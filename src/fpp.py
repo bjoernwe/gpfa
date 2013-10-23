@@ -5,12 +5,12 @@ import scipy.spatial.distance
 import mdp
 
 
-class FuturePreservingMapBase(mdp.Node):
+class FPPBase(mdp.Node):
 
     data = None
 
     def __init__(self, output_dim, k=10, normalized_laplacian=True, neighbor_edges=True, input_dim=None, dtype=None):
-        super(FuturePreservingMapBase, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        super(FPPBase, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.normalized_laplacian = normalized_laplacian
         self.neighbor_edges = neighbor_edges
@@ -73,31 +73,47 @@ class FuturePreservingMapBase(mdp.Node):
         
 
 
-class FuturePreservingMap(FuturePreservingMapBase):
+class FPP(FPPBase):
     
     def __init__(self, output_dim, k=10, normalized_laplacian=True, neighbor_edges=True, input_dim=None, dtype=None):
-        FuturePreservingMapBase.__init__(self, output_dim=output_dim, k=k, normalized_laplacian=normalized_laplacian, neighbor_edges=neighbor_edges, input_dim=input_dim, dtype=dtype)
+        FPPBase.__init__(self, output_dim=output_dim, k=k, normalized_laplacian=normalized_laplacian, neighbor_edges=neighbor_edges, input_dim=input_dim, dtype=dtype)
 
         
     def _stop_training(self):
-        FuturePreservingMapBase._stop_training(self)
+        FPPBase._stop_training(self)
         if self.normalized_laplacian:
-            E, U = scipy.sparse.linalg.eigs(self.W, k=self.output_dim, which='LR')
+            # find largest eigenvectors of connection matrix
+            E, U = scipy.sparse.linalg.eigs(self.W, k=self.output_dim+1, which='LR')
             self.E = E.real
             self.U = U.real
         else:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, sigma=0.0, k=self.output_dim, which='LR')
+            # find smallest eigenvectors, respectively largest (sigma - eig) 
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, sigma=0.0, k=self.output_dim+1, which='LA')
+            
+        self.knn = []
+        for i in range(self.output_dim):
+            knn = mdp.nodes.KNNClassifier(k=1)
+            knn.train(self.data, labels=self.U[:,i+1])
+            self.knn.append(knn)
+            
+            
+    def _execute(self, x):
+        N, _ = x.shape
+        result = np.zeros((N, self.output_dim))
+        for i in range(self.output_dim):
+            result[:,i] = self.knn[i].label(x)
+        return result
         
         
         
-class FuturePreservingMapLinear(FuturePreservingMapBase):
+class FPPLinear(FPPBase):
     
     def __init__(self, output_dim, k=10, normalized_laplacian=True, neighbor_edges=True, input_dim=None, dtype=None):
-        FuturePreservingMapBase.__init__(self, output_dim=output_dim, k=k, normalized_laplacian=normalized_laplacian, neighbor_edges=neighbor_edges, input_dim=input_dim, dtype=dtype)
+        FPPBase.__init__(self, output_dim=output_dim, k=k, normalized_laplacian=normalized_laplacian, neighbor_edges=neighbor_edges, input_dim=input_dim, dtype=dtype)
     
         
     def _stop_training(self):
-        FuturePreservingMapBase._stop_training(self)
+        FPPBase._stop_training(self)
         
         # projected graph laplacian
         D2 = self.data.T.dot(self.D.dot(self.data))
@@ -105,10 +121,11 @@ class FuturePreservingMapLinear(FuturePreservingMapBase):
         #W2 = self.data.T.dot(self.W.dot(self.data))
         
         # calculate the eigen-vectors
-        print L2
-        self.E, self.U = scipy.sparse.linalg.eigs(L2, M=D2, sigma=0.0, k=self.output_dim, which='LR')
-        #self.E, self.U = scipy.sparse.linalg.eigsh(L2, M=D2, k=self.output_dim, which='SM')
+        #self.E, self.U = scipy.sparse.linalg.eigs(L2, M=D2, sigma=0.0, k=self.output_dim, which='LR')
+        E, U = scipy.sparse.linalg.eigs(L2, M=D2, k=self.output_dim, which='SR')
         #self.E, self.U = scipy.sparse.linalg.eigsh(W2, k=self.output_dim, which='LM')
+        self.E = E.real
+        self.U = U.real
         return
     
     
