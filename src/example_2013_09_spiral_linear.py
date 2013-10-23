@@ -12,6 +12,7 @@ from studienprojekt.env_swiss_roll import EnvSwissRoll
 if __name__ == '__main__':
     
     # parameters
+    k = 5
     N = 5000
     expansion = 1
     noisy_dims = 50
@@ -40,13 +41,13 @@ if __name__ == '__main__':
     # algorithms
     models = []
     models.append(mdp.nodes.SFANode())
-    models.append(mdp.nodes.LLENode(k=10))
+    models.append(mdp.nodes.LLENode(k=k))
     #models.append(mdp.nodes.HLLENode(k=55))
     #models.append(future_preserving_map.FuturePreservingMap(output_dim=2, 
     models.append(fpp.FPPLinear(output_dim=2, 
-                                k=10, 
+                                k=k, 
                                 normalized_laplacian=False, 
-                                neighbor_edges=True))
+                                neighbor_edges=False))
     
     # learn
     for j, model in enumerate(models):

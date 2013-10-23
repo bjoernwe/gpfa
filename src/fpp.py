@@ -37,13 +37,12 @@ class FPPBase(mdp.Node):
         distances = scipy.spatial.distance.squareform(distances)
 
         # future-preserving graph
-        for t in range(N-1):
-            neighbors = np.argsort(distances[t+1])
-            for v in neighbors[0:self.k+1]:
-                u = v-1     # predecessor of neighbor
-                if t != u:  # no self-connections
-                    W[t,u] = 1
-                    W[u,t] = 1
+        for s in range(N-1):
+            neighbors = np.argsort(distances[s])
+            for t in neighbors[0:self.k+1]:
+                if s != t and t+1 < N:  # no self-connections
+                    W[s+1,t+1] = 1
+                    W[t+1,s+1] = 1
                     
         # k-nearest-neighbor graph for regularization
         if self.neighbor_edges:
