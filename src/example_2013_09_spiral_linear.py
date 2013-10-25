@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # algorithms
     models = []
     models.append(mdp.nodes.SFANode())
-    models.append(mdp.nodes.LLENode(k=k))
+    #models.append(mdp.nodes.LLENode(k=k))
     #models.append(mdp.nodes.HLLENode(k=55))
     #models.append(future_preserving_map.FuturePreservingMap(output_dim=2, 
     models.append(fpp.FPPLinear(output_dim=2, 
