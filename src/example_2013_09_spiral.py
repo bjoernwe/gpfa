@@ -2,6 +2,7 @@ import numpy as np
 
 from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
+Axes3D
 
 import mdp
 

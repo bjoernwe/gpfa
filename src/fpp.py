@@ -14,24 +14,24 @@ class FPPBase(mdp.Node):
         self.k = k
         self.normalized_laplacian = normalized_laplacian
         self.neighbor_edges = neighbor_edges
-        
-    
+
+
     def _train(self, x):
         if self.data is None:
             self.data = x
         else:
             np.vstack((self.data, x))
-    
-    
+
+
     def _stop_training(self):
         """
         Calculates the graph Laplacian.
         """
-        
+
         # initialize weight matrix W
         N, _ = self.data.shape
         W = scipy.sparse.dok_matrix((N, N))
-       
+
         # pairwise distances of data points
         distances = scipy.spatial.distance.pdist(self.data)
         distances = scipy.spatial.distance.squareform(distances)
@@ -43,7 +43,7 @@ class FPPBase(mdp.Node):
                 if s != t and t+1 < N:  # no self-connections
                     W[s+1,t+1] = 1
                     W[t+1,s+1] = 1
-                    
+
         # k-nearest-neighbor graph for regularization
         if self.neighbor_edges:
             for i in range(N):
@@ -52,7 +52,7 @@ class FPPBase(mdp.Node):
                     if i != j:
                         W[i,j] = 1
                         W[j,i] = 1
-            
+
         # graph Laplacian
         d = W.sum(axis=1).T
         if self.normalized_laplacian:
@@ -62,22 +62,22 @@ class FPPBase(mdp.Node):
             D = scipy.sparse.eye(N, N)
         else:
             D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
-        
+
         # keep matrices
         L = D - W
         self.W = W
         self.D = D
         self.L = L
         return
-        
+
 
 
 class FPP(FPPBase):
-    
+
     def __init__(self, output_dim, k=10, normalized_laplacian=True, neighbor_edges=True, input_dim=None, dtype=None):
         FPPBase.__init__(self, output_dim=output_dim, k=k, normalized_laplacian=normalized_laplacian, neighbor_edges=neighbor_edges, input_dim=input_dim, dtype=dtype)
 
-        
+
     def _stop_training(self):
         FPPBase._stop_training(self)
         if self.normalized_laplacian:
@@ -86,27 +86,27 @@ class FPP(FPPBase):
             self.E = E.real
             self.U = U.real
         else:
-            # find smallest eigenvectors, respectively largest (sigma - eig) 
+            # find smallest eigenvectors, respectively largest (sigma - eig)
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, sigma=0.0, k=self.output_dim+1, which='LA')
-            
+
         self.knn = []
         for i in range(self.output_dim):
             knn = mdp.nodes.KNNClassifier(k=1)
             knn.train(self.data, labels=self.U[:,i+1])
             self.knn.append(knn)
-            
-            
+
+
     def _execute(self, x):
         N, _ = x.shape
         result = np.zeros((N, self.output_dim))
         for i in range(self.output_dim):
             result[:,i] = self.knn[i].label(x)
         return result
-        
-        
-        
+
+
+
 class FPPLinear(mdp.Node):
-    
+
     def __init__(self, output_dim, k=10, normalized_laplacian=True, neighbor_edges=False, input_dim=None, dtype=None):
         super(FPPLinear, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
@@ -115,14 +115,14 @@ class FPPLinear(mdp.Node):
         self.L = None
         self.D = None
         return
-    
-    
+
+
     def _train(self, x):
 
         # initialize weight matrix W
         N, _ = x.shape
         W = scipy.sparse.dok_matrix((N, N))
-       
+
         # pairwise distances of data points
         distances = scipy.spatial.distance.pdist(x)
         distances = scipy.spatial.distance.squareform(distances)
@@ -134,7 +134,7 @@ class FPPLinear(mdp.Node):
                 if s != t and t+1 < N:  # no self-connections
                     W[s+1,t+1] = 1
                     W[t+1,s+1] = 1
-                    
+
         # k-nearest-neighbor graph for regularization
         if self.neighbor_edges:
             for i in range(N):
@@ -143,9 +143,10 @@ class FPPLinear(mdp.Node):
                     if i != j:
                         W[i,j] = 1
                         W[j,i] = 1
-            
+
         # graph Laplacian
         d = W.sum(axis=1).T
+        d[d==0] = float('inf') 
         if self.normalized_laplacian:
             d_inv = 1./d
             D_inv = scipy.sparse.dia_matrix((d_inv, 0), shape=(N, N))
@@ -154,11 +155,11 @@ class FPPLinear(mdp.Node):
         else:
             D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
         L = D - W
-    
+
         # projected graph laplacian
         D2 = x.T.dot(D.dot(x))
         L2 = x.T.dot(L.dot(x))
-        
+
         # add chunk result to global result
         if self.L is None:
             self.L = L2
@@ -166,10 +167,10 @@ class FPPLinear(mdp.Node):
         else:
             self.L += L2
             self.D += D2
-            
+
         return
-        
-        
+
+
     def _stop_training(self):
         # calculate the eigen-vectors
         #E, U = scipy.sparse.linalg.eigs(self.L, M=self.D, sigma=0.0, k=self.output_dim, which='LR')
@@ -177,9 +178,8 @@ class FPPLinear(mdp.Node):
         self.E = E.real
         self.U = U.real
         return
-    
-    
+
+
     def _execute(self, x):
         return x.dot(self.U)
-    
-    
+
