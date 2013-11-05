@@ -13,34 +13,40 @@ import mdp
 
 import fpp
 
+import PFANodeMDP
+#import PFANodeMDPRefImp
+
 from studienprojekt.env_swiss_roll import EnvSwissRoll
 
 if __name__ == '__main__':
 
     # parameters
-    k = 5
+    k = 10
     N = 5000
     expansion = 1
-    noisy_dims = 48
+    noisy_dims = 200-2
     whitening = True
     normalized_laplacian = True
-    neighbor_edges = True
+    neighbor_edges = False
     chunks = 1
 
     # algorithms
     models = []
     models.append(mdp.nodes.SFANode())
+    #models.append(PFANodeMDP.PFANode(p=2, k=4, affine=False, output_dim=2))
     #models.append(mdp.nodes.LLENode(k=k))
     #models.append(mdp.nodes.HLLENode(k=55))
     #models.append(future_preserving_map.FuturePreservingMap(output_dim=2,
-    models.append(fpp.GraphSFA(output_dim=2,
-                                k=k,
-                                normalized_laplacian=normalized_laplacian,
-                                neighbor_edges=neighbor_edges))
-    models.append(fpp.FPPLinear(output_dim=2,
-                                k=k,
-                                normalized_laplacian=normalized_laplacian,
-                                neighbor_edges=neighbor_edges))
+    #models.append(fpp.GraphSFA(output_dim=2,
+    #                            k=k,
+    #                            normalized_laplacian=normalized_laplacian,
+    #                            neighbor_edges=neighbor_edges))
+    for i in range(1, 9):
+        models.append(fpp.FPPLinear(output_dim=2,
+                                    k=k,
+                                    iterations=i,
+                                    normalized_laplacian=normalized_laplacian,
+                                    neighbor_edges=neighbor_edges))
 
     # learn
     for j, model in enumerate(models):
@@ -71,11 +77,12 @@ if __name__ == '__main__':
                 data = whitening_node.execute(data)
 
             # train
+            #np.save('data.npy', data)
             model.train(data)
 
         # plot
         data2 = model.execute(data)
-        pyplot.subplot(1, 3, j+1)
+        pyplot.subplot(3, 3, j+1)
         pyplot.scatter(x=data2[:,0], y=data2[:,1], c=labels, s=50, edgecolor='None')
         pyplot.title(model.__class__.__name__)
 
