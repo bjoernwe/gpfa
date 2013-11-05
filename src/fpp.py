@@ -115,8 +115,8 @@ class FPPLinear(mdp.Node):
         self.L = None
         self.D = None
         return
-
-
+    
+    
     def _train(self, x):
 
         # initialize weight matrix W
@@ -134,6 +134,86 @@ class FPPLinear(mdp.Node):
                 if s != t and t+1 < N:  # no self-connections
                     W[s+1,t+1] = 1
                     W[t+1,s+1] = 1
+
+        # k-nearest-neighbor graph for regularization
+        if self.neighbor_edges:
+            for i in range(N):
+                neighbors = np.argsort(distances[i])
+                for j in neighbors[0:self.k+1]:
+                    if i != j:
+                        W[i,j] = 1
+                        W[j,i] = 1
+
+        # graph Laplacian
+        d = W.sum(axis=1).T
+        d[d==0] = float('inf') 
+        if self.normalized_laplacian:
+            d_inv = 1./d
+            D_inv = scipy.sparse.dia_matrix((d_inv, 0), shape=(N, N))
+            W = D_inv.dot(W)
+            D = scipy.sparse.eye(N, N)
+        else:
+            D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
+        L = D - W
+
+        # projected graph laplacian
+        D2 = x.T.dot(D.dot(x))
+        L2 = x.T.dot(L.dot(x))
+
+        # add chunk result to global result
+        if self.L is None:
+            self.L = L2
+            self.D = D2
+        else:
+            self.L += L2
+            self.D += D2
+
+        return
+
+
+    def _stop_training(self):
+        # calculate the eigen-vectors
+        #E, U = scipy.sparse.linalg.eigs(self.L, M=self.D, sigma=0.0, k=self.output_dim, which='LR')
+        E, U = scipy.sparse.linalg.eigs(self.L, M=self.D, k=self.output_dim, which='SR')
+        self.E = E.real
+        self.U = U.real
+        return
+
+
+    def _execute(self, x):
+        return x.dot(self.U)
+
+
+
+class GraphSFA(mdp.Node):
+
+    def __init__(self, output_dim, k=10, normalized_laplacian=True, neighbor_edges=False, input_dim=None, dtype=None):
+        super(GraphSFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        self.k = k
+        self.normalized_laplacian = normalized_laplacian
+        self.neighbor_edges = neighbor_edges
+        self.L = None
+        self.D = None
+        return
+    
+    
+    def _train(self, x):
+
+        # initialize weight matrix W
+        N, _ = x.shape
+        W = scipy.sparse.dok_matrix((N, N))
+
+        # pairwise distances of data points
+        distances = scipy.spatial.distance.pdist(x)
+        distances = scipy.spatial.distance.squareform(distances)
+
+        # future-preserving graph
+        for s in range(N-1):
+            neighbors = np.argsort(distances[s])
+            for t in neighbors[0:self.k+1]:
+                if t+1 < N:  # no self-connections
+                    W[s,t+1] = 1
+                    W[t+1,s] = 1
 
         # k-nearest-neighbor graph for regularization
         if self.neighbor_edges:

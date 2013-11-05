@@ -20,9 +20,11 @@ if __name__ == '__main__':
     # parameters
     k = 5
     N = 5000
-    expansion = 2
-    noisy_dims = 10
+    expansion = 1
+    noisy_dims = 48
     whitening = True
+    normalized_laplacian = True
+    neighbor_edges = True
     chunks = 1
 
     # algorithms
@@ -31,10 +33,14 @@ if __name__ == '__main__':
     #models.append(mdp.nodes.LLENode(k=k))
     #models.append(mdp.nodes.HLLENode(k=55))
     #models.append(future_preserving_map.FuturePreservingMap(output_dim=2,
+    models.append(fpp.GraphSFA(output_dim=2,
+                                k=k,
+                                normalized_laplacian=normalized_laplacian,
+                                neighbor_edges=neighbor_edges))
     models.append(fpp.FPPLinear(output_dim=2,
                                 k=k,
-                                normalized_laplacian=True,
-                                neighbor_edges=False))
+                                normalized_laplacian=normalized_laplacian,
+                                neighbor_edges=neighbor_edges))
 
     # learn
     for j, model in enumerate(models):
