@@ -13,7 +13,7 @@ import mdp
 
 import fpp
 
-import PFANodeMDP
+#import PFANodeMDP
 #import PFANodeMDPRefImp
 
 from studienprojekt.env_swiss_roll import EnvSwissRoll
@@ -24,10 +24,10 @@ if __name__ == '__main__':
     k = 10
     N = 5000
     expansion = 1
-    noisy_dims = 200-2
+    noisy_dims = 500-2
     whitening = True
-    normalized_laplacian = True
-    neighbor_edges = False
+    normalized_laplacian = False
+    neighbor_graph = False
     chunks = 1
 
     # algorithms
@@ -41,12 +41,14 @@ if __name__ == '__main__':
     #                            k=k,
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
-    for i in range(1, 9):
+    for i in range(1, 6):
         models.append(fpp.FPPLinear(output_dim=2,
                                     k=k,
                                     iterations=i,
                                     normalized_laplacian=normalized_laplacian,
-                                    neighbor_edges=neighbor_edges))
+                                    reversed_graph=True,
+                                    sfa_graph=False,
+                                    neighbor_graph=neighbor_graph))
 
     # learn
     for j, model in enumerate(models):

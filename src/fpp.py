@@ -107,12 +107,14 @@ class FPP(FPPBase):
 
 class FPPLinear(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=1, normalized_laplacian=True, neighbor_edges=False, input_dim=None, dtype=None):
+    def __init__(self, output_dim, k=10, iterations=1, normalized_laplacian=True, reversed_graph=True, sfa_graph=False, neighbor_graph=False, input_dim=None, dtype=None):
         super(FPPLinear, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.normalized_laplacian = normalized_laplacian
-        self.neighbor_edges = neighbor_edges
+        self.reversed_graph = reversed_graph
+        self.sfa_graph = sfa_graph
+        self.neighbor_graph = neighbor_graph
         self.L = None
         self.D = None
         return
@@ -145,8 +147,23 @@ class FPPLinear(mdp.Node):
                         W[s+1,t+1] = 1
                         W[t+1,s+1] = 1
     
+            # future-preserving graph (reversed)
+            if self.reversed_graph:
+                for s in range(1, N):
+                    neighbors = np.argsort(distances[s])
+                    for t in neighbors[0:self.k+1]:
+                        if s != t and t-1 >= 0:  # no self-connections
+                            W[s-1,t-1] = 1
+                            W[t-1,s-1] = 1
+                            
+            # sfa graph
+            if self.sfa_graph:
+                for t in range(N-1):
+                    W[t,t+1] = 1
+                    W[t+1,t] = 1
+            
             # k-nearest-neighbor graph for regularization
-            if self.neighbor_edges:
+            if self.neighbor_graph:
                 for i in range(N):
                     neighbors = np.argsort(distances[i])
                     for j in neighbors[0:self.k+1]:
