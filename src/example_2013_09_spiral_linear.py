@@ -26,7 +26,6 @@ if __name__ == '__main__':
     expansion = 1
     noisy_dims = 100-2
     whitening = True
-    normalized_laplacian = False
     neighbor_graph = False
     chunks = 1
 
@@ -46,7 +45,6 @@ if __name__ == '__main__':
         models.append(fpp.FPPLinear(output_dim=2,
                                     k=k,
                                     iterations=i,
-                                    normalized_laplacian=normalized_laplacian,
                                     preserve_past=True))
 
     # learn

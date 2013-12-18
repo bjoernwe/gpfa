@@ -108,11 +108,10 @@ class FPP(FPPBase):
 
 class FPPLinear(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=1, normalized_laplacian=True, preserve_past=True, neighbor_graph=False, input_dim=None, dtype=None):
+    def __init__(self, output_dim, k=10, iterations=1, preserve_past=True, neighbor_graph=False, input_dim=None, dtype=None):
         super(FPPLinear, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
-        self.normalized_laplacian = normalized_laplacian
         self.preserve_past = preserve_past
         self.neighbor_graph = neighbor_graph
         self.L = None
@@ -181,13 +180,7 @@ class FPPLinear(mdp.Node):
             # graph Laplacian
             d = W.sum(axis=1).T
             d[d==0] = float('inf') 
-            if self.normalized_laplacian:
-                d_inv = 1./d
-                D_inv = scipy.sparse.dia_matrix((d_inv, 0), shape=(N, N))
-                W = D_inv.dot(W)
-                D = scipy.sparse.eye(N, N)
-            else:
-                D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
+            D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
             L = D - W
     
             # projected graph laplacian
