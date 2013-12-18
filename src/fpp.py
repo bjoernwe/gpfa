@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.linalg
 import scipy.sparse.linalg
 import scipy.spatial.distance
 
@@ -107,17 +108,22 @@ class FPP(FPPBase):
 
 class FPPLinear(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=1, normalized_laplacian=True, reversed_graph=True, sfa_graph=False, neighbor_graph=False, input_dim=None, dtype=None):
+    def __init__(self, output_dim, k=10, iterations=1, normalized_laplacian=True, preserve_past=True, neighbor_graph=False, input_dim=None, dtype=None):
         super(FPPLinear, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.normalized_laplacian = normalized_laplacian
-        self.reversed_graph = reversed_graph
-        self.sfa_graph = sfa_graph
+        self.preserve_past = preserve_past
         self.neighbor_graph = neighbor_graph
         self.L = None
         self.D = None
+        self.sigma = 3.0
         return
+    
+    
+    def _kernel(self, d):
+        print d
+        return np.exp(-.5*(d/self.sigma)**2) / (self.sigma * np.sqrt(2. * np.pi))
     
     
     def _train(self, x):
@@ -143,25 +149,26 @@ class FPPLinear(mdp.Node):
             for s in range(N-1):
                 neighbors = np.argsort(distances[s])
                 for t in neighbors[0:self.k+1]:
-                    if s != t and t+1 < N:  # no self-connections
-                        W[s+1,t+1] = 1
-                        W[t+1,s+1] = 1
+                    if s != t: # no self-connections
+                        if s+1 < N and t+1 < N:
+                            #d = self._kernel(distances[s+1, t+1])
+                            #d = distances[s+u, t+u]
+                            #print d
+                            W[s+1,t+1] = 1#./d
+                            W[t+1,s+1] = 1#./d
     
-            # future-preserving graph (reversed)
-            if self.reversed_graph:
+            # past-preserving graph
+            if self.preserve_past:
                 for s in range(1, N):
                     neighbors = np.argsort(distances[s])
                     for t in neighbors[0:self.k+1]:
-                        if s != t and t-1 >= 0:  # no self-connections
-                            W[s-1,t-1] = 1
-                            W[t-1,s-1] = 1
+                        if s != t: # no self-connections
+                            if s-1 > 0 and t-1 >= 0:
+                                #d = self._kernel(distances[s-1, t-1])
+                                #d = distances[s-u, t-u]
+                                W[s-1,t-1] = 1#./d
+                                W[t-1,s-1] = 1#./d
                             
-            # sfa graph
-            if self.sfa_graph:
-                for t in range(N-1):
-                    W[t,t+1] = 1
-                    W[t+1,t] = 1
-            
             # k-nearest-neighbor graph for regularization
             if self.neighbor_graph:
                 for i in range(N):
@@ -189,8 +196,17 @@ class FPPLinear(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                _, U = scipy.sparse.linalg.eigs(L2, M=D2, k=self.output_dim, which='SR')
-                y = x.dot(U.real)
+                #E, U = scipy.sparse.linalg.eigs(L2, M=D2, k=self.output_dim, which='SR')
+                #E, U = np.linalg.eigh(L2)
+                E, U = scipy.linalg.eigh(a=L2, b=D2)
+                (E, U) = (E.real, U.real)
+                print min(E), max(E)
+                assert 0 not in E
+                assert float('nan') not in E
+                assert float('nan') not in U 
+                for i in range(len(E)):
+                    U[:,i] = U[:,i] / E[i]**2
+                y = x.dot(U)
 
         # add chunk result to global result
         if self.L is None:
