@@ -24,15 +24,15 @@ if __name__ == '__main__':
     k = 10
     N = 5000
     expansion = 1
-    noisy_dims = 100-2
+    noisy_dims = 1000-2
     whitening = True
     neighbor_graph = False
     chunks = 1
 
     # algorithms
     models = []
-    models.append(mdp.nodes.SFANode())
-    models.append(PFANodeMDP.PFANode(p=2, k=4, affine=False, output_dim=2))
+    #models.append(mdp.nodes.SFANode())
+    #models.append(PFANodeMDP.PFANode(p=2, k=4, affine=False, output_dim=2))
     #models.append(PFANodeMDP.PFANode(p=2, k=8, affine=False, output_dim=2))
     #models.append(mdp.nodes.LLENode(k=k))
     #models.append(mdp.nodes.HLLENode(k=55))
@@ -41,11 +41,11 @@ if __name__ == '__main__':
     #                            k=k,
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
-    for i in range(1, 1+1):
-        models.append(fpp.FPPLinear(output_dim=2,
-                                    k=k,
-                                    iterations=i,
-                                    preserve_past=True))
+    for i in range(10, 10+1):
+        models.append(fpp.FPP(output_dim=2,
+                              k=k,
+                              iterations=i,
+                              preserve_past=True))
 
     # learn
     for j, model in enumerate(models):
@@ -57,12 +57,13 @@ if __name__ == '__main__':
         for _ in range(chunks):
 
             # data
-            env = EnvSwissRoll(sigma=0.5)
+            env = EnvSwissRoll(sigma=0.5, seed=5)
             data0, _, labels = env.do_random_steps(num_steps=N)
 
             # add noisy dim
+            R = np.random.RandomState(seed=0)
             for i in range(noisy_dims):
-                noise_complete = 1. * np.random.random(N)
+                noise_complete = 1. * R.rand(N)
                 data0 = np.insert(data0, 2, axis=1, values=noise_complete)
 
             # expansion
