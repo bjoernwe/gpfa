@@ -7,7 +7,9 @@ import mdp
 
 class FPP(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None, preserve_past=True, neighbor_graph=False, input_dim=None, dtype=None):
+    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None, 
+                 preserve_past=True, neighbor_graph=False, input_dim=None, 
+                 dtype=None):
         super(FPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
@@ -49,8 +51,6 @@ class FPP(mdp.Node):
             # pairwise distances of data points
             distances = scipy.spatial.distance.pdist(y)
             distances = scipy.spatial.distance.squareform(distances)
-            
-            # 
             neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
     
             # future-preserving graph
