@@ -137,8 +137,6 @@ class gPFA(mdp.Node):
         self.iteration_dim = iteration_dim
         if self.iteration_dim is None:
             self.iteration_dim = self.output_dim
-        self.L = None
-        self.D = None
         self.C = None
         return
 
@@ -149,28 +147,41 @@ class gPFA(mdp.Node):
 
         # number of samples
         N, _ = x.shape
-        
-        # pairwise distances of data points
-        distances = scipy.spatial.distance.pdist(x)
-        distances = scipy.spatial.distance.squareform(distances)
-        neighbors = [np.array(np.argsort(distances[i])[:self.k+1], dtype=int) for i in range(N-1)]
-        
-        cov = mdp.utils.CovarianceMatrix()
-        for neigh in neighbors:
-            neighbor_future = neigh + 1
-            neighbor_future = np.setdiff1d(neighbor_future, np.array([N]), assume_unique=True)
-            combinations = np.array(list(itertools.combinations(neighbor_future, 2)), dtype=int)
-            indices_i = combinations[:,0]
-            indices_j = combinations[:,1]
-            deltas = x[indices_i] - x[indices_j]
-            cov.update(deltas)
+
+        # data y is used for calculating the k neighbors
+        y = x
+
+        # iterate algorithm            
+        for l in range(self.iterations):
+                    
+            # pairwise distances of data points
+            distances = scipy.spatial.distance.pdist(y)
+            distances = scipy.spatial.distance.squareform(distances)
+            neighbors = [np.array(np.argsort(distances[i])[:self.k+1], dtype=int) for i in range(N-1)]
             
-        C, _, _ = cov.fix()
+            cov = mdp.utils.CovarianceMatrix()
+            for neigh in neighbors:
+                neighbor_future = neigh + 1
+                neighbor_future = np.setdiff1d(neighbor_future, np.array([N]), assume_unique=True)
+                combinations = np.array(list(itertools.combinations(neighbor_future, 2)), dtype=int)
+                indices_i = combinations[:,0]
+                indices_j = combinations[:,1]
+                deltas = x[indices_i] - x[indices_j]
+                cov.update(deltas)
+    
+            C, _, _ = cov.fix()
+    
+            # (if not the last iteration:) solve and project
+            if l < self.iterations-1:
+                E, U = scipy.linalg.eigh(a=C, eigvals=(0, self.iteration_dim-1))
+                print min(E), max(E)
+                y = x.dot(U)
+
         if self.C is None:
             self.C = C
         else:
             self.C += C
-
+            
 
     def _stop_training(self):
         self.E, self.U = scipy.linalg.eigh(a=self.C, eigvals=(0, self.output_dim-1))

@@ -24,7 +24,7 @@ if __name__ == '__main__':
     k = 10
     N = 5000
     expansion = 1
-    noisy_dims = 50-2
+    noisy_dims = 100-2
     whitening = True
     neighbor_graph = False
     chunks = 1
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     #                            k=k,
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
-    models.append(fpp.gPFA(output_dim=2))
+    models.append(fpp.gPFA(output_dim=2, iterations=3))
     for i in range(1, 1+1):
         models.append(fpp.FPP(output_dim=2,
                               k=k,
