@@ -1,4 +1,6 @@
+import itertools
 import numpy as np
+import scipy.linalg
 import scipy.sparse.linalg
 import scipy.spatial.distance
 
@@ -8,11 +10,12 @@ import mdp
 class FPP(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None, 
-                 preserve_past=True, neighbor_graph=False, input_dim=None, 
-                 dtype=None):
+                 preserve_future=True, preserve_past=True, neighbor_graph=False, 
+                 input_dim=None, dtype=None):
         super(FPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
+        self.preserve_future = preserve_future
         self.preserve_past = preserve_past
         self.neighbor_graph = neighbor_graph
         self.iteration_dim = iteration_dim
@@ -54,12 +57,13 @@ class FPP(mdp.Node):
             neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
     
             # future-preserving graph
-            for s in range(N-1):
-                for t in neighbors[s]:#[0:self.k+1]:
-                    if s != t: # no self-connections
-                        if s+1 < N and t+1 < N:
-                            W[s+1,t+1] = 1
-                            W[t+1,s+1] = 1
+            if self.preserve_future:
+                for s in range(N-1):
+                    for t in neighbors[s]:#[0:self.k+1]:
+                        if s != t: # no self-connections
+                            if s+1 < N and t+1 < N:
+                                W[s+1,t+1] = 1
+                                W[t+1,s+1] = 1
     
             # past-preserving graph
             if self.preserve_past:
@@ -73,7 +77,7 @@ class FPP(mdp.Node):
             # k-nearest-neighbor graph for regularization
             if self.neighbor_graph:
                 for i in range(N):
-                    for j in neighbors[s]:
+                    for j in neighbors[i]:
                         if i != j:
                             W[i,j] = 1
                             W[j,i] = 1
@@ -115,6 +119,61 @@ class FPP(mdp.Node):
 
     def _stop_training(self):
         self.E, self.U = scipy.sparse.linalg.eigsh(self.D-self.L, M=self.D, k=self.output_dim, which='LA')
+        return
+
+
+    def _execute(self, x):
+        return x.dot(self.U)
+
+
+
+class gPFA(mdp.Node):
+
+    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None, 
+                 input_dim=None, dtype=None):
+        super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        self.k = k
+        self.iterations = iterations
+        self.iteration_dim = iteration_dim
+        if self.iteration_dim is None:
+            self.iteration_dim = self.output_dim
+        self.L = None
+        self.D = None
+        self.C = None
+        return
+
+    
+    def _train(self, x):
+        
+        # TODO: whitening
+
+        # number of samples
+        N, _ = x.shape
+        
+        # pairwise distances of data points
+        distances = scipy.spatial.distance.pdist(x)
+        distances = scipy.spatial.distance.squareform(distances)
+        neighbors = [np.array(np.argsort(distances[i])[:self.k+1], dtype=int) for i in range(N-1)]
+        
+        cov = mdp.utils.CovarianceMatrix()
+        for neigh in neighbors:
+            neighbor_future = neigh + 1
+            neighbor_future = np.setdiff1d(neighbor_future, np.array([N]), assume_unique=True)
+            combinations = np.array(list(itertools.combinations(neighbor_future, 2)), dtype=int)
+            indices_i = combinations[:,0]
+            indices_j = combinations[:,1]
+            deltas = x[indices_i] - x[indices_j]
+            cov.update(deltas)
+            
+        C, _, _ = cov.fix()
+        if self.C is None:
+            self.C = C
+        else:
+            self.C += C
+
+
+    def _stop_training(self):
+        self.E, self.U = scipy.linalg.eigh(a=self.C, eigvals=(0, self.output_dim-1))
         return
 
 

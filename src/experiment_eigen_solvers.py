@@ -6,7 +6,7 @@ import time
 
 if __name__ == '__main__':
     
-    N = 1000
+    N = 10000
     
     # data
     A = np.random.random(size=(N, N))
@@ -106,12 +106,14 @@ if __name__ == '__main__':
     start = time.time()
     E, U = np.linalg.eig(A)
     end = time.time()
-    print "np.linalg.eig: %fs" % (end - start)
+    idx = np.argsort(E.real)
+    print "np.linalg.eig: %fs (%f+%fj)" % (end - start, E[idx[-1]].real, E[idx[-1]].imag)
     
     # SciPy
     start = time.time()
     E, U = scipy.linalg.eig(B)
     end = time.time()
-    print "scipy.linalg.eig: %fs" % (end - start)
+    idx = np.argsort(E.real)
+    print "scipy.linalg.eig: %fs (%f+%fj)" % (end - start, E[idx[-1]].real, E[idx[-1]].imag)
     
             
