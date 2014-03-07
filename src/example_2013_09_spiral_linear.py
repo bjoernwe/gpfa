@@ -16,15 +16,17 @@ import fpp
 #import PFANodeMDP
 #import PFANodeMDPRefImp
 
+from envs.env_ribbon import EnvRibbon
+
 from studienprojekt.env_swiss_roll import EnvSwissRoll
 
 if __name__ == '__main__':
 
     # parameters
     k = 10
-    N = 5000
+    N = 1000
     expansion = 1
-    noisy_dims = 100-2
+    noisy_dims = 50-2
     whitening = True
     neighbor_graph = False
     chunks = 1
@@ -41,8 +43,8 @@ if __name__ == '__main__':
     #                            k=k,
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
-    models.append(fpp.gPFA(output_dim=2, iterations=3))
-    for i in range(1, 1+1):
+    for i in range(1, 4+1):
+        models.append(fpp.gPFA(output_dim=2, k=k, iterations=i, iteration_dim=10))
         models.append(fpp.FPP(output_dim=2,
                               k=k,
                               iterations=i,
@@ -60,8 +62,10 @@ if __name__ == '__main__':
         for _ in range(chunks):
 
             # data
-            env = EnvSwissRoll(sigma=0.5, seed=5)
+            #env = EnvSwissRoll(sigma=0.5, seed=None)
+            env = EnvRibbon(step_size=2, seed=None)
             data0, _, labels = env.do_random_steps(num_steps=N)
+            print data0.shape, labels.shape
 
             # add noisy dim
             R = np.random.RandomState(seed=0)
@@ -85,7 +89,7 @@ if __name__ == '__main__':
         # plot
         data2 = model.execute(data)
         pyplot.subplot(3, 3, j+1)
-        pyplot.scatter(x=data2[:,0], y=data2[:,1], c=labels, s=50, edgecolor='None')
+        pyplot.scatter(x=data2[:-1,0], y=data2[:-1,1], c=labels, s=50, edgecolor='None')
         pyplot.title(model.__class__.__name__)
 
     # show plot

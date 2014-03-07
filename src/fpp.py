@@ -55,6 +55,13 @@ class FPP(mdp.Node):
             distances = scipy.spatial.distance.pdist(y)
             distances = scipy.spatial.distance.squareform(distances)
             neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
+            
+            # future-preserving graph
+#             if self.preserve_future:
+#                 for t in range(N-1):
+#                     for (i,j) in itertools.permutations(neighbors[t], 2):
+#                         if i+1 < N and j+1 < N:
+#                             W[i+1,j+1] += 1
     
             # future-preserving graph
             if self.preserve_future:
@@ -62,8 +69,8 @@ class FPP(mdp.Node):
                     for t in neighbors[s]:#[0:self.k+1]:
                         if s != t: # no self-connections
                             if s+1 < N and t+1 < N:
-                                W[s+1,t+1] = 1
-                                W[t+1,s+1] = 1
+                                W[s+1,t+1] += 1
+                                W[t+1,s+1] += 1
     
             # past-preserving graph
             if self.preserve_past:
@@ -94,7 +101,8 @@ class FPP(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                E, U = scipy.sparse.linalg.eigsh(D2-L2, M=D2, k=self.iteration_dim, which='LA')
+                E, U = scipy.linalg.eigh(a=L2, eigvals=(0, self.iteration_dim-1))
+                #E, U = scipy.sparse.linalg.eigsh(D2-L2, M=D2, k=self.iteration_dim, which='LA')
                 E = 1 - E
                 #E, U = scipy.linalg.eigh(a=L2, b=D2)
                 #(E, U) = (E.real, U.real)
@@ -118,7 +126,14 @@ class FPP(mdp.Node):
 
 
     def _stop_training(self):
-        self.E, self.U = scipy.sparse.linalg.eigsh(self.D-self.L, M=self.D, k=self.output_dim, which='LA')
+        #self.E, self.U = scipy.sparse.linalg.eigsh(self.D-self.L, M=self.D, k=self.output_dim, which='LA')
+        #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+        #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, sigma=0, which='LA')
+        #self.E, self.U = scipy.sparse.linalg.eigsh(np.eye(self.input_dim)-self.L, k=self.output_dim, which='LA')
+        self.E, self.U = scipy.linalg.eigh(a=self.L, eigvals=(0, self.output_dim-1))
+        #self.E, self.U = scipy.linalg.eigh(a=self.D-self.L, eigvals=(self.input_dim-2, self.input_dim-1))
+        #self.U[:,0] /= np.linalg.norm(self.U[:,0])
+        #self.U[:,1] /= np.linalg.norm(self.U[:,1])
         return
 
 
@@ -160,16 +175,21 @@ class gPFA(mdp.Node):
             neighbors = [np.array(np.argsort(distances[i])[:self.k+1], dtype=int) for i in range(N-1)]
             
             cov = mdp.utils.CovarianceMatrix()
-            for neigh in neighbors:
-                neighbor_future = neigh + 1
-                neighbor_future = np.setdiff1d(neighbor_future, np.array([N]), assume_unique=True)
-                combinations = np.array(list(itertools.combinations(neighbor_future, 2)), dtype=int)
-                indices_i = combinations[:,0]
-                indices_j = combinations[:,1]
-                deltas = x[indices_i] - x[indices_j]
+#             for neighborhood in neighbors:
+#                 neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
+#                 combinations = np.array(list(itertools.combinations(neighborhood, 2)), dtype=int)
+#                 combinations += 1
+#                 indices_i = combinations[:,0]
+#                 indices_j = combinations[:,1]
+#                 deltas = x[indices_i] - x[indices_j]
+#                 cov.update(deltas)
+            for t, neighborhood in enumerate(neighbors):
+                neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
+                future = neighborhood + 1
+                deltas = x[future] - x[t+1]
                 cov.update(deltas)
     
-            C, _, _ = cov.fix()
+            C, _, _ = cov.fix(center=False)
     
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
@@ -185,6 +205,9 @@ class gPFA(mdp.Node):
 
     def _stop_training(self):
         self.E, self.U = scipy.linalg.eigh(a=self.C, eigvals=(0, self.output_dim-1))
+        #self.E, self.U = scipy.linalg.eigh(a=np.eye(self.input_dim)-self.C, eigvals=(self.input_dim-self.output_dim, self.input_dim-1))
+        #self.E, self.U = scipy.sparse.linalg.eigsh(self.C, k=self.output_dim, which='SM')
+        print self.E
         return
 
 
