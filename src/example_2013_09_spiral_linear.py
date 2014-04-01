@@ -26,10 +26,10 @@ if __name__ == '__main__':
     k = 10
     N = 1000
     expansion = 1
-    noisy_dims = 50-2
+    noisy_dims = 20-2
     whitening = True
     neighbor_graph = False
-    chunks = 1
+    chunks = 2
 
     # algorithms
     models = []

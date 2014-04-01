@@ -103,7 +103,8 @@ class FPP(mdp.Node):
             if l < self.iterations-1:
                 E, U = scipy.linalg.eigh(a=L2, eigvals=(0, self.iteration_dim-1))
                 #E, U = scipy.sparse.linalg.eigsh(D2-L2, M=D2, k=self.iteration_dim, which='LA')
-                E = 1 - E
+                #E, U = scipy.sparse.linalg.eigsh(L2, M=D2, k=self.output_dim, which='SM')
+                #E = 1 - E
                 #E, U = scipy.linalg.eigh(a=L2, b=D2)
                 #(E, U) = (E.real, U.real)
                 print min(E), max(E)
@@ -127,7 +128,7 @@ class FPP(mdp.Node):
 
     def _stop_training(self):
         #self.E, self.U = scipy.sparse.linalg.eigsh(self.D-self.L, M=self.D, k=self.output_dim, which='LA')
-        #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+        #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
         #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, sigma=0, which='LA')
         #self.E, self.U = scipy.sparse.linalg.eigsh(np.eye(self.input_dim)-self.L, k=self.output_dim, which='LA')
         self.E, self.U = scipy.linalg.eigh(a=self.L, eigvals=(0, self.output_dim-1))
@@ -188,12 +189,19 @@ class gPFA(mdp.Node):
                 future = neighborhood + 1
                 deltas = x[future] - x[t+1]
                 cov.update(deltas)
+#             for t, neighborhood in enumerate(neighbors):
+#                 neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
+#                 future = neighborhood + 1
+#                 mu = np.mean(x[future], axis=0)
+#                 deltas = x[future] - mu#x[t+1]
+#                 cov.update(deltas)
     
             C, _, _ = cov.fix(center=False)
     
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
                 E, U = scipy.linalg.eigh(a=C, eigvals=(0, self.iteration_dim-1))
+                #E, U = scipy.sparse.linalg.eigsh(C, k=self.iteration_dim, which='SM')
                 print min(E), max(E)
                 y = x.dot(U)
 
