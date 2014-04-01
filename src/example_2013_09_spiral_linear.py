@@ -30,6 +30,7 @@ if __name__ == '__main__':
     whitening = True
     neighbor_graph = False
     chunks = 2
+    minimize_variance = False
 
     # algorithms
     models = []
@@ -44,11 +45,13 @@ if __name__ == '__main__':
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
     for i in range(1, 4+1):
-        models.append(fpp.gPFA(output_dim=2, k=k, iterations=i, iteration_dim=5))
+        models.append(fpp.gPFA(output_dim=2, k=k, iterations=i, iteration_dim=5, minimize_variance=minimize_variance))
         models.append(fpp.FPP(output_dim=2,
                               k=k,
                               iterations=i,
                               iteration_dim=5,
+                              minimize_variance=minimize_variance,
+                              normalized_objective=False,
                               preserve_past=False,
                               neighbor_graph=False))
 
