@@ -44,11 +44,11 @@ if __name__ == '__main__':
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
     for i in range(1, 4+1):
-        models.append(fpp.gPFA(output_dim=2, k=k, iterations=i, iteration_dim=10))
+        models.append(fpp.gPFA(output_dim=2, k=k, iterations=i, iteration_dim=5))
         models.append(fpp.FPP(output_dim=2,
                               k=k,
                               iterations=i,
-                              iteration_dim=10,
+                              iteration_dim=5,
                               preserve_past=False,
                               neighbor_graph=False))
 
