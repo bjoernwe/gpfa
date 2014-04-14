@@ -4,6 +4,8 @@ import scipy.linalg
 import scipy.sparse.linalg
 import scipy.spatial.distance
 
+from matplotlib import pyplot
+
 import mdp
 
 
@@ -58,23 +60,23 @@ class FPP(mdp.Node):
             distances = scipy.spatial.distance.pdist(y)
             distances = scipy.spatial.distance.squareform(distances)
             neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
+            #neighbors = [np.where(distances[i,:] <= 1.5)[0] for i in range(N)]
+            #for ne in neighbors:
+            #    print len(ne)
             
-            if self.minimize_variance:
-                # future-preserving graph
-                if self.preserve_future:
+            # future-preserving graph
+            if self.preserve_future:
+                if self.minimize_variance:
                     for t in range(N-1):
                         for (i,j) in itertools.permutations(neighbors[t], 2):
                             if i+1 < N and j+1 < N:
                                 W[i+1,j+1] += 1
-            else:
-                # future-preserving graph
-                if self.preserve_future:
+                else:
                     for s in range(N-1):
                         for t in neighbors[s]:#[0:self.k+1]:
-                            if s != t: # no self-connections
-                                if s+1 < N and t+1 < N:
-                                    W[s+1,t+1] += 1
-                                    W[t+1,s+1] += 1
+                            if s+1 < N and t+1 < N:
+                                W[s+1,t+1] += 1
+                                W[t+1,s+1] += 1
     
             # past-preserving graph
             if self.preserve_past:
@@ -186,16 +188,7 @@ class gPFA(mdp.Node):
             distances = scipy.spatial.distance.pdist(y)
             distances = scipy.spatial.distance.squareform(distances)
             neighbors = [np.array(np.argsort(distances[i])[:self.k+1], dtype=int) for i in range(N-1)]
-            
             cov = mdp.utils.CovarianceMatrix()
-#             for neighborhood in neighbors:
-#                 neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
-#                 combinations = np.array(list(itertools.combinations(neighborhood, 2)), dtype=int)
-#                 combinations += 1
-#                 indices_i = combinations[:,0]
-#                 indices_j = combinations[:,1]
-#                 deltas = x[indices_i] - x[indices_j]
-#                 cov.update(deltas)
 
             if self.minimize_variance:
                 for t, neighborhood in enumerate(neighbors):

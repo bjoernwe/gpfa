@@ -26,7 +26,7 @@ if __name__ == '__main__':
     k = 10
     N = 1000
     expansion = 1
-    noisy_dims = 20-2
+    noisy_dims = 50-2
     whitening = True
     neighbor_graph = False
     chunks = 2
@@ -51,7 +51,7 @@ if __name__ == '__main__':
                               iterations=i,
                               iteration_dim=5,
                               minimize_variance=minimize_variance,
-                              normalized_objective=False,
+                              normalized_objective=True,
                               preserve_past=False,
                               neighbor_graph=False))
 
