@@ -111,6 +111,8 @@ class FPP(mdp.Node):
                 #E, U = scipy.sparse.linalg.eigsh(D2-L2, M=D2, k=self.iteration_dim, which='LA')
                 if self.normalized_objective:
                     E, U = scipy.sparse.linalg.eigsh(L2, M=D2, k=self.iteration_dim, which='SM')
+                    for i in range(len(E)):
+                        U[:,i] /= np.linalg.norm(U[:,i])
                 else:
                     E, U = scipy.sparse.linalg.eigsh(L2, k=self.iteration_dim, which='SM')
                 #E = 1 - E
@@ -120,8 +122,6 @@ class FPP(mdp.Node):
                 #assert 0 not in E
                 #assert float('nan') not in E
                 #assert float('nan') not in U 
-                #for i in range(len(E)):
-                #    U[:,i] = U[:,i] / E[i]**2
                 y = x.dot(U)
 
         # add chunk result to global result
@@ -139,6 +139,8 @@ class FPP(mdp.Node):
         #self.E, self.U = scipy.sparse.linalg.eigsh(self.D-self.L, M=self.D, k=self.output_dim, which='LA')
         if self.normalized_objective:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            for i in range(len(self.E)):
+                self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
         #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, sigma=0, which='LA')
@@ -158,13 +160,14 @@ class FPP(mdp.Node):
 class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 minimize_variance=False, 
+                 minimize_variance=False, normalized_objective=False,
                  input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.iteration_dim = iteration_dim
         self.minimize_variance = minimize_variance
+        self.normalized_objective = normalized_objective
         if self.iteration_dim is None:
             self.iteration_dim = self.output_dim
         self.C = None
