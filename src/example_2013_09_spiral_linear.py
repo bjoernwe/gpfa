@@ -30,8 +30,8 @@ if __name__ == '__main__':
     whitening = True
     neighbor_graph = False
     chunks = 2
-    minimize_variance = True
-    normalized_objective = True
+    minimize_variance = False
+    normalized_objective = False
 
     # algorithms
     models = []
@@ -63,16 +63,16 @@ if __name__ == '__main__':
         print "%s" % (model.__class__.__name__)
 
         # for every chunk
-        for _ in range(chunks):
+        for c in range(chunks):
 
             # data
             #env = EnvSwissRoll(sigma=0.5, seed=None)
-            env = EnvRibbon(step_size=2, seed=None)
+            env = EnvRibbon(step_size=2, seed=c)
             data0, _, labels = env.do_random_steps(num_steps=N)
             print data0.shape, labels.shape
 
             # add noisy dim
-            R = np.random.RandomState(seed=0)
+            R = np.random.RandomState(seed=c)
             for i in range(noisy_dims):
                 noise_complete = 1. * R.rand(N)
                 data0 = np.insert(data0, 2, axis=1, values=noise_complete)
