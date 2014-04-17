@@ -39,34 +39,26 @@ if __name__ == '__main__':
                           iterations=1,
                           iteration_dim=5,
                           minimize_variance=True,
-                          normalized_objective=False,
-                          preserve_past=False,
-                          neighbor_graph=False))
+                          normalized_objective=False))
     models.append(fpp.FPP(output_dim=2,
                           k=k,
                           iterations=1,
                           iteration_dim=5,
                           minimize_variance=False,
-                          normalized_objective=False,
-                          preserve_past=False,
-                          neighbor_graph=False))
+                          normalized_objective=False))
     #models.append(fpp.gPFA(output_dim=2, k=k, iterations=1, iteration_dim=5, minimize_variance=False))
     models.append(fpp.FPP(output_dim=2,
                           k=k,
                           iterations=1,
                           iteration_dim=5,
                           minimize_variance=True,
-                          normalized_objective=True,
-                          preserve_past=False,
-                          neighbor_graph=False))
+                          normalized_objective=True))
     models.append(fpp.FPP(output_dim=2,
                           k=k,
                           iterations=1,
                           iteration_dim=5,
                           minimize_variance=False,
-                          normalized_objective=True,
-                          preserve_past=False,
-                          neighbor_graph=False))
+                          normalized_objective=True))
 
     # learn
     for j, model in enumerate(models):

@@ -13,16 +13,12 @@ class FPP(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
                  minimize_variance=False, normalized_objective=True, 
-                 preserve_future=True, preserve_past=True, neighbor_graph=False, 
                  input_dim=None, dtype=None):
         super(FPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.minimize_variance = minimize_variance
         self.normalized_objective = normalized_objective
-        self.preserve_future = preserve_future
-        self.preserve_past = preserve_past
-        self.neighbor_graph = neighbor_graph
         self.iteration_dim = iteration_dim
         if self.iteration_dim is None:
             self.iteration_dim = self.output_dim
@@ -65,35 +61,17 @@ class FPP(mdp.Node):
             #    print len(ne)
             
             # future-preserving graph
-            if self.preserve_future:
-                if self.minimize_variance:
-                    for t in range(N-1):
-                        for (i,j) in itertools.permutations(neighbors[t], 2):
-                            if i+1 < N and j+1 < N:
-                                W[i+1,j+1] += 1
-                else:
-                    for s in range(N-1):
-                        for t in neighbors[s]:#[0:self.k+1]:
-                            if s+1 < N and t+1 < N:
-                                W[s+1,t+1] += 1
-                                W[t+1,s+1] += 1
-    
-            # past-preserving graph
-            if self.preserve_past:
-                for s in range(1, N):
-                    for t in neighbors[s]:
-                        if s != t: # no self-connections
-                            if s-1 > 0 and t-1 >= 0:
-                                W[s-1,t-1] = 1
-                                W[t-1,s-1] = 1
-                            
-            # k-nearest-neighbor graph for regularization
-            if self.neighbor_graph:
-                for i in range(N):
-                    for j in neighbors[i]:
-                        if i != j:
-                            W[i,j] = 1
-                            W[j,i] = 1
+            if self.minimize_variance:
+                for t in range(N-1):
+                    for (i,j) in itertools.permutations(neighbors[t], 2):
+                        if i+1 < N and j+1 < N:
+                            W[i+1,j+1] += 1
+            else:
+                for s in range(N-1):
+                    for t in neighbors[s]:#[0:self.k+1]:
+                        if s+1 < N and t+1 < N:
+                            W[s+1,t+1] += 1
+                            W[t+1,s+1] += 1
     
             # graph Laplacian
             d = W.sum(axis=1).T
@@ -107,21 +85,12 @@ class FPP(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                #E, U = scipy.linalg.eigh(a=L2, eigvals=(0, self.iteration_dim-1))
-                #E, U = scipy.sparse.linalg.eigsh(D2-L2, M=D2, k=self.iteration_dim, which='LA')
                 if self.normalized_objective:
                     E, U = scipy.sparse.linalg.eigsh(L2, M=D2, k=self.iteration_dim, which='SM')
                     for i in range(len(E)):
                         U[:,i] /= np.linalg.norm(U[:,i])
                 else:
                     E, U = scipy.sparse.linalg.eigsh(L2, k=self.iteration_dim, which='SM')
-                #E = 1 - E
-                #E, U = scipy.linalg.eigh(a=L2, b=D2)
-                #(E, U) = (E.real, U.real)
-                print min(E), max(E)
-                #assert 0 not in E
-                #assert float('nan') not in E
-                #assert float('nan') not in U 
                 y = x.dot(U)
 
         # add chunk result to global result
@@ -136,19 +105,12 @@ class FPP(mdp.Node):
 
 
     def _stop_training(self):
-        #self.E, self.U = scipy.sparse.linalg.eigsh(self.D-self.L, M=self.D, k=self.output_dim, which='LA')
         if self.normalized_objective:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
             for i in range(len(self.E)):
                 self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
-        #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, sigma=0, which='LA')
-        #self.E, self.U = scipy.sparse.linalg.eigsh(np.eye(self.input_dim)-self.L, k=self.output_dim, which='LA')
-        #self.E, self.U = scipy.linalg.eigh(a=self.L, eigvals=(0, self.output_dim-1))
-        #self.E, self.U = scipy.linalg.eigh(a=self.D-self.L, eigvals=(self.input_dim-2, self.input_dim-1))
-        #self.U[:,0] /= np.linalg.norm(self.U[:,0])
-        #self.U[:,1] /= np.linalg.norm(self.U[:,1])
         return
 
 

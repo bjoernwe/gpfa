@@ -52,9 +52,7 @@ if __name__ == '__main__':
                               iterations=i,
                               iteration_dim=5,
                               minimize_variance=minimize_variance,
-                              normalized_objective=normalized_objective,
-                              preserve_past=False,
-                              neighbor_graph=False))
+                              normalized_objective=normalized_objective))
 
     # learn
     for j, model in enumerate(models):
