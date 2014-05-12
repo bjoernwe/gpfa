@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     # algorithms
     models = []
-    #models.append(fpp.gPFA(output_dim=2, k=k, iterations=1, iteration_dim=5, minimize_variance=True))
+    models.append(fpp.gPFA(output_dim=2, k=k, iterations=1, iteration_dim=5, minimize_variance=True))
     models.append(fpp.FPP(output_dim=2,
                           k=k,
                           iterations=1,
@@ -59,6 +59,7 @@ if __name__ == '__main__':
                           iteration_dim=5,
                           minimize_variance=False,
                           normalized_objective=True))
+    model_plot_pos = [1, 2, 3, 5, 6]
 
     # learn
     for j, model in enumerate(models):
@@ -96,7 +97,8 @@ if __name__ == '__main__':
 
         # plot
         data2 = model.execute(data)
-        ax = pyplot.subplot(1, len(models), j+1)
+        #ax = pyplot.subplot(1, len(models), j+1)
+        ax = pyplot.subplot(2, 3, model_plot_pos[j])
         ax.set_xlim([-2, 2])
         ax.set_ylim([-2, 2])
         pyplot.scatter(x=data2[:-1,0], y=data2[:-1,1], c=labels, s=50, edgecolor='None')

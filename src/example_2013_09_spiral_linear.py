@@ -26,12 +26,11 @@ if __name__ == '__main__':
     k = 10
     N = 1000
     expansion = 1
-    noisy_dims = 20-2
+    noisy_dims = 30-2
     whitening = True
-    neighbor_graph = False
-    chunks = 2
+    chunks = 1
     minimize_variance = False
-    normalized_objective = False
+    normalized_objective = True
 
     # algorithms
     models = []
@@ -95,4 +94,5 @@ if __name__ == '__main__':
         pyplot.title(model.__class__.__name__)
 
     # show plot
+    print 'finish'
     pyplot.show()

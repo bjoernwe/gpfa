@@ -9,6 +9,77 @@ from matplotlib import pyplot
 import mdp
 
 
+class LPP(mdp.Node):
+
+    def __init__(self, output_dim, k=10, normalized_objective=True, 
+                 input_dim=None, dtype=None):
+        super(LPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        self.k = k
+        self.normalized_objective = normalized_objective
+        self.L = None
+        self.D = None
+        return
+    
+    
+    def _train(self, x):
+
+        # number of samples
+        N, _ = x.shape
+        
+        # from y we calculate the euclidean distances
+        # after the first iteration it contains the projected data
+        y = x
+        
+        # initialize weight matrix W
+        W = scipy.sparse.dok_matrix((N, N))
+    
+        # pairwise distances of data points
+        distances = scipy.spatial.distance.pdist(y)
+        distances = scipy.spatial.distance.squareform(distances)
+        neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
+        
+        # neighbor graph
+        for s in range(N-1):
+            for t in neighbors[s]:#[0:self.k+1]:
+                W[s,t] += 1
+                W[t,s] += 1
+
+        # graph Laplacian
+        d = W.sum(axis=1).T
+        #d[d==0] = float('inf') 
+        D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
+        L = D - W
+
+        # projected graph laplacian
+        D2 = x.T.dot(D.dot(x))
+        L2 = x.T.dot(L.dot(x))
+
+        # add chunk result to global result
+        if self.L is None:
+            self.L = L2
+            self.D = D2
+        else:
+            self.L += L2
+            self.D += D2
+
+        return
+
+
+    def _stop_training(self):
+        if self.normalized_objective:
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            for i in range(len(self.E)):
+                self.U[:,i] /= np.linalg.norm(self.U[:,i])
+        else:
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+        return
+
+
+    def _execute(self, x):
+        return x.dot(self.U)
+
+
+
 class FPP(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
@@ -70,8 +141,14 @@ class FPP(mdp.Node):
                 for s in range(N-1):
                     for t in neighbors[s]:#[0:self.k+1]:
                         if s+1 < N and t+1 < N:
+                            #d = distances[s,t]
+                            #if d > 0:
                             W[s+1,t+1] += 1
                             W[t+1,s+1] += 1
+                                #W[s+1,t+1] += 1/d**2
+                                #W[t+1,s+1] += 1/d**2
+                                #W[s+1,t+1] += 1/np.sqrt(d)
+                                #W[t+1,s+1] += 1/np.sqrt(d)
     
             # graph Laplacian
             d = W.sum(axis=1).T
