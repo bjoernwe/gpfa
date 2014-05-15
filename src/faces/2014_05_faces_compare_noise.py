@@ -15,6 +15,7 @@ if __name__ == '__main__':
     iterations = 15
     reduce_variance = False
     whitening = False
+    additive_noise = 50
     
     # load data file
     faces_raw = np.load('faces.npy')
@@ -27,6 +28,10 @@ if __name__ == '__main__':
         pca.train(faces)
         faces = pca.execute(faces)
         print 'dim after pca:', faces.shape
+
+    # additive noise
+    if additive_noise > 0:
+        faces += additive_noise * np.random.randn(faces.shape[0], faces.shape[1])
         
     # whiten data
     if whitening:
@@ -74,8 +79,8 @@ if __name__ == '__main__':
     
         for i in np.random.permutation(faces.shape[0]):
             
-            if np.any((np.abs(plotted_faces[:,0] - result[i,0]) < 0.05) & \
-                      (np.abs(plotted_faces[:,1] - result[i,1]) < 0.07)):
+            if np.any((np.abs(plotted_faces[:,0] - result[i,0]) < 0.06) & \
+                      (np.abs(plotted_faces[:,1] - result[i,1]) < 0.09)):
                 continue
             else:
                 plotted_faces = np.insert(plotted_faces, plotted_faces.shape[0], values=result[i,:], axis=0)
@@ -93,10 +98,7 @@ if __name__ == '__main__':
                                 arrowprops=None)
         
             ax[a].add_artist(ab)
-            if reduce_variance:
-                ax[a].set_title('PCA + %s' % algorithm)
-            else:
-                ax[a].set_title(algorithm)
+            ax[a].set_title(algorithm)
         
         pyplot.draw()
         

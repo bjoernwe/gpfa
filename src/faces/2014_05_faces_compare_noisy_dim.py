@@ -15,18 +15,35 @@ if __name__ == '__main__':
     iterations = 15
     reduce_variance = False
     whitening = False
+    additive_noise = 0
+    additional_noise_dim = 560
+    additional_noise_std = 50
+    spacing = [[0.015, 0.02], [0.015, 0.02]]
     
     # load data file
     faces_raw = np.load('faces.npy')
     faces = np.array(faces_raw, copy=True)
     print faces_raw.shape
-    
+
     # PCA
     if reduce_variance:
         pca = mdp.nodes.PCANode(output_dim=0.99)
         pca.train(faces)
         faces = pca.execute(faces)
         print 'dim after pca:', faces.shape
+
+    # plot variance
+    #pyplot.hist(np.std(faces_raw, axis=0))
+    #pyplot.show()
+
+    # additive noise
+    if additive_noise > 0:
+        faces += additive_noise * np.random.randn(faces.shape[0], faces.shape[1])
+        
+    # additional dimensions
+    if additional_noise_dim > 0:
+        noise = additional_noise_std * np.random.randn(faces.shape[0], additional_noise_dim)
+        faces = np.hstack([faces, noise])
         
     # whiten data
     if whitening:
@@ -36,8 +53,8 @@ if __name__ == '__main__':
         print 'dim after whitening:', faces.shape
 
 
+    #for algorithm in ['SFA', 'LPP', 'gPFA']:
     fig, ax = pyplot.subplots(1, 2)
-    #for algorithm in ['sfa', 'lpp', 'fpp']:
     for a, algorithm in enumerate(['LPP', 'gPFA']):
 
         # model
@@ -51,7 +68,7 @@ if __name__ == '__main__':
             node = FPP(output_dim=2,
                        k=k,
                        iterations=iterations,
-                       iteration_dim=4,
+                       iteration_dim=2,
                        minimize_variance=False,
                        normalized_objective=True)
         else:
@@ -74,6 +91,7 @@ if __name__ == '__main__':
     
         for i in np.random.permutation(faces.shape[0]):
             
+            # already another picture close by?
             if np.any((np.abs(plotted_faces[:,0] - result[i,0]) < 0.05) & \
                       (np.abs(plotted_faces[:,1] - result[i,1]) < 0.07)):
                 continue
@@ -93,10 +111,7 @@ if __name__ == '__main__':
                                 arrowprops=None)
         
             ax[a].add_artist(ab)
-            if reduce_variance:
-                ax[a].set_title('PCA + %s' % algorithm)
-            else:
-                ax[a].set_title(algorithm)
+            ax[a].set_title(algorithm)
         
         pyplot.draw()
         

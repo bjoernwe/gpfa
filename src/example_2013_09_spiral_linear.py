@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
             # data
             #env = EnvSwissRoll(sigma=0.5, seed=None)
-            env = EnvRibbon(step_size=2, seed=c)
+            env = EnvRibbon(step_size=1, seed=c)
             data0, _, labels = env.do_random_steps(num_steps=N)
             print data0.shape, labels.shape
 
