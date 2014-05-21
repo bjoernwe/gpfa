@@ -15,11 +15,17 @@ if __name__ == '__main__':
     iterations = 15
     reduce_variance = False
     whitening = False
+    velocity = False
     
     # load data file
     faces_raw = np.load('faces.npy')
-    faces = np.array(faces_raw, copy=True)
-    print faces_raw.shape
+    
+    # concatenate time steps
+    if velocity:
+        faces = np.hstack([faces_raw[:-1], faces_raw[1:]])
+    else:
+        faces = np.array(faces_raw, copy=True)
+    print faces.shape
     
     # PCA
     if reduce_variance:
@@ -37,7 +43,6 @@ if __name__ == '__main__':
 
 
     fig, ax = pyplot.subplots(1, 2)
-    #for algorithm in ['sfa', 'lpp', 'fpp']:
     for a, algorithm in enumerate(['LPP', 'gPFA']):
 
         # model

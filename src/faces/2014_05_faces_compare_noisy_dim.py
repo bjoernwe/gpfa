@@ -19,11 +19,17 @@ if __name__ == '__main__':
     additional_noise_dim = 560
     additional_noise_std = 50
     spacing = [[0.015, 0.02], [0.015, 0.02]]
+    velocity = False
     
     # load data file
     faces_raw = np.load('faces.npy')
-    faces = np.array(faces_raw, copy=True)
-    print faces_raw.shape
+    
+    # concatenate time steps
+    if velocity:
+        faces = np.hstack([faces_raw[:-1], faces_raw[1:]])
+    else:
+        faces = np.array(faces_raw, copy=True)
+    print faces.shape
 
     # PCA
     if reduce_variance:
