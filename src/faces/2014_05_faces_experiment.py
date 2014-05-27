@@ -13,7 +13,7 @@ from fpp import *
 def experiment(algorithm, k, iterations, additional_noise_dim, additional_noise_std):
 
     # parameters
-    reduce_variance = False
+    reduce_variance = True
     whitening = False
     normalized_objective = True
     additive_noise = 0
@@ -121,22 +121,25 @@ def performance_lpp(projected_data, k, baseline_result):
 
 if __name__ == '__main__':
     
-    k = 1
+    k = 3
     iterations = 5
     trials = 3
     dimensions = [0, 1, 2, 5, 10, 20, 50, 100, 200, 500]
 
     baseline_result = {}
-    baseline_result['lpp'] = experiment(algorithm='lpp', k=k, iterations=0, additional_noise_dim=0, additional_noise_std=0)
-    baseline_result['fpp'] = experiment(algorithm='fpp', k=k, iterations=iterations, additional_noise_dim=0, additional_noise_std=0)
+    for algorithm in ['sfa', 'lpp', 'fpp']:
+    #baseline_result['sfa'] = experiment(algorithm='sfa', k=k, iterations=0, additional_noise_dim=0, additional_noise_std=0)
+        baseline_result[algorithm] = experiment(algorithm=algorithm, k=k, iterations=iterations, additional_noise_dim=0, additional_noise_std=0)
+    #baseline_result['fpp'] = experiment(algorithm='fpp', k=k, iterations=iterations, additional_noise_dim=0, additional_noise_std=0)
 
     result = {}
     
-    for a, algorithm in enumerate(['lpp', 'fpp']):
+    for a, algorithm in enumerate(['sfa', 'lpp', 'fpp']):
 
         print algorithm
         
         result[algorithm] = {}
+        result[algorithm]['sfa'] = np.zeros((len(dimensions),trials))
         result[algorithm]['lpp'] = np.zeros((len(dimensions),trials))
         result[algorithm]['fpp'] = np.zeros((len(dimensions),trials))
         
@@ -147,11 +150,11 @@ if __name__ == '__main__':
                 result[algorithm]['lpp'][i,r] = performance_lpp(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm])
                 result[algorithm]['fpp'][i,r] = performance_fpp(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm])
 
-        pyplot.subplot(1, 2, a+1)
+        pyplot.subplot(1, 3, a+1)
         pyplot.title(algorithm)
         pyplot.errorbar(x=dimensions, y=np.mean(result[algorithm]['lpp'], axis=1), yerr=np.std(result[algorithm]['lpp'], axis=1))
         pyplot.errorbar(x=dimensions, y=np.mean(result[algorithm]['fpp'], axis=1), yerr=np.std(result[algorithm]['fpp'], axis=1))
-        pyplot.legend(['lpp perf', 'fpp perf'])
+        pyplot.legend(['neighborhood', 'future'])
         
     pickle.dump(baseline_result, open('baseline_result.pkl', 'wb'))
     pickle.dump(result, open('result.pkl', 'wb'))
