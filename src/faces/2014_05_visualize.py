@@ -11,14 +11,14 @@ from fpp import *
 if __name__ == '__main__':
     
     # parameters
-    algorithm = 'lpp'
-    k = 5
+    algorithm = 'fpp'
+    k = 20
     iterations = 5
     reduce_variance = True
     whitening = False
     normalized_objective = True
     additive_noise = 0
-    additional_noise_dim = 0
+    additional_noise_dim = 20
     additional_noise_std = 200
     
     # load data file
@@ -74,35 +74,35 @@ if __name__ == '__main__':
     # training
     node.train(faces)
     node.stop_training()
-    result = node.execute(faces)
+    results = node.execute(faces)
     #print node.U.shape
-    #result = node.U
-    #result /= np.max(result, axis=0) - np.min(result, axis=0)
+    #results = node.U
+    #results /= np.max(results, axis=0) - np.min(results, axis=0)
 
     # normalize to variance one in sum
-    cov = np.cov(result.T)
+    cov = np.cov(results.T)
     E, U = np.linalg.eigh(cov)
     W = U.dot(np.diag(1./np.sqrt((np.sum(E)*np.ones(2)))).dot(U.T))
-    result = result.dot(W)
+    results = results.dot(W)
     
     # plot
     fig, ax = pyplot.subplots()
-    ax.scatter(result[:,0], result[:,1])
+    ax.scatter(results[:,0], results[:,1])
     
     #for j in range(faces.shape[0]-1):
-    #    ax.plot(result[j:j+2,0], result[j:j+2,1], '-')
+    #    ax.plot(results[j:j+2,0], results[j:j+2,1], '-')
     
     plotted_faces = np.empty((0, 2))
 
     for i in np.random.permutation(faces.shape[0]):
         
-        if np.any((np.abs(plotted_faces[:,0] - result[i,0]) < 0.008) & \
-                  (np.abs(plotted_faces[:,1] - result[i,1]) < 0.014)):
+        if np.any((np.abs(plotted_faces[:,0] - results[i,0]) < 0.008) & \
+                  (np.abs(plotted_faces[:,1] - results[i,1]) < 0.014)):
             continue
         else:
-            plotted_faces = np.insert(plotted_faces, plotted_faces.shape[0], values=result[i,:], axis=0)
+            plotted_faces = np.insert(plotted_faces, plotted_faces.shape[0], values=results[i,:], axis=0)
 
-        xy = result[i]
+        xy = results[i]
     
         arr = faces_raw[i].reshape((28, 20))
         #arr = faces[i].reshape((2*28, 20))

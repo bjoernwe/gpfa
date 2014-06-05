@@ -9,6 +9,30 @@ from matplotlib import pyplot
 import mdp
 
 
+class RandomProjection(mdp.Node):
+
+    def __init__(self, output_dim, input_dim=None, dtype=None):
+        super(RandomProjection, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        return
+    
+    
+    def _train(self, x):
+        return
+
+
+    def _stop_training(self):
+        D = self.input_dim
+        A = np.random.random((D, D))
+        A = A + A.T
+        _, self.U = scipy.sparse.linalg.eigsh(A, k=self.output_dim)
+        return
+
+
+    def _execute(self, x):
+        return x.dot(self.U)
+
+
+
 class LPP(mdp.Node):
 
     def __init__(self, output_dim, k=10, normalized_objective=True, 
@@ -39,7 +63,7 @@ class LPP(mdp.Node):
         neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
         
         # neighbor graph
-        for s in range(N-1):
+        for s in range(N):
             for t in neighbors[s]:#[0:self.k+1]:
                 W[s,t] += 1
                 W[t,s] += 1
@@ -72,6 +96,10 @@ class LPP(mdp.Node):
                 self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+    
+        # normalize directions
+        mask = self.U[0,:] > 0
+        self.U = self.U * mask - self.U * ~mask
         return
 
 
@@ -91,8 +119,8 @@ class FPP(mdp.Node):
         self.minimize_variance = minimize_variance
         self.normalized_objective = normalized_objective
         self.iteration_dim = iteration_dim
-        if self.iteration_dim is None:
-            self.iteration_dim = self.output_dim
+        #if self.iteration_dim is None:
+        #    self.iteration_dim = 'auto'
         self.L = None
         self.D = None
         return
@@ -106,6 +134,127 @@ class FPP(mdp.Node):
 #     def _kernel(self, u, v):
 #         d = u-v
 #         return np.exp(-.5*(d/self.sigma)**2) / (self.sigma * np.sqrt(2. * np.pi))
+    
+    
+    def _train(self, x):
+
+        # number of samples
+        N, _ = x.shape
+        
+        # from y we calculate the euclidean distances
+        # after the first iteration it contains the projected data
+        y = x
+        
+        # run algorithm several times e
+        for l in range(self.iterations):
+
+            # initialize weight matrix W
+            W = scipy.sparse.dok_matrix((N, N))
+        
+            # pairwise distances of data points
+            distances = scipy.spatial.distance.pdist(y)
+            distances = scipy.spatial.distance.squareform(distances)
+            neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
+            #neighbors = [np.where(distances[i,:] <= 1.5)[0] for i in range(N)]
+            #for ne in neighbors:
+            #    print len(ne)
+            
+            # future-preserving graph
+            if self.minimize_variance:
+                for t in range(N-1):
+                    for (i,j) in itertools.permutations(neighbors[t], 2):
+                        if i+1 < N and j+1 < N:
+                            W[i+1,j+1] += 1
+            else:
+                for s in range(N-1):
+                    for t in neighbors[s]:#[0:self.k+1]:
+                        if t+1 < N:
+                            #d = distances[s,t]
+                            #if d > 0:
+                            W[s+1,t+1] += 1
+                            W[t+1,s+1] += 1
+                                #W[s+1,t+1] += 1/d**2
+                                #W[t+1,s+1] += 1/d**2
+                                #W[s+1,t+1] += 1/np.sqrt(d)
+                                #W[t+1,s+1] += 1/np.sqrt(d)
+
+            # neighborhood graph
+            for s in range(N):
+                for t in neighbors[s]:
+                    W[s,t] += 1
+                    W[t,s] += 1
+    
+            # graph Laplacian
+            d = W.sum(axis=1).T
+            #d[d==0] = float('inf') 
+            D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
+            L = D - W
+    
+            # projected graph laplacian
+            D2 = x.T.dot(D.dot(x))
+            L2 = x.T.dot(L.dot(x))
+
+            # (if not the last iteration:) solve and project
+            if l < self.iterations-1:
+                if self.normalized_objective:
+                    if type(self.iteration_dim) == int:
+                        E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM', k=self.iteration_dim)
+                        for i in range(len(E)):
+                            U[:,i] /= np.linalg.norm(U[:,i])
+                    else:
+                        E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM')
+                        for i in range(len(E)):
+                            U[:,i] /= np.linalg.norm(U[:,i]) / np.sqrt(E[i])
+                else:
+                    E, U = scipy.sparse.linalg.eigsh(L2, k=self.iteration_dim, which='SM')
+                y = x.dot(U)
+
+        # add chunk result to global result
+        if self.L is None:
+            self.L = L2
+            self.D = D2
+        else:
+            self.L += L2
+            self.D += D2
+
+        return
+
+
+    def _stop_training(self):
+        if self.normalized_objective:
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            for i in range(len(self.E)):
+                self.U[:,i] /= np.linalg.norm(self.U[:,i])
+        else:
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+    
+        # normalize directions
+        mask = self.U[0,:] > 0
+        self.U = self.U * mask - self.U * ~mask
+        return
+
+
+    def _execute(self, x):
+        return x.dot(self.U)
+
+
+
+class FPPnl(mdp.Node):
+
+    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
+                 minimize_variance=False, normalized_objective=True, 
+                 input_dim=None, dtype=None):
+        super(FPPnl, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        self.k = k
+        self.iterations = iterations
+        self.minimize_variance = minimize_variance
+        self.normalized_objective = normalized_objective
+        self.iteration_dim = iteration_dim
+        if self.iteration_dim is None:
+            self.iteration_dim = self.output_dim
+        self.L = None
+        self.D = None
+        return
     
     
     def _train(self, x):
@@ -141,14 +290,11 @@ class FPP(mdp.Node):
                 for s in range(N-1):
                     for t in neighbors[s]:#[0:self.k+1]:
                         if s+1 < N and t+1 < N:
-                            #d = distances[s,t]
-                            #if d > 0:
                             W[s+1,t+1] += 1
                             W[t+1,s+1] += 1
-                                #W[s+1,t+1] += 1/d**2
-                                #W[t+1,s+1] += 1/d**2
-                                #W[s+1,t+1] += 1/np.sqrt(d)
-                                #W[t+1,s+1] += 1/np.sqrt(d)
+                            
+            W[0,1] += 1
+            W[1,0] += 1
     
             # graph Laplacian
             d = W.sum(axis=1).T
@@ -157,26 +303,27 @@ class FPP(mdp.Node):
             L = D - W
     
             # projected graph laplacian
-            D2 = x.T.dot(D.dot(x))
-            L2 = x.T.dot(L.dot(x))
+            #D2 = x.T.dot(D.dot(x))
+            #L2 = x.T.dot(L.dot(x))
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
                 if self.normalized_objective:
-                    E, U = scipy.sparse.linalg.eigsh(L2, M=D2, k=self.iteration_dim, which='SM')
+                    E, U = scipy.sparse.linalg.eigsh(L, M=D, k=self.iteration_dim, which='SM')
                     for i in range(len(E)):
                         U[:,i] /= np.linalg.norm(U[:,i])
                 else:
-                    E, U = scipy.sparse.linalg.eigsh(L2, k=self.iteration_dim, which='SM')
-                y = x.dot(U)
+                    E, U = scipy.sparse.linalg.eigsh(L, k=self.iteration_dim, which='SM')
+                #y = x.dot(U)
+                y = U
 
         # add chunk result to global result
         if self.L is None:
-            self.L = L2
-            self.D = D2
+            self.L = L
+            self.D = D
         else:
-            self.L += L2
-            self.D += D2
+            self.L += L
+            self.D += D
 
         return
 

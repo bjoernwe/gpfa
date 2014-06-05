@@ -9,11 +9,10 @@ import mdp
 import fpp
 
 
-def experiment(algorithm, k, iterations, reduce_variance=False, whitening=False, normalize_std=False, additional_noise_dim=0, additional_noise_std=0):
+def experiment(algorithm, k, iterations, iteration_dim, reduce_variance=False, whitening=False, normalize_std=False, additional_noise_dim=0, additional_noise_std=0, additive_noise=0):
 
     # parameters
     normalized_objective = True
-    additive_noise = 0
     
     # load data file
     faces_raw = np.load('faces.npy')
@@ -65,7 +64,7 @@ def experiment(algorithm, k, iterations, reduce_variance=False, whitening=False,
         node = fpp.FPP(output_dim=2,
                    k=k,
                    iterations=iterations,
-                   iteration_dim=4,
+                   iteration_dim=iteration_dim,
                    minimize_variance=False,
                    normalized_objective=normalized_objective)
     else:
@@ -76,20 +75,20 @@ def experiment(algorithm, k, iterations, reduce_variance=False, whitening=False,
     # training
     node.train(faces)
     node.stop_training()
-    result = node.execute(faces)
+    results = node.execute(faces)
     
     
-    # scale result to variance 1
-    cov = np.cov(result.T)
+    # scale results to variance 1
+    cov = np.cov(results.T)
     E, U = np.linalg.eigh(cov)
     W = U.dot(np.diag(1./np.sqrt((np.sum(E)*np.ones(2)))).dot(U.T))
-    result = result.dot(W)
+    results = results.dot(W)
     
-    #cov = np.cov(result.T)
+    #cov = np.cov(results.T)
     #E, U = np.linalg.eigh(cov)
     #assert np.abs(np.sum(E)-1) < 1e-6
     
-    return result
+    return results
 
 
 

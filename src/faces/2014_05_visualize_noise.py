@@ -66,26 +66,26 @@ if __name__ == '__main__':
     
         # training
         node.train(faces)
-        result = node.execute(faces)
+        results = node.execute(faces)
         
-        # normalize result
-        #result /= np.std(result, axis=0)
-        result /= np.max(result, axis=0) - np.min(result, axis=0)
+        # normalize results
+        #results /= np.std(results, axis=0)
+        results /= np.max(results, axis=0) - np.min(results, axis=0)
         
         # plot
-        ax[a].scatter(result[:,0], result[:,1])
+        ax[a].scatter(results[:,0], results[:,1])
         
         plotted_faces = np.empty((0, 2))
     
         for i in np.random.permutation(faces.shape[0]):
             
-            if np.any((np.abs(plotted_faces[:,0] - result[i,0]) < 0.06) & \
-                      (np.abs(plotted_faces[:,1] - result[i,1]) < 0.09)):
+            if np.any((np.abs(plotted_faces[:,0] - results[i,0]) < 0.06) & \
+                      (np.abs(plotted_faces[:,1] - results[i,1]) < 0.09)):
                 continue
             else:
-                plotted_faces = np.insert(plotted_faces, plotted_faces.shape[0], values=result[i,:], axis=0)
+                plotted_faces = np.insert(plotted_faces, plotted_faces.shape[0], values=results[i,:], axis=0)
     
-            xy = result[i]
+            xy = results[i]
         
             arr = faces_raw[i].reshape((28, 20))
             im = OffsetImage(arr, zoom=1, cmap=pyplot.get_cmap('gray'))

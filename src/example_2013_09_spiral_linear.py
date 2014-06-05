@@ -90,7 +90,9 @@ if __name__ == '__main__':
         # plot
         data2 = model.execute(data)
         pyplot.subplot(3, 3, j+1)
-        pyplot.scatter(x=data2[:-1,0], y=data2[:-1,1], c=labels, s=50, edgecolor='None')
+        #pyplot.scatter(x=data2[:-1,0], y=data2[:-1,1], c=labels, s=50, edgecolor='None')
+        for t in range(N-1):
+            pyplot.plot(data2[t:t+2,0], data2[t:t+2,1])
         pyplot.title(model.__class__.__name__)
 
     # show plot
