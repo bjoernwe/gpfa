@@ -167,22 +167,21 @@ class FPP(mdp.Node):
                             W[i+1,j+1] += 1
             else:
                 for s in range(N-1):
-                    for t in neighbors[s]:#[0:self.k+1]:
+                    for t in neighbors[s]:
                         if t+1 < N:
-                            #d = distances[s,t]
-                            #if d > 0:
                             W[s+1,t+1] += 1
                             W[t+1,s+1] += 1
-                                #W[s+1,t+1] += 1/d**2
-                                #W[t+1,s+1] += 1/d**2
-                                #W[s+1,t+1] += 1/np.sqrt(d)
-                                #W[t+1,s+1] += 1/np.sqrt(d)
 
             # neighborhood graph
-            for s in range(N):
-                for t in neighbors[s]:
-                    W[s,t] += 1
-                    W[t,s] += 1
+            if self.minimize_variance:
+                for t in range(N):
+                    for (i,j) in itertools.permutations(neighbors[t], 2):
+                        W[i,j] += 1
+            else:
+                for s in range(N):
+                    for t in neighbors[s]:
+                        W[s,t] += 1
+                        W[t,s] += 1
     
             # graph Laplacian
             d = W.sum(axis=1).T

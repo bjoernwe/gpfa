@@ -9,16 +9,17 @@ import experiment_base as eb
 if __name__ == '__main__':
     
     k = 5
+    minimize_variance = False
     iterations = 5
     iteration_dim = 50
     trials = 2
-    dimensions = [0, 1, 2, 5, 10, 20]#, 50, 100, 200, 500]
+    dimensions = [0, 1, 2, 5, 10, 20, 50, 100, 200, 500]
 
     baseline_result = {}
     for algorithm in ['random', 'lpp', 'fpp']:
         baseline_result[algorithm] = {}
         for do_pca in [False, True]:
-            baseline_result[algorithm][do_pca] = eb.experiment(algorithm=algorithm, k=k, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=0, additional_noise_std=0, additive_noise=0)
+            baseline_result[algorithm][do_pca] = eb.experiment(algorithm=algorithm, k=k, minimize_variance=minimize_variance, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=0, additional_noise_std=0, additive_noise=0)
 
     results = {}
 
@@ -35,7 +36,7 @@ if __name__ == '__main__':
             for i, dim in enumerate(dimensions):
                 print dim
                 for r in range(trials):
-                    tmp_result = eb.experiment(algorithm=algorithm, k=k, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=dim, additional_noise_std=200, additive_noise=0)
+                    tmp_result = eb.experiment(algorithm=algorithm, k=k, minimize_variance=minimize_variance, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=dim, additional_noise_std=200, additive_noise=0)
                     results[algorithm]['lpp'][i,r] = eb.performance_lpp(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm][do_pca])
                     results[algorithm]['fpp'][i,r] = eb.performance_fpp(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm][do_pca])
     

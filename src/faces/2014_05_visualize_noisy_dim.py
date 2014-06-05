@@ -13,6 +13,7 @@ if __name__ == '__main__':
     # parameters
     k = 5
     iterations = 5
+    minimize_variance = False
     reduce_variance = True
     whitening = False
     additive_noise = 0
@@ -75,7 +76,7 @@ if __name__ == '__main__':
                        k=k,
                        iterations=iterations,
                        iteration_dim=50,
-                       minimize_variance=False,
+                       minimize_variance=minimize_variance,
                        normalized_objective=True)
         else:
             print 'unexpected algorithm', algorithm

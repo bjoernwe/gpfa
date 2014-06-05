@@ -9,7 +9,7 @@ import mdp
 import fpp
 
 
-def experiment(algorithm, k, iterations, iteration_dim, reduce_variance=False, whitening=False, normalize_std=False, additional_noise_dim=0, additional_noise_std=0, additive_noise=0):
+def experiment(algorithm, k, minimize_variance, iterations, iteration_dim, reduce_variance=False, whitening=False, normalize_std=False, additional_noise_dim=0, additional_noise_std=0, additive_noise=0):
 
     # parameters
     normalized_objective = True
@@ -65,7 +65,7 @@ def experiment(algorithm, k, iterations, iteration_dim, reduce_variance=False, w
                    k=k,
                    iterations=iterations,
                    iteration_dim=iteration_dim,
-                   minimize_variance=False,
+                   minimize_variance=minimize_variance,
                    normalized_objective=normalized_objective)
     else:
         print 'unexpected algorithm', algorithm
