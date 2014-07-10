@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # parameters
     k = 5
     iterations = 15
-    reduce_variance = False
+    reduce_variance = True
     whitening = False
     velocity = False
     
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
 
     fig, ax = pyplot.subplots(1, 2)
-    for a, algorithm in enumerate(['LPP', 'gPFA']):
+    for a, algorithm in enumerate(['SFA', 'gPFA']):
 
         # model
         if algorithm == 'SFA':

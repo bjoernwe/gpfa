@@ -12,12 +12,12 @@ if __name__ == '__main__':
     
     # parameters
     k = 5
-    iterations = 5
+    iterations = 1
     minimize_variance = False
     reduce_variance = True
     whitening = False
     additive_noise = 0
-    additional_noise_dim = 20
+    additional_noise_dim = 0
     additional_noise_std = 200
     spacing = [[0.015, 0.02], [0.015, 0.02]]
     velocity = False
