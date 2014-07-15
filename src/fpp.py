@@ -169,8 +169,8 @@ class FPP(mdp.Node):
                 for s in range(N-1):
                     for t in neighbors[s]:
                         if t+1 < N:
-                            W[s+1,t+1] += 1
-                            W[t+1,s+1] += 1
+                            W[s+1,t+1] = 1
+                            W[t+1,s+1] = 1
 
             # neighborhood graph
             if self.minimize_variance:
@@ -180,8 +180,8 @@ class FPP(mdp.Node):
             else:
                 for s in range(N):
                     for t in neighbors[s]:
-                        W[s,t] += 1
-                        W[t,s] += 1
+                        W[s,t] = 1
+                        W[t,s] = 1
     
             # graph Laplacian
             d = W.sum(axis=1).T
@@ -269,7 +269,9 @@ class FPPnl(mdp.Node):
         for l in range(self.iterations):
 
             # initialize weight matrix W
-            W = scipy.sparse.dok_matrix((N, N))
+            #W = scipy.sparse.dok_matrix((N, N))
+            W = np.zeros((N, N))
+            W -= 0.01
         
             # pairwise distances of data points
             distances = scipy.spatial.distance.pdist(y)
@@ -289,8 +291,8 @@ class FPPnl(mdp.Node):
                 for s in range(N-1):
                     for t in neighbors[s]:#[0:self.k+1]:
                         if s+1 < N and t+1 < N:
-                            W[s+1,t+1] += 1
-                            W[t+1,s+1] += 1
+                            W[s+1,t+1] = 1
+                            W[t+1,s+1] = 1
                             
             W[0,1] += 1
             W[1,0] += 1
@@ -329,15 +331,16 @@ class FPPnl(mdp.Node):
 
     def _stop_training(self):
         if self.normalized_objective:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim+1, which='SM')
             for i in range(len(self.E)):
                 self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim+1, which='SM')
         return
 
 
     def _execute(self, x):
+        print self.U.shape, x.shape
         return x.dot(self.U)
 
 

@@ -14,12 +14,9 @@ if __name__ == '__main__':
     # parameters
     k = 5
     N = 5000
-    expansion = 1
     noisy_dims = 50-2
     whitening = True
     iterations = 5
-    minimize_variance = False
-    normalized_objective = True
     seed = None
     
     environments = [EnvCube(seed=seed), EnvOscillator(seed=seed)]
@@ -27,22 +24,18 @@ if __name__ == '__main__':
     for e, env in enumerate(environments):
 
         # data
-        data0, _, _ = env.do_random_steps(num_steps=N)
-        labels = np.zeros(data0.shape[0], dtype=int)
-        for i, dat in enumerate(data0):
+        data, _, _ = env.do_random_steps(num_steps=N)
+        
+        # color data (checkerboard)
+        labels = np.zeros(N, dtype=int)
+        for i, dat in enumerate(data):
             x = int(4 * dat[0] - 1e-6)
             y = int(4 * dat[1] - 1e-6)
             labels[i] = (x + y) % 2
 
-        # add noisy dim
+        # add noisy dims
         R = np.random.RandomState(seed=seed)
-        for i in range(noisy_dims):
-            noise_complete = 1. * R.rand(N)
-            data0 = np.insert(data0, 2, axis=1, values=noise_complete)
-
-        # expansion
-        expansion_node = mdp.nodes.PolynomialExpansionNode(degree=expansion)
-        data = expansion_node.execute(data0)
+        data = np.hstack([data, R.rand(N, noisy_dims)])
 
         # whitening
         if whitening:
@@ -56,8 +49,8 @@ if __name__ == '__main__':
                               k=k,
                               iterations=iterations,
                               iteration_dim=10,
-                              minimize_variance=minimize_variance,
-                              normalized_objective=normalized_objective))
+                              minimize_variance=False,
+                              normalized_objective=True))
         models.append(fpp.LPP(output_dim=2, k=k))
 
         # train & plot        
