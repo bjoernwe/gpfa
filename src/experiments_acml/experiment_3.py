@@ -14,7 +14,6 @@ if __name__ == '__main__':
     k = 5
     N = 5000
     whitening = True
-    iterations = 1
     expansion_degree = 2
     seed = None
     
@@ -35,7 +34,7 @@ if __name__ == '__main__':
     # algorithms
     model = fpp.FPP(output_dim=2,
                     k=k,
-                    iterations=iterations,
+                    iterations=1,
                     iteration_dim=2,
                     minimize_variance=False,
                     normalized_objective=True)
@@ -47,10 +46,10 @@ if __name__ == '__main__':
     # plot
     fig = pyplot.figure()
     ax = fig.add_subplot(1, 2, 1, projection='3d')
-    ax.scatter(data_raw[:-1,0], data_raw[:-1,2], data_raw[:-1,1], c=labels, cmap=pyplot.cm.get_cmap('Blues'))
+    s = ax.scatter(data_raw[1:,0], data_raw[1:,2], data_raw[1:,1], c=labels, s=30, linewidth='0.2', cmap=pyplot.cm.get_cmap('Blues'))
+    s.set_edgecolors = s.set_facecolors = lambda *args:None
     ax = fig.add_subplot(1, 2, 2)
-    ax.scatter(x=result[1:,0], y=result[1:,1], c=labels, s=50, cmap=pyplot.cm.get_cmap('Blues'))
-    pyplot.title(model.__class__.__name__)
+    ax.scatter(x=result[1:,0], y=result[1:,1], c=labels, s=50, linewidth='0.5', cmap=pyplot.cm.get_cmap('Blues'))
 
     # show plot
     print 'finish'
