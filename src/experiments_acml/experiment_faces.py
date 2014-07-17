@@ -20,6 +20,7 @@ if __name__ == '__main__':
     faces_raw = np.load('faces.npy')
     faces = np.array(faces_raw, copy=True)
     N, D = faces.shape
+    print N, D
 
     # PCA
     pca = mdp.nodes.PCANode(output_dim=0.99)
@@ -47,10 +48,17 @@ if __name__ == '__main__':
                               k=k,
                               iterations=iterations,
                               iteration_dim=10,
-                              minimize_variance=False,
+                              variance_graph=False,
+                              neighborhood_graph=False,
                               normalized_objective=True))
         #models.append(fpp.LPP(output_dim=2, k=k))
 
+        # whitening
+        if whitening:
+            whitening_node = mdp.nodes.WhiteningNode()
+            whitening_node.train(data)
+            data = whitening_node.execute(data)
+    
         # train & plot        
         for m, model in enumerate(models):
     

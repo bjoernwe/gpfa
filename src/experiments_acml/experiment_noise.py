@@ -15,12 +15,15 @@ if __name__ == '__main__':
     # parameters
     k = 5
     N = 5000
-    noisy_dims = 20
-    whitening = False
+    noisy_dims = 50
+    whitening = True
     iterations = 5
     seed = None
     
+    # prepare data and noise
     environments = [EnvCube(seed=seed), EnvOscillator(seed=seed)]
+    R = np.random.RandomState(seed=seed)
+    noise = [1.1*R.rand(N, noisy_dims), R.randint(0, 2, size=(N, noisy_dims))]
     
     for e, env in enumerate(environments):
 
@@ -35,9 +38,8 @@ if __name__ == '__main__':
             labels[i] = (x + y) % 2
 
         # add noisy dims
-        R = np.random.RandomState(seed=seed)
-        data = np.hstack([data, R.rand(N, noisy_dims)])
-        #print np.cov(data.T)
+        data = np.hstack([data, noise[e]])
+        print np.diag(np.cov(data.T))
 
         # whitening
         if whitening:
@@ -54,7 +56,8 @@ if __name__ == '__main__':
                               k=k,
                               iterations=iterations,
                               iteration_dim=10,
-                              minimize_variance=False,
+                              variance_graph=False,
+                              neighborhood_graph=True,
                               normalized_objective=True))
         models.append(fpp.LPP(output_dim=2, k=k))
 

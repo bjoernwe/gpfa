@@ -36,7 +36,8 @@ if __name__ == '__main__':
                     k=k,
                     iterations=1,
                     iteration_dim=2,
-                    minimize_variance=False,
+                    variance_graph=False,
+                    neighborhood_graph=False,
                     normalized_objective=True)
 
     # train
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     s.set_edgecolors = s.set_facecolors = lambda *args:None
     ax = fig.add_subplot(1, 2, 2)
     ax.scatter(x=result[1:,0], y=result[1:,1], c=labels, s=50, linewidth='0.5', cmap=pyplot.cm.get_cmap('Blues'))
+    ax.set_title('gPFA')
 
     # show plot
     print 'finish'

@@ -92,8 +92,8 @@ class LPP(mdp.Node):
     def _stop_training(self):
         if self.normalized_objective:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
-            for i in range(len(self.E)):
-                self.U[:,i] /= np.linalg.norm(self.U[:,i])
+            #for i in range(len(self.E)):
+            #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
     
@@ -111,12 +111,13 @@ class LPP(mdp.Node):
 class FPP(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 minimize_variance=False, normalized_objective=True, 
+                 variance_graph=False, neighborhood_graph=True, normalized_objective=True, 
                  input_dim=None, dtype=None):
         super(FPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
-        self.minimize_variance = minimize_variance
+        self.variance_graph = variance_graph
+        self.neighborhood_graph = neighborhood_graph
         self.normalized_objective = normalized_objective
         self.iteration_dim = iteration_dim
         #if self.iteration_dim is None:
@@ -160,7 +161,7 @@ class FPP(mdp.Node):
             #    print len(ne)
             
             # future-preserving graph
-            if self.minimize_variance:
+            if self.variance_graph:
                 for t in range(N-1):
                     for (i,j) in itertools.permutations(neighbors[t], 2):
                         if i+1 < N and j+1 < N:
@@ -173,15 +174,16 @@ class FPP(mdp.Node):
                             W[t+1,s+1] = 1
 
             # neighborhood graph
-            if self.minimize_variance:
-                for t in range(N):
-                    for (i,j) in itertools.permutations(neighbors[t], 2):
-                        W[i,j] += 1
-            else:
-                for s in range(N):
-                    for t in neighbors[s]:
-                        W[s,t] = 1
-                        W[t,s] = 1
+            if self.neighborhood_graph:
+                if self.variance_graph:
+                    for t in range(N):
+                        for (i,j) in itertools.permutations(neighbors[t], 2):
+                            W[i,j] += 1
+                else:
+                    for s in range(N):
+                        for t in neighbors[s]:
+                            W[s,t] = 1
+                            W[t,s] = 1
     
             # graph Laplacian
             d = W.sum(axis=1).T
@@ -198,12 +200,12 @@ class FPP(mdp.Node):
                 if self.normalized_objective:
                     if type(self.iteration_dim) == int:
                         E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM', k=self.iteration_dim)
-                        for i in range(len(E)):
-                            U[:,i] /= np.linalg.norm(U[:,i])
+                        #for i in range(len(E)):
+                        #    U[:,i] /= np.linalg.norm(U[:,i])
                     else:
                         E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM')
-                        for i in range(len(E)):
-                            U[:,i] /= np.linalg.norm(U[:,i]) / np.sqrt(E[i])
+                        #for i in range(len(E)):
+                        #    U[:,i] /= np.linalg.norm(U[:,i]) / np.sqrt(E[i])
                 else:
                     E, U = scipy.sparse.linalg.eigsh(L2, k=self.iteration_dim, which='SM')
                 y = x.dot(U)
@@ -222,8 +224,8 @@ class FPP(mdp.Node):
     def _stop_training(self):
         if self.normalized_objective:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
-            for i in range(len(self.E)):
-                self.U[:,i] /= np.linalg.norm(self.U[:,i])
+            #for i in range(len(self.E)):
+            #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
             self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
     
@@ -246,7 +248,7 @@ class FPPnl(mdp.Node):
         super(FPPnl, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
-        self.minimize_variance = minimize_variance
+        self.variance_graph = minimize_variance
         self.normalized_objective = normalized_objective
         self.iteration_dim = iteration_dim
         if self.iteration_dim is None:
@@ -282,7 +284,7 @@ class FPPnl(mdp.Node):
             #    print len(ne)
             
             # future-preserving graph
-            if self.minimize_variance:
+            if self.variance_graph:
                 for t in range(N-1):
                     for (i,j) in itertools.permutations(neighbors[t], 2):
                         if i+1 < N and j+1 < N:
@@ -354,7 +356,7 @@ class gPFA(mdp.Node):
         self.k = k
         self.iterations = iterations
         self.iteration_dim = iteration_dim
-        self.minimize_variance = minimize_variance
+        self.variance_graph = minimize_variance
         self.normalized_objective = normalized_objective
         if self.iteration_dim is None:
             self.iteration_dim = self.output_dim
@@ -381,7 +383,7 @@ class gPFA(mdp.Node):
             neighbors = [np.array(np.argsort(distances[i])[:self.k+1], dtype=int) for i in range(N-1)]
             cov = mdp.utils.CovarianceMatrix()
 
-            if self.minimize_variance:
+            if self.variance_graph:
                 for t, neighborhood in enumerate(neighbors):
                     neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
                     future = neighborhood + 1
