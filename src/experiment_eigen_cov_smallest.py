@@ -23,25 +23,26 @@ class Timer(object):
             
 if __name__ == '__main__':
     
-    D = 1000
+    D = 100
     N = 10000
     
     # data
     data = np.random.random(size=(N, D))
     A = np.dot(data.T, data)
+    print A.shape
 
 
     print "\nsmallest Eigenvector:\n"
 
     # SciPy    
-    with Timer() as t:
-        E, U = scipy.sparse.linalg.eigs(A, k=1, which='SM')
-    print "scipy.sparse.linalg.eigs: %fs (%f)" % (t.msecs, E[0].real)
+    #with Timer() as t:
+    #    E, U = scipy.sparse.linalg.eigs(A, k=1, which='SM')
+    #print "scipy.sparse.linalg.eigs: %fs (%f)" % (t.msecs, E[0].real)
 
     # SciPy    
-    with Timer() as t:
-        E, U = scipy.sparse.linalg.eigs(A, k=1, which='SR')
-    print "scipy.sparse.linalg.eigs: %fs (%f)" % (t.msecs, E[0].real)
+    #with Timer() as t:
+    #    E, U = scipy.sparse.linalg.eigs(A, k=1, which='SR')
+    #print "scipy.sparse.linalg.eigs: %fs (%f)" % (t.msecs, E[0].real)
 
 
     print "\nsmallest Eigenvector (symmetric):\n"
@@ -52,14 +53,14 @@ if __name__ == '__main__':
     print "scipy.linalg.eigh: %fs (%f)" % (t.msecs, E[0])
 
     # SciPy    
-#     with Timer() as t:
-#         E, U = scipy.sparse.linalg.eigsh(A, k=1, which='SM')
-#     print "scipy.sparse.linalg.eigsh: %fs (%f)" % (t.msecs, E[0])
+    #with Timer() as t:
+    #    E, U = scipy.sparse.linalg.eigsh(A, k=1, which='SM')
+    #print "scipy.sparse.linalg.eigsh: %fs (%f)" % (t.msecs, E[0])
 
     # SciPy    
-#     with Timer() as t:
-#         E, U = scipy.sparse.linalg.eigsh(A, k=1, which='SA')
-#     print "scipy.sparse.linalg.eigsh: %fs (%f)" % (t.msecs, E[0])
+    #with Timer() as t:
+    #    E, U = scipy.sparse.linalg.eigsh(A, k=1, which='SA')
+    #print "scipy.sparse.linalg.eigsh: %fs (%f)" % (t.msecs, E[0])
 
 
     print "\nfull Eigendecomposition (symmetric):\n"

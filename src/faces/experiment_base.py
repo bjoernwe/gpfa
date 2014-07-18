@@ -9,7 +9,7 @@ import mdp
 import fpp
 
 
-def experiment(algorithm, k, minimize_variance, iterations, iteration_dim, reduce_variance=False, whitening=False, normalize_std=False, additional_noise_dim=0, additional_noise_std=0, additive_noise=0):
+def experiment(algorithm, k, variance_graph, iterations, iteration_dim, reduce_variance=False, whitening=False, normalize_std=False, additional_noise_dim=0, additional_noise_std=0, additive_noise=0):
 
     # parameters
     normalized_objective = True
@@ -65,7 +65,7 @@ def experiment(algorithm, k, minimize_variance, iterations, iteration_dim, reduc
                    k=k,
                    iterations=iterations,
                    iteration_dim=iteration_dim,
-                   minimize_variance=minimize_variance,
+                   variance_graph=variance_graph,
                    normalized_objective=normalized_objective)
     else:
         print 'unexpected algorithm', algorithm
@@ -91,8 +91,16 @@ def experiment(algorithm, k, minimize_variance, iterations, iteration_dim, reduc
     return results
 
 
+def whiten_data(data):
+    whitening = mdp.nodes.WhiteningNode()
+    whitening.train(data)
+    return whitening.execute(data)
 
-def performance_fpp(projected_data, k, baseline_result):
+
+def variance_of_future(projected_data, k, baseline_result):
+    
+    projected_data = whiten_data(projected_data)
+    baseline_result = whiten_data(baseline_result)
     
     N = projected_data.shape[0]
     
@@ -101,23 +109,28 @@ def performance_fpp(projected_data, k, baseline_result):
     neighbors = [np.array(np.argsort(distances[i])[1:k+1], dtype=int) for i in range(N-1)]
     
     performance = 0
+    number_of_edges = 0
     for t, neighborhood in enumerate(neighbors):
         neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
         if len(neighborhood) == 0:
             continue
-        assert len(neighborhood) >= 1
         future = neighborhood + 1
         delta_vectors = projected_data[future] - projected_data[t+1]
-        deltas = np.sqrt(np.diag(delta_vectors.dot(delta_vectors.T)))
+        squared_distances = np.diag(delta_vectors.dot(delta_vectors.T))
+        assert len(neighborhood) >= 1
         assert np.all(np.isfinite(delta_vectors))
-        assert len(deltas) == len(neighborhood)
-        performance += np.mean(deltas)
-    performance /= N-1
+        assert len(squared_distances) == len(neighborhood)
+        performance += np.sum(squared_distances)
+        number_of_edges += len(neighborhood)
+    performance = np.sqrt(performance / (number_of_edges - 1))
     return performance
 
 
 
-def performance_lpp(projected_data, k, baseline_result):
+def variance_of_neighbors(projected_data, k, baseline_result):
+    
+    projected_data = whiten_data(projected_data)
+    baseline_result = whiten_data(baseline_result)
     
     N = projected_data.shape[0]
     
@@ -126,14 +139,19 @@ def performance_lpp(projected_data, k, baseline_result):
     neighbors = [np.array(np.argsort(distances[i])[1:k+1], dtype=int) for i in range(N)]
     
     performance = 0
+    number_of_edges = 0
     for t, neighborhood in enumerate(neighbors):
-        assert len(neighborhood) >= 1
+        neighborhood = np.setdiff1d(neighborhood, np.array([N-1]), assume_unique=True)
+        if len(neighborhood) == 0:
+            continue
         delta_vectors = projected_data[neighborhood] - projected_data[t]
-        deltas = np.sqrt(np.diag(delta_vectors.dot(delta_vectors.T)))
+        squared_distances = np.diag(delta_vectors.dot(delta_vectors.T))
+        assert len(neighborhood) >= 1
         assert np.all(np.isfinite(delta_vectors))
-        assert len(deltas) == len(neighborhood)
-        performance += np.mean(deltas)
-    performance /= N
+        assert len(squared_distances) == len(neighborhood)
+        performance += np.sum(squared_distances)
+        number_of_edges += len(neighborhood)
+    performance = np.sqrt(performance / (number_of_edges - 1))
     return performance
 
     

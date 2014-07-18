@@ -65,8 +65,8 @@ class LPP(mdp.Node):
         # neighbor graph
         for s in range(N):
             for t in neighbors[s]:#[0:self.k+1]:
-                W[s,t] += 1
-                W[t,s] += 1
+                W[s,t] = 1
+                W[t,s] = 1
 
         # graph Laplacian
         d = W.sum(axis=1).T
@@ -91,11 +91,13 @@ class LPP(mdp.Node):
 
     def _stop_training(self):
         if self.normalized_objective:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
             #for i in range(len(self.E)):
             #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+            #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
     
         # normalize directions
         mask = self.U[0,:] > 0
@@ -199,11 +201,13 @@ class FPP(mdp.Node):
             if l < self.iterations-1:
                 if self.normalized_objective:
                     if type(self.iteration_dim) == int:
-                        E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM', k=self.iteration_dim)
+                        #E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM', k=self.iteration_dim)
+                        E, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
                         #for i in range(len(E)):
                         #    U[:,i] /= np.linalg.norm(U[:,i])
                     else:
-                        E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM')
+                        #E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM')
+                        E, U = scipy.linalg.eigh(L2, b=D2)
                         #for i in range(len(E)):
                         #    U[:,i] /= np.linalg.norm(U[:,i]) / np.sqrt(E[i])
                 else:
@@ -223,7 +227,12 @@ class FPP(mdp.Node):
 
     def _stop_training(self):
         if self.normalized_objective:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+            if self.input_dim == self.output_dim:
+                #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D)
+                self.E, self.U = scipy.linalg.eigh(self.L, b=self.D)
+            else:
+                #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
+                self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
             #for i in range(len(self.E)):
             #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
@@ -243,12 +252,12 @@ class FPP(mdp.Node):
 class FPPnl(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 minimize_variance=False, normalized_objective=True, 
+                 variance_graph=False, normalized_objective=True, 
                  input_dim=None, dtype=None):
         super(FPPnl, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
-        self.variance_graph = minimize_variance
+        self.variance_graph = variance_graph
         self.normalized_objective = normalized_objective
         self.iteration_dim = iteration_dim
         if self.iteration_dim is None:
@@ -350,13 +359,13 @@ class FPPnl(mdp.Node):
 class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 minimize_variance=False, normalized_objective=False,
+                 variance_graph=False, normalized_objective=False,
                  input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.iteration_dim = iteration_dim
-        self.variance_graph = minimize_variance
+        self.variance_graph = variance_graph
         self.normalized_objective = normalized_objective
         if self.iteration_dim is None:
             self.iteration_dim = self.output_dim

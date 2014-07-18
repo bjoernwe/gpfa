@@ -9,7 +9,7 @@ import experiment_base as eb
 if __name__ == '__main__':
     
     k = 5
-    minimize_variance = False
+    variance_graph = False
     iterations = 5
     iteration_dim = 50
     trials = 2
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     for algorithm in ['random', 'lpp', 'fpp']:
         baseline_result[algorithm] = {}
         for do_pca in [False, True]:
-            baseline_result[algorithm][do_pca] = eb.experiment(algorithm=algorithm, k=k, minimize_variance=minimize_variance, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=0, additional_noise_std=0, additive_noise=0)
+            baseline_result[algorithm][do_pca] = eb.experiment(algorithm=algorithm, k=k, variance_graph=variance_graph, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=0, additional_noise_std=0, additive_noise=0)
 
     results = {}
 
@@ -36,9 +36,9 @@ if __name__ == '__main__':
             for i, dim in enumerate(dimensions):
                 print dim
                 for r in range(trials):
-                    tmp_result = eb.experiment(algorithm=algorithm, k=k, minimize_variance=minimize_variance, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=dim, additional_noise_std=200, additive_noise=0)
-                    results[algorithm]['lpp'][i,r] = eb.performance_lpp(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm][do_pca])
-                    results[algorithm]['fpp'][i,r] = eb.performance_fpp(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm][do_pca])
+                    tmp_result = eb.experiment(algorithm=algorithm, k=k, variance_graph=variance_graph, iterations=iterations, iteration_dim=iteration_dim, reduce_variance=do_pca, additional_noise_dim=dim, additional_noise_std=200, additive_noise=0)
+                    results[algorithm]['lpp'][i,r] = eb.variance_of_neighbors(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm][do_pca])
+                    results[algorithm]['fpp'][i,r] = eb.variance_of_future(projected_data=tmp_result, k=k, baseline_result=baseline_result[algorithm][do_pca])
     
             pyplot.subplot(2, 2, 2*p+a+1)
             pyplot.title(np.array(['', 'pca + '])[do_pca] + algorithm)

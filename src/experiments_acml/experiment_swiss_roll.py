@@ -37,8 +37,9 @@ if __name__ == '__main__':
                     iterations=1,
                     iteration_dim=2,
                     variance_graph=False,
-                    neighborhood_graph=False,
+                    neighborhood_graph=True,
                     normalized_objective=True)
+    #model = fpp.LPP(output_dim=2, k=k, normalized_objective=True)
 
     # train
     model.train(data)
@@ -49,8 +50,9 @@ if __name__ == '__main__':
     ax = fig.add_subplot(1, 2, 1, projection='3d')
     s = ax.scatter(data_raw[1:,0], data_raw[1:,2], data_raw[1:,1], c=labels, s=30, linewidth='0.2', cmap=pyplot.cm.get_cmap('Blues'))
     s.set_edgecolors = s.set_facecolors = lambda *args:None
-    ax = fig.add_subplot(1, 2, 2)
+    ax = fig.add_subplot(1, 2, 2)#, projection='3d')
     ax.scatter(x=result[1:,0], y=result[1:,1], c=labels, s=50, linewidth='0.5', cmap=pyplot.cm.get_cmap('Blues'))
+    #ax.scatter(result[1:,0], result[1:,1], result[1:,2], c=labels, s=50, linewidth='0.5', cmap=pyplot.cm.get_cmap('Blues'))
     ax.set_title('gPFA')
 
     # show plot

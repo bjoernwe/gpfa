@@ -7,7 +7,6 @@ import mdp
 import fpp
 
 from envs.env_cube import EnvCube
-from envs.env_cube_interactive import EnvCubeInteractive
 from envs.env_oscillator import EnvOscillator
 
 if __name__ == '__main__':
@@ -17,7 +16,7 @@ if __name__ == '__main__':
     N = 5000
     noisy_dims = 50
     whitening = True
-    iterations_list = 5
+    iterations = 5
     seed = None
     
     # prepare data and noise
@@ -54,12 +53,12 @@ if __name__ == '__main__':
         models = []
         models.append(fpp.FPP(output_dim=2,
                               k=k,
-                              iterations_list=iterations_list,
+                              iterations=iterations,
                               iteration_dim=10,
                               variance_graph=False,
                               neighborhood_graph=True,
                               normalized_objective=True))
-        #models.append(fpp.LPP(output_dim=2, k=k))
+        models.append(fpp.LPP(output_dim=2, k=k))
 
         # train & plot        
         for m, model in enumerate(models):
