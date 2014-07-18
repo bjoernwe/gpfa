@@ -17,7 +17,7 @@ if __name__ == '__main__':
     N = 5000
     noisy_dims = 50
     whitening = True
-    iterations = 5
+    iterations_list = 5
     seed = None
     
     # prepare data and noise
@@ -54,12 +54,12 @@ if __name__ == '__main__':
         models = []
         models.append(fpp.FPP(output_dim=2,
                               k=k,
-                              iterations=iterations,
+                              iterations_list=iterations_list,
                               iteration_dim=10,
                               variance_graph=False,
                               neighborhood_graph=True,
                               normalized_objective=True))
-        models.append(fpp.LPP(output_dim=2, k=k))
+        #models.append(fpp.LPP(output_dim=2, k=k))
 
         # train & plot        
         for m, model in enumerate(models):
