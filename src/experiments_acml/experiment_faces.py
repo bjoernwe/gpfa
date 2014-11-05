@@ -5,15 +5,16 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 import mdp
 
-import fpp
+import gpfa
 
 if __name__ == '__main__':
 
     # parameters
-    k = 5
-    noisy_dims = 200
+    k = 30
+    noisy_dims = 0
     whitening = False
     iterations = 1
+    constraint_optimization = True
     seed = None
 
     # load data file
@@ -44,13 +45,13 @@ if __name__ == '__main__':
 
         # algorithms
         models = []
-        models.append(fpp.FPP(output_dim=2,
-                              k=k,
-                              iterations=iterations,
-                              iteration_dim=10,
-                              variance_graph=False,
-                              neighborhood_graph=False,
-                              normalized_objective=True))
+        models.append(gpfa.gPFA(output_dim=2,
+                                k=k,
+                                iterations=iterations,
+                                iteration_dim=10,
+                                variance_graph=False,
+                                neighborhood_graph=False,
+                                constraint_optimization=constraint_optimization))
         #models.append(fpp.LPP(output_dim=2, k=k))
 
         # whitening
@@ -73,14 +74,14 @@ if __name__ == '__main__':
             #ax[d][m].scatter(result[:,0], result[:,1])
             #ax[d][m].set_title(model.__class__.__name__)
             ax.scatter(result[:,0], result[:,1])
-            ax.set_title(model.__class__.__name__)
+            ax.set_title('gPFA')
             
             plotted_faces = np.empty((0, 2))
         
             for i in np.random.permutation(faces.shape[0]):
                 
                 if np.any((np.abs(plotted_faces[:,0] - result[i,0]) < 15) & \
-                          (np.abs(plotted_faces[:,1] - result[i,1]) < 70)):
+                          (np.abs(plotted_faces[:,1] - result[i,1]) < 60)):
                     continue
                 else:
                     plotted_faces = np.insert(plotted_faces, plotted_faces.shape[0], values=result[i,:], axis=0)

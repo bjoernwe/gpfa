@@ -1,5 +1,3 @@
-import numpy as np
-
 from matplotlib import pyplot
 
 import mdp
@@ -15,6 +13,7 @@ if __name__ == '__main__':
     N = 5000
     whitening = True
     expansion_degree = 2
+    constraint_optimization = True
     seed = None
     
     # data
@@ -38,7 +37,7 @@ if __name__ == '__main__':
                     iteration_dim=2,
                     variance_graph=False,
                     neighborhood_graph=True,
-                    normalized_objective=True)
+                    constraint_optimization=constraint_optimization)
     #model = fpp.LPP(output_dim=2, k=k, normalized_objective=True)
 
     # train

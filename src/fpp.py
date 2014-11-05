@@ -4,8 +4,6 @@ import scipy.linalg
 import scipy.sparse.linalg
 import scipy.spatial.distance
 
-from matplotlib import pyplot
-
 import mdp
 
 
@@ -35,11 +33,9 @@ class RandomProjection(mdp.Node):
 
 class LPP(mdp.Node):
 
-    def __init__(self, output_dim, k=10, normalized_objective=True, 
-                 input_dim=None, dtype=None):
+    def __init__(self, output_dim, k=10, input_dim=None, dtype=None):
         super(LPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
-        self.normalized_objective = normalized_objective
         self.L = None
         self.D = None
         return
@@ -50,27 +46,22 @@ class LPP(mdp.Node):
         # number of samples
         N, _ = x.shape
         
-        # from y we calculate the euclidean distances
-        # after the first iteration it contains the projected data
-        y = x
-        
         # initialize weight matrix W
         W = scipy.sparse.dok_matrix((N, N))
     
         # pairwise distances of data points
-        distances = scipy.spatial.distance.pdist(y)
+        distances = scipy.spatial.distance.pdist(x)
         distances = scipy.spatial.distance.squareform(distances)
         neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
         
         # neighbor graph
         for s in range(N):
-            for t in neighbors[s]:#[0:self.k+1]:
+            for t in neighbors[s]:
                 W[s,t] = 1
                 W[t,s] = 1
 
         # graph Laplacian
         d = W.sum(axis=1).T
-        #d[d==0] = float('inf') 
         D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
         L = D - W
 
@@ -90,14 +81,7 @@ class LPP(mdp.Node):
 
 
     def _stop_training(self):
-        if self.normalized_objective:
-            #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
-            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
-            #for i in range(len(self.E)):
-            #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
-        else:
-            #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
-            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
+        self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
     
         # normalize directions
         mask = self.U[0,:] > 0
@@ -113,30 +97,18 @@ class LPP(mdp.Node):
 class FPP(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 variance_graph=False, neighborhood_graph=True, normalized_objective=True, 
-                 input_dim=None, dtype=None):
+                 variance_graph=False, neighborhood_graph=True, 
+                 constraint_optimization=True, input_dim=None, dtype=None):
         super(FPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.variance_graph = variance_graph
         self.neighborhood_graph = neighborhood_graph
-        self.normalized_objective = normalized_objective
         self.iteration_dim = iteration_dim
-        #if self.iteration_dim is None:
-        #    self.iteration_dim = 'auto'
+        self.constraint_optimization = constraint_optimization
         self.L = None
         self.D = None
         return
-    
-    
-#     def _kernel(self, d):
-#         print d
-#         return np.exp(-.5*(d/self.sigma)**2) / (self.sigma * np.sqrt(2. * np.pi))
-
-
-#     def _kernel(self, u, v):
-#         d = u-v
-#         return np.exp(-.5*(d/self.sigma)**2) / (self.sigma * np.sqrt(2. * np.pi))
     
     
     def _train(self, x):
@@ -199,19 +171,18 @@ class FPP(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                if self.normalized_objective:
+                if self.constraint_optimization:
                     if type(self.iteration_dim) == int:
-                        #E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM', k=self.iteration_dim)
-                        E, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
-                        #for i in range(len(E)):
-                        #    U[:,i] /= np.linalg.norm(U[:,i])
+                        _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
                     else:
-                        #E, U = scipy.sparse.linalg.eigsh(L2, M=D2, which='SM')
-                        E, U = scipy.linalg.eigh(L2, b=D2)
-                        #for i in range(len(E)):
-                        #    U[:,i] /= np.linalg.norm(U[:,i]) / np.sqrt(E[i])
+                        _, U = scipy.linalg.eigh(L2, b=D2)
+                    for i in range(U.shape[1]):
+                        U[:,i] /= np.linalg.norm(U[:,i])
                 else:
-                    E, U = scipy.sparse.linalg.eigsh(L2, k=self.iteration_dim, which='SM')
+                    if type(self.iteration_dim) == int:
+                        _, U = scipy.linalg.eigh(L2, eigvals=(0, self.output_dim-1))
+                    else:
+                        _, U = scipy.linalg.eigh(L2)
                 y = x.dot(U)
 
         # add chunk result to global result
@@ -226,17 +197,20 @@ class FPP(mdp.Node):
 
 
     def _stop_training(self):
-        if self.normalized_objective:
+        if self.constraint_optimization:
             if self.input_dim == self.output_dim:
-                #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D)
                 self.E, self.U = scipy.linalg.eigh(self.L, b=self.D)
             else:
-                #self.E, self.U = scipy.sparse.linalg.eigsh(self.L, M=self.D, k=self.output_dim, which='SM')
                 self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
-            #for i in range(len(self.E)):
-            #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
+            # For iterated gPFA, normalize eigenvectors 
+            #if self.iterations >= 1:
+            for i in range(self.U.shape[1]):
+                self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
-            self.E, self.U = scipy.sparse.linalg.eigsh(self.L, k=self.output_dim, which='SM')
+            if self.input_dim == self.output_dim:
+                self.E, self.U = scipy.linalg.eigh(self.L)
+            else:
+                self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
     
         # normalize directions
         mask = self.U[0,:] > 0
