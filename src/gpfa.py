@@ -109,58 +109,61 @@ class gPFA(mdp.Node):
         self.L = None
         self.D = None
         return
-    
-    
+
+
     def _train(self, x):
 
         # number of samples
         N, _ = x.shape
-        
+
         # from y we calculate the euclidean distances
         # after the first iteration it contains the projected data
         y = x
-        
+
         # run algorithm several times e
         for l in range(self.iterations):
 
-            # initialize weight matrix W
-            W = scipy.sparse.dok_matrix((N, N))
-        
             # pairwise distances of data points
             distances = scipy.spatial.distance.pdist(y)
             distances = scipy.spatial.distance.squareform(distances)
-            neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
-            
+            neighbors = [np.argsort(distances[i])[:self.k+1] for i in xrange(N)]
+
             # future-preserving graph
+            index_list = []
             if self.variance_graph:
                 for t in range(N-1):
-                    for (i,j) in itertools.permutations(neighbors[t], 2):
-                        if i+1 < N and j+1 < N:
-                            W[i+1,j+1] += 1
+                    index_list += itertools.permutations(neighbors[t]+1, 2)
             else:
                 for s in range(N-1):
-                    for t in neighbors[s]:
-                        if t+1 < N:
-                            W[s+1,t+1] = 1
-                            W[t+1,s+1] = 1
+                    index_list += [(s+1,t) for t in neighbors[s]+1]
+                    index_list += [(t,s+1) for t in neighbors[s]+1]
 
             # neighborhood graph
             if self.neighborhood_graph:
                 if self.variance_graph:
                     for t in range(N):
-                        for (i,j) in itertools.permutations(neighbors[t], 2):
-                            W[i,j] += 1
+                        index_list += itertools.permutations(neighbors[t], 2)
                 else:
                     for s in range(N):
-                        for t in neighbors[s]:
-                            W[s,t] = 1
-                            W[t,s] = 1
+                        index_list += [(s,t) for t in neighbors[s]]
+                        index_list += [(t,s) for t in neighbors[s]]
+
+            # count edges only once
+            if not self.variance_graph:
+                index_list = list(set(index_list))
+
+            # weight matrix from index list
+            index_list = np.array(index_list)
+            W = scipy.sparse.coo_matrix((np.ones(index_list.shape[0]), (index_list[:,0], index_list[:,1])), shape=(N+1,N+1))
+            W = W.tocsr()
+            W = W[:N,:N]    # cut the N+1 elements
     
             # graph Laplacian
             d = W.sum(axis=1).T
             #d[d==0] = float('inf') 
             D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
             L = D - W
+            L = L.tocsr()
     
             # projected graph laplacian
             D2 = x.T.dot(D.dot(x))
