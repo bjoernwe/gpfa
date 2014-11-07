@@ -1,4 +1,5 @@
 import collections
+import functools
 import numpy as np
 import multiprocessing
 
@@ -16,6 +17,7 @@ A simple wrapper for function f that allows having a specific argument
 """
 def f_wrapper(arg, arg_name, f, **kwargs):
     kwargs[arg_name] = arg
+    print kwargs
     return f(**kwargs)
 
 
@@ -24,7 +26,7 @@ Plots the real-valued function f using its given arguments. One of the argument
 is expected to be an iterable, which is used for the x-axis.
 """
 def plot(f, **kwargs):
-    iterable_arguments = [k for (k, v) in kwargs.items()
+    iterable_arguments = [k for (k, v) in kwargs.items() 
                           if isinstance(v, collections.Iterable)]
     if len(iterable_arguments) == 0:
         print 'Warning: No iterable argument found for plotting.'
@@ -35,13 +37,17 @@ def plot(f, **kwargs):
     else:
         arg_name = iterable_arguments[0]
         arg = kwargs.pop(arg_name)
-        for x in arg:
-            f_wrapper(x, arg_name, f, **kwargs)
+        f_partial = functools.partial(f_wrapper, arg_name=arg_name, f=f,
+                                      **kwargs)
+        #for x in arg:
+        #    f_partial(x)
+        pool = multiprocessing.Pool(processes=5)
+        pool.map(f_partial, arg)
     return
 
 
 def main():
-    plot(my_func, a=-1, b=[1,2,3])
+    plot(my_func, a=-1, b=[1, 2, 3], c=True)
 
 
 if __name__ == '__main__':
