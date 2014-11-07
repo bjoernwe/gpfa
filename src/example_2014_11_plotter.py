@@ -5,6 +5,9 @@ import multiprocessing
 
 
 def my_func(a, b, c=False):
+    N = 3000
+    A = np.random.randn(N, N)
+    _, _ = np.linalg.eig(A)
     print 'a:', a
     print 'b:', b
     print 'c:', c
@@ -39,15 +42,15 @@ def plot(f, **kwargs):
         arg = kwargs.pop(arg_name)
         f_partial = functools.partial(f_wrapper, arg_name=arg_name, f=f,
                                       **kwargs)
-        #for x in arg:
-        #    f_partial(x)
-        pool = multiprocessing.Pool(processes=5)
-        pool.map(f_partial, arg)
-    return
+        pool = multiprocessing.Pool()
+        result = pool.map(f_partial, arg)
+        pool.close()
+        pool.join()
+    return result
 
 
 def main():
-    plot(my_func, a=-1, b=[1, 2, 3], c=True)
+    plot(my_func, a=-1, b=[1, 2, 3, 4, 5], c=True)
 
 
 if __name__ == '__main__':
