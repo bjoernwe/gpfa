@@ -113,7 +113,7 @@ def plot(f, **kwargs):
 
 
 
-def _f_wrapper(arg, arg_name, f, **kwargs):
+def _f_wrapper(arg, iter_arg_name, f, **kwargs):
     """
     A simple wrapper for function f that allows having a specific argument
     ('arg_name') as the first argument. This is the method that is actually
@@ -124,7 +124,7 @@ def _f_wrapper(arg, arg_name, f, **kwargs):
     """
     os.nice(kwargs.pop('niceness', 10))
     np.random.seed()
-    kwargs[arg_name] = arg
+    kwargs[iter_arg_name] = arg
     return f(**kwargs)
 
 
