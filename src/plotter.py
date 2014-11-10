@@ -10,25 +10,12 @@ import time
 from matplotlib import pyplot as plt
 
 
-"""
-A simple wrapper for function f that allows having a specific argument
-('arg_name') as the first argument. The argument 'niceness' is removed from
-kwargs and used to increment the niceness of the current process (default: 10).
-Also the NumPy's random number generator is initialized with a new seed.
-"""
-def _f_wrapper(arg, arg_name, f, **kwargs):
-    os.nice(kwargs.pop('niceness', 10))
-    np.random.seed()
-    kwargs[arg_name] = arg
-    return f(**kwargs)
 
-
-
-"""
-Plots the real-valued function f using its given arguments. One of the argument
-is expected to be an iterable, which is used for the x-axis.
-"""
 def plot(f, **kwargs):
+    """
+    Plots the real-valued function f using its given arguments. One of the argument
+    is expected to be an iterable, which is used for the x-axis.
+    """
     
     # look for iterable arguments
     iterable_arguments = [k for (k, v) in kwargs.items() 
@@ -45,17 +32,23 @@ def plot(f, **kwargs):
         return
 
     else:
+        
+        # get default arguments of function f
+        argspecs = inspect.getargspec(f)
+        default_args = dict(zip(argspecs.args[-len(argspecs.defaults):], argspecs.defaults))
+        args = default_args.copy()
+        args.update(kwargs)
 
         # extract arguments for plotter
         arg_name    = iterable_arguments[0]
-        arg         = kwargs.pop(arg_name)
-        processes   = kwargs.pop('processes', multiprocessing.cpu_count())
-        show_plot   = kwargs.pop('show_plot', True)
-        repetitions = kwargs.pop('repetitions', 1)
+        arg         = args.pop(arg_name)
+        processes   = args.pop('processes', multiprocessing.cpu_count())
+        show_plot   = args.pop('show_plot', True)
+        repetitions = args.pop('repetitions', 1)
 
         # wrap function f
         f_partial = functools.partial(_f_wrapper, arg_name=arg_name, f=f,
-                                      **kwargs)
+                                      **args)
 
         # prepare argument list for repetitions
         if repetitions > 1:
@@ -91,34 +84,51 @@ def plot(f, **kwargs):
 
         # describe plot
         plt.xlabel(arg_name)
-        plt.title(inspect.stack()[1][1], y=1)
-        plt.suptitle('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
-                     'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in kwargs.items()]))
+        plt.suptitle(inspect.stack()[1][1])
+        plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
+                  'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in args.items()]),
+                  fontsize=12)
         plt.subplots_adjust(top=0.85)
 
-        # show plot
         if show_plot:
             plt.show()
 
-        return result
+        return
 
     return
 
 
-"""
-A simple example function with two arguments x and y.
-"""
-def _example_func(x, y):
+
+def _f_wrapper(arg, arg_name, f, **kwargs):
+    """
+    A simple wrapper for function f that allows having a specific argument
+    ('arg_name') as the first argument. The argument 'niceness' is removed from
+    kwargs and used to increment the niceness of the current process (default: 10).
+    Also the NumPy's random number generator is initialized with a new seed.
+    """
+    os.nice(kwargs.pop('niceness', 10))
+    np.random.seed()
+    kwargs[arg_name] = arg
+    return f(**kwargs)
+
+
+
+def _example_func(x, y=-1, z=False):
+    """
+    A simple example function with two arguments x and y.
+    """
     fx = x**2 / 10
     fy = np.sin(y)
     return fx + fy + .5 * np.random.randn()
 
 
+
 def main():
-    plot(_example_func, x=0, y=range(10), repetitions=10)
-    #plot(_example_func, x=range(10), y=0, repetitions=100, show_plot=False)
-    #plot(_example_func, x=0, y=range(10), repetitions=100, show_plot=False)
-    #plt.show()
+    plt.subplot(1, 2, 1)
+    plot(_example_func, x=0, y=range(10), repetitions=10, show_plot=False)
+    plt.subplot(1, 2, 2)
+    plot(_example_func, x=range(10), y=0, repetitions=10)
+
 
 
 if __name__ == '__main__':
