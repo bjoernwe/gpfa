@@ -1,9 +1,11 @@
 import collections
+import datetime
 import functools
 import inspect
 import multiprocessing
 import numpy as np
 import os
+import time
 
 from matplotlib import pyplot as plt
 
@@ -62,10 +64,21 @@ def plot(f, **kwargs):
             arg = np.repeat(arg, repetitions)
 
         # start a pool of processes
+        time_start = time.localtime()
         pool = multiprocessing.Pool(processes=processes)
-        result = pool.map(f_partial, arg)
+        result = pool.map(f_partial, arg, chunksize=1)
         pool.close()
         pool.join()
+        time_stop = time.localtime()
+
+        # calculate running time
+        time_diff = time.mktime(time_stop) - time.mktime(time_start)
+        time_delta = datetime.timedelta(seconds=time_diff)
+        time_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
+        if time_start.tm_yday == time_stop.tm_yday:
+            time_stop_str = time.strftime('%H:%M:%S', time_start)
+        else:
+            time_stop_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
 
         # either errorbar plot or regular plot
         if repetitions > 1:
@@ -78,8 +91,10 @@ def plot(f, **kwargs):
 
         # describe plot
         plt.xlabel(arg_name)
-        plt.title(inspect.stack()[1][1])
-        plt.suptitle('arguments: ' + str.join(', ', ['%s=%s' % (k,v) for k,v in kwargs.items()]))
+        plt.title(inspect.stack()[1][1], y=1)
+        plt.suptitle('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
+                     'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in kwargs.items()]))
+        plt.subplots_adjust(top=0.85)
 
         # show plot
         if show_plot:
