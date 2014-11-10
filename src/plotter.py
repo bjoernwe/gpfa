@@ -113,9 +113,9 @@ def _f_wrapper(arg, arg_name, f, **kwargs):
 
 
 
-def _example_func(x, y=-1, z=False):
+def _example_func(x, y='ignore me!', z=False):
     """
-    A simple example function with two arguments x and y.
+    A simple example function with two arguments x, y and z.
     """
     fx = x**2 / 10
     fy = np.sin(y)
