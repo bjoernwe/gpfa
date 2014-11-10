@@ -33,33 +33,47 @@ def plot(f, **kwargs):
 
     else:
         
-        # get default arguments of function f
-        argspecs = inspect.getargspec(f)
-        default_args = dict(zip(argspecs.args[-len(argspecs.defaults):], argspecs.defaults))
-        args = default_args.copy()
-        args.update(kwargs)
+        # get default arguments of function f and update them with given ones
+        #
+        # this is not strictly necessary but otherwise the argument lists lacks
+        # the default ones which should be included in the plot
+        fargspecs = inspect.getargspec(f)
+        fkwargs = {}
+        if fargspecs.defaults is not None:
+            default_args = dict(zip(fargspecs.args[-len(fargspecs.defaults):], fargspecs.defaults))
+            fkwargs = default_args.copy()
+        fkwargs.update(kwargs)
 
-        # extract arguments for plotter
-        arg_name    = iterable_arguments[0]
-        arg         = args.pop(arg_name)
-        processes   = args.pop('processes', multiprocessing.cpu_count())
-        show_plot   = args.pop('show_plot', True)
-        repetitions = args.pop('repetitions', 1)
+        # extract arguments for plotter itself
+        iter_arg_name = iterable_arguments[0]
+        iter_arg      = fkwargs.pop(iter_arg_name)
+        processes     = fkwargs.pop('processes', multiprocessing.cpu_count())
+        show_plot     = fkwargs.pop('show_plot', True)
+        repetitions   = fkwargs.pop('repetitions', 1)
+
+        # make sure, all arguments are defined for function f
+#         undefined_args = set(fargspecs.args)
+#         undefined_args.discard(iter_arg_name)  # remove iterable argument
+#         undefined_args.difference_update(fkwargs.keys())  # remove other known arguments
+#         print undefined_args
+#         if len(undefined_args) > 0:
+#             print 'Error: Undefined arguments: ', undefined_args 
 
         # wrap function f
-        f_partial = functools.partial(_f_wrapper, arg_name=arg_name, f=f,
-                                      **args)
+        f_partial = functools.partial(_f_wrapper, iter_arg_name=iter_arg_name, f=f,
+                                      **fkwargs)
 
         # prepare argument list for repetitions
         if repetitions > 1:
-            old_arg = arg
-            arg = np.array(arg)
-            arg = np.repeat(arg, repetitions)
+            old_arg = iter_arg
+            iter_arg = np.array(iter_arg)
+            iter_arg = np.repeat(iter_arg, repetitions)
 
         # start a pool of processes
         time_start = time.localtime()
         pool = multiprocessing.Pool(processes=processes)
-        result = pool.map(f_partial, arg, chunksize=1)
+        print iter_arg
+        result = pool.map(f_partial, iter_arg, chunksize=1)
         pool.close()
         pool.join()
         time_stop = time.localtime()
@@ -75,18 +89,18 @@ def plot(f, **kwargs):
 
         # either errorbar plot or regular plot
         if repetitions > 1:
-            arg = old_arg
-            result = np.reshape(result, (len(arg), repetitions))
-            plt.errorbar(arg, np.mean(result, axis=1),
+            iter_arg = old_arg
+            result = np.reshape(result, (len(iter_arg), repetitions))
+            plt.errorbar(iter_arg, np.mean(result, axis=1),
                          yerr=np.std(result, axis=1))
         else:
-            plt.plot(arg, result)
+            plt.plot(iter_arg, result)
 
         # describe plot
-        plt.xlabel(arg_name)
+        plt.xlabel(iter_arg_name)
         plt.suptitle(inspect.stack()[1][1])
         plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
-                  'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in args.items()]),
+                  'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in fkwargs.items()]),
                   fontsize=12)
         plt.subplots_adjust(top=0.85)
 
@@ -102,9 +116,11 @@ def plot(f, **kwargs):
 def _f_wrapper(arg, arg_name, f, **kwargs):
     """
     A simple wrapper for function f that allows having a specific argument
-    ('arg_name') as the first argument. The argument 'niceness' is removed from
-    kwargs and used to increment the niceness of the current process (default: 10).
-    Also the NumPy's random number generator is initialized with a new seed.
+    ('arg_name') as the first argument. This is the method that is actually
+    managed and called by the multiprocessing pool. Therefore the argument 
+    'niceness' is removed from **kwargs and used to increment the niceness of 
+    the current process (default: 10). Also the NumPy's random number generator 
+    is initialized with a new seed.
     """
     os.nice(kwargs.pop('niceness', 10))
     np.random.seed()
@@ -115,7 +131,7 @@ def _f_wrapper(arg, arg_name, f, **kwargs):
 
 def _example_func(x, y='ignore me!', z=False):
     """
-    A simple example function with two arguments x, y and z.
+    A simple example function with three arguments x, y and z.
     """
     fx = x**2 / 10
     fy = np.sin(y)
