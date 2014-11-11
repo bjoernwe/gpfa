@@ -52,12 +52,12 @@ def plot(f, **kwargs):
         repetitions   = fkwargs.pop('repetitions', 1)
 
         # make sure, all arguments are defined for function f
-#         undefined_args = set(fargspecs.args)
-#         undefined_args.discard(iter_arg_name)  # remove iterable argument
-#         undefined_args.difference_update(fkwargs.keys())  # remove other known arguments
-#         print undefined_args
-#         if len(undefined_args) > 0:
-#             print 'Error: Undefined arguments: ', undefined_args 
+        undefined_args = set(fargspecs.args)
+        undefined_args.discard(iter_arg_name)  # remove iterable argument
+        undefined_args.difference_update(fkwargs.keys())  # remove other known arguments
+        if len(undefined_args) > 0:
+            print 'Error: Undefined arguments:', str.join(', ', undefined_args)
+            return
 
         # wrap function f
         f_partial = functools.partial(_f_wrapper, iter_arg_name=iter_arg_name, f=f,
@@ -72,7 +72,6 @@ def plot(f, **kwargs):
         # start a pool of processes
         time_start = time.localtime()
         pool = multiprocessing.Pool(processes=processes)
-        print iter_arg
         result = pool.map(f_partial, iter_arg, chunksize=1)
         pool.close()
         pool.join()
