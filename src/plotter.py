@@ -47,6 +47,7 @@ def plot(f, **kwargs):
         # extract arguments for plotter itself
         iter_arg_name = iterable_arguments[0]
         iter_arg      = fkwargs.pop(iter_arg_name)
+        save_plot     = fkwargs.pop('save_plot', True)
         show_plot     = fkwargs.pop('show_plot', True)
         repetitions   = fkwargs.pop('repetitions', 1)
         processes     = fkwargs.pop('processes', None)
@@ -105,11 +106,13 @@ def plot(f, **kwargs):
                   fontsize=12)
         plt.subplots_adjust(top=0.85)
 
-        if show_plot:
+        if save_plot:
             if not os.path.exists('plotter_results'):
                 os.makedirs('plotter_results')
             timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
             plt.savefig('plotter_results/%s%02d.png' % (timestamp, len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])))
+
+        if show_plot:
             plt.show()
 
         return
