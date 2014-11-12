@@ -101,8 +101,11 @@ def plot(f, **kwargs):
         # describe plot
         plt.xlabel(iter_arg_name)
         plt.suptitle(inspect.stack()[1][1])
+        plotted_args = fkwargs.copy()
+        if repetitions > 1:
+            plotted_args['repetitions'] = repetitions
         plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
-                  'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in fkwargs.items()]),
+                  'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()]),
                   fontsize=12)
         plt.subplots_adjust(top=0.85)
 
