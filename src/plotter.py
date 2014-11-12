@@ -5,15 +5,15 @@ import inspect
 import multiprocessing
 import numpy as np
 import os
+import pickle
 import time
 
-from matplotlib import pyplot as plt
 
 
-
-def evaluate(f, repetitions=1, processes=None, **kwargs):
+def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
     """
-    
+    Evaluates the real-valued function f using the given keyword arguments. One 
+    of the arguments must be an iterable, which is used for parallel evaluation.
     """
     
     # look for iterable arguments
@@ -74,6 +74,11 @@ def evaluate(f, repetitions=1, processes=None, **kwargs):
         # re-arrange repetitions in 2d array
         if repetitions > 1:
             values = np.reshape(values, (len(iter_arg), repetitions))
+            
+        # calculate a prefix for result files
+        timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
+        number_of_results = len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])
+        result_prefix = '%s%02d' % (timestamp, number_of_results)
         
         # prepare result
         result = {}    
@@ -83,8 +88,14 @@ def evaluate(f, repetitions=1, processes=None, **kwargs):
         result['iter_arg_name'] = iter_arg_name
         result['iter_arg'] = iter_arg
         result['kwargs'] = fkwargs
-        result['filename'] = inspect.stack()[1][1]
+        result['script'] = ([s for s in inspect.stack() if os.path.basename(s[1]) != 'plotter.py'] + [None])[0]
         result['repetitions'] = repetitions
+        result['result_prefix'] = result_prefix
+        
+        if save_result:
+            with open('plotter_results/%s.pkl' % result_prefix, 'wb') as f:
+                pickle.dump(result, f)
+        
         return result
     
     return
@@ -96,6 +107,9 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
     Plots the real-valued function f using the given keyword arguments. One of 
     the arguments must be an iterable, which is used for the x-axis.
     """
+
+    # makes evaluate() independent from matplotlib
+    from matplotlib import pyplot as plt
 
     # run the experiment
     result = evaluate(f, repetitions=repetitions, **kwargs)
@@ -124,7 +138,7 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
 
     # describe plot
     plt.xlabel(result['iter_arg_name'])
-    plt.suptitle(inspect.stack()[1][1])
+    plt.suptitle(result['script'])
     plotted_args = result['kwargs'].copy()
     if repetitions > 1:
         plotted_args['repetitions'] = repetitions
@@ -137,8 +151,7 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
     if save_plot:
         if not os.path.exists('plotter_results'):
             os.makedirs('plotter_results')
-        timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
-        plt.savefig('plotter_results/%s%02d.png' % (timestamp, len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])))
+        plt.savefig('plotter_results/%s.png' % result['result_prefix'])
 
     # show plot
     if show_plot:
@@ -175,6 +188,7 @@ def _example_func(x, y='ignore me!', z=False):
 
 
 def main():
+    from matplotlib import pyplot as plt
     plt.subplot(1, 2, 1)
     plot(_example_func, x=0, y=range(10), repetitions=10, show_plot=False)
     plt.subplot(1, 2, 2)
