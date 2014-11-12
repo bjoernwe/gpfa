@@ -11,10 +11,9 @@ from matplotlib import pyplot as plt
 
 
 
-def plot(f, **kwargs):
+def evaluate(f, repetitions=1, processes=None, **kwargs):
     """
-    Plots the real-valued function f using its given arguments. One of the 
-    arguments to be an iterable, which is used for the x-axis.
+    
     """
     
     # look for iterable arguments
@@ -40,85 +39,110 @@ def plot(f, **kwargs):
         fargspecs = inspect.getargspec(f)
         fkwargs = {}
         if fargspecs.defaults is not None:
-            default_args = dict(zip(fargspecs.args[-len(fargspecs.defaults):], fargspecs.defaults))
-            fkwargs = default_args.copy()
+            fkwargs = dict(zip(fargspecs.args[-len(fargspecs.defaults):], fargspecs.defaults))
         fkwargs.update(kwargs)
 
-        # extract arguments for plotter itself
-        iter_arg_name = iterable_arguments[0]
-        iter_arg      = fkwargs.pop(iter_arg_name)
-        save_plot     = fkwargs.pop('save_plot', True)
-        show_plot     = fkwargs.pop('show_plot', True)
-        repetitions   = fkwargs.pop('repetitions', 1)
-        processes     = fkwargs.pop('processes', None)
-        if processes is None:
-            processes = multiprocessing.cpu_count()
-
         # make sure, all arguments are defined for function f
-        undefined_args = set(fargspecs.args)
-        undefined_args.discard(iter_arg_name)  # remove iterable argument
-        undefined_args.difference_update(fkwargs.keys())  # remove other known arguments
-        if len(undefined_args) > 0:
+        if len(fargspecs.args) > len(fkwargs):
+            undefined_args = set(fargspecs.args) - set(fkwargs.keys())
             print 'Error: Undefined arguments:', str.join(', ', undefined_args)
             return
+
+        # the iterable argument and its name
+        iter_arg_name = iterable_arguments[0]
+        iter_arg      = fkwargs.pop(iter_arg_name)
 
         # wrap function f
         f_partial = functools.partial(_f_wrapper, iter_arg_name=iter_arg_name, f=f,
                                       **fkwargs)
 
         # prepare argument list for repetitions
+        f_iter_arg = iter_arg
         if repetitions > 1:
-            old_arg = iter_arg
-            iter_arg = np.array(iter_arg)
-            iter_arg = np.repeat(iter_arg, repetitions)
+            f_iter_arg = np.repeat(iter_arg, repetitions)
 
         # start a pool of processes
+        if processes is None:
+            processes = multiprocessing.cpu_count()
         time_start = time.localtime()
         pool = multiprocessing.Pool(processes=processes)
-        result = pool.map(f_partial, iter_arg, chunksize=1)
+        values = pool.map(f_partial, f_iter_arg, chunksize=1)
         pool.close()
         pool.join()
         time_stop = time.localtime()
 
-        # calculate running time
-        time_diff = time.mktime(time_stop) - time.mktime(time_start)
-        time_delta = datetime.timedelta(seconds=time_diff)
-        time_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
-        if time_start.tm_yday == time_stop.tm_yday:
-            time_stop_str = time.strftime('%H:%M:%S', time_start)
-        else:
-            time_stop_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
-
-        # either errorbar plot or regular plot
+        # re-arrange repetitions in 2d array
         if repetitions > 1:
-            iter_arg = old_arg
-            result = np.reshape(result, (len(iter_arg), repetitions))
-            plt.errorbar(iter_arg, np.mean(result, axis=1),
-                         yerr=np.std(result, axis=1))
-        else:
-            plt.plot(iter_arg, result)
+            values = np.reshape(values, (len(iter_arg), repetitions))
+        
+        # prepare result
+        result = {}    
+        result['values'] = values
+        result['time_start'] = time_start
+        result['time_stop'] = time_stop
+        result['iter_arg_name'] = iter_arg_name
+        result['iter_arg'] = iter_arg
+        result['kwargs'] = fkwargs
+        result['filename'] = inspect.stack()[1][1]
+        result['repetitions'] = repetitions
+        return result
+    
+    return
 
-        # describe plot
-        plt.xlabel(iter_arg_name)
-        plt.suptitle(inspect.stack()[1][1])
-        plotted_args = fkwargs.copy()
-        if repetitions > 1:
-            plotted_args['repetitions'] = repetitions
-        plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
-                  'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()]),
-                  fontsize=12)
-        plt.subplots_adjust(top=0.85)
 
-        if save_plot:
-            if not os.path.exists('plotter_results'):
-                os.makedirs('plotter_results')
-            timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
-            plt.savefig('plotter_results/%s%02d.png' % (timestamp, len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])))
 
-        if show_plot:
-            plt.show()
+def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwargs):
+    """
+    Plots the real-valued function f using the given keyword arguments. One of 
+    the arguments must be an iterable, which is used for the x-axis.
+    """
 
+    # run the experiment
+    result = evaluate(f, repetitions=repetitions, **kwargs)
+    if result is None:
         return
+    
+    # calculate running time
+    time_start = result['time_start']
+    time_stop = result['time_stop']
+    time_diff = time.mktime(time_stop) - time.mktime(time_start)
+    time_delta = datetime.timedelta(seconds=time_diff)
+    time_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
+    if time_start.tm_yday == time_stop.tm_yday:
+        time_stop_str = time.strftime('%H:%M:%S', time_start)
+    else:
+        time_stop_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
+
+    # either errorbar plot or regular plot
+    x_values = result['iter_arg']
+    y_values = result['values']
+    if repetitions > 1:
+        plt.errorbar(x_values, np.mean(y_values, axis=1),
+                     yerr=np.std(y_values, axis=1))
+    else:
+        plt.plot(x_values, y_values)
+
+    # describe plot
+    plt.xlabel(result['iter_arg_name'])
+    plt.suptitle(inspect.stack()[1][1])
+    plotted_args = result['kwargs'].copy()
+    if repetitions > 1:
+        plotted_args['repetitions'] = repetitions
+    plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
+              'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()]),
+              fontsize=12)
+    plt.subplots_adjust(top=0.85)
+
+    # save plot in file
+    if save_plot:
+        if not os.path.exists('plotter_results'):
+            os.makedirs('plotter_results')
+        timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
+        plt.savefig('plotter_results/%s%02d.png' % (timestamp, len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])))
+
+    # show plot
+    if show_plot:
+        plt.show()
 
     return
 
