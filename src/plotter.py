@@ -13,8 +13,8 @@ from matplotlib import pyplot as plt
 
 def plot(f, **kwargs):
     """
-    Plots the real-valued function f using its given arguments. One of the argument
-    is expected to be an iterable, which is used for the x-axis.
+    Plots the real-valued function f using its given arguments. One of the 
+    arguments to be an iterable, which is used for the x-axis.
     """
     
     # look for iterable arguments
@@ -47,9 +47,11 @@ def plot(f, **kwargs):
         # extract arguments for plotter itself
         iter_arg_name = iterable_arguments[0]
         iter_arg      = fkwargs.pop(iter_arg_name)
-        processes     = fkwargs.pop('processes', multiprocessing.cpu_count())
         show_plot     = fkwargs.pop('show_plot', True)
         repetitions   = fkwargs.pop('repetitions', 1)
+        processes     = fkwargs.pop('processes', None)
+        if processes is None:
+            processes = multiprocessing.cpu_count()
 
         # make sure, all arguments are defined for function f
         undefined_args = set(fargspecs.args)
@@ -104,6 +106,10 @@ def plot(f, **kwargs):
         plt.subplots_adjust(top=0.85)
 
         if show_plot:
+            if not os.path.exists('plotter_results'):
+                os.makedirs('plotter_results')
+            timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
+            plt.savefig('plotter_results/%s%02d.png' % (timestamp, len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])))
             plt.show()
 
         return
@@ -121,7 +127,7 @@ def _f_wrapper(arg, iter_arg_name, f, **kwargs):
     the current process (default: 10). Also the NumPy's random number generator 
     is initialized with a new seed.
     """
-    os.nice(kwargs.pop('niceness', 10))
+    os.nice(kwargs.pop('niceness', 20))
     np.random.seed()
     kwargs[iter_arg_name] = arg
     return f(**kwargs)
