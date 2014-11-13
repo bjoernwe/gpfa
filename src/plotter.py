@@ -76,9 +76,9 @@ def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
             values = np.reshape(values, (len(iter_arg), repetitions))
             
         # calculate a prefix for result files
-        timestamp = time.strftime('%Y%m%d%H%M%S', time_start)
-        number_of_results = len([f for f in os.listdir('plotter_results/') if f.startswith(timestamp)])
-        result_prefix = '%s%02d' % (timestamp, number_of_results)
+        timestamp = time.strftime('%Y%m%d_%H%M%S', time_start)
+        number_of_results = len(set([os.path.splitext(f)[0] for f in os.listdir('plotter_results/') if f.startswith(timestamp)]))
+        result_prefix = '%s_%02d' % (timestamp, number_of_results)
         
         # prepare result
         result = {}    
@@ -88,11 +88,13 @@ def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
         result['iter_arg_name'] = iter_arg_name
         result['iter_arg'] = iter_arg
         result['kwargs'] = fkwargs
-        result['script'] = ([s for s in inspect.stack() if os.path.basename(s[1]) != 'plotter.py'] + [None])[0]
+        result['script'] = ([s[1] for s in inspect.stack() if os.path.basename(s[1]) != 'plotter.py'] + [None])[0]
         result['repetitions'] = repetitions
         result['result_prefix'] = result_prefix
         
         if save_result:
+            if not os.path.exists('plotter_results'):
+                os.makedirs('plotter_results')
             with open('plotter_results/%s.pkl' % result_prefix, 'wb') as f:
                 pickle.dump(result, f)
         
@@ -157,7 +159,7 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
     if show_plot:
         plt.show()
 
-    return
+    return result
 
 
 
