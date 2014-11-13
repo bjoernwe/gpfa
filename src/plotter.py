@@ -18,7 +18,7 @@ def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
     
     # look for iterable arguments
     iterable_arguments = [k for (k, v) in kwargs.items() 
-                          if isinstance(v, collections.Iterable)]
+                          if isinstance(v, collections.Iterable) and not isinstance(v, str)]
 
     if len(iterable_arguments) == 0:
 
@@ -77,7 +77,9 @@ def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
             
         # calculate a prefix for result files
         timestamp = time.strftime('%Y%m%d_%H%M%S', time_start)
-        number_of_results = len(set([os.path.splitext(f)[0] for f in os.listdir('plotter_results/') if f.startswith(timestamp)]))
+        number_of_results = 0
+        if os.path.exists('plotter_results'):
+            number_of_results = len(set([os.path.splitext(f)[0] for f in os.listdir('plotter_results/') if f.startswith(timestamp)]))
         result_prefix = '%s_%02d' % (timestamp, number_of_results)
         
         # prepare result
