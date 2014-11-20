@@ -112,14 +112,31 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
     the arguments must be an iterable, which is used for the x-axis.
     """
 
-    # makes evaluate() independent from matplotlib
-    from matplotlib import pyplot as plt
-
     # run the experiment
-    result = evaluate(f, repetitions=repetitions, **kwargs)
+    result = evaluate(f, repetitions=repetitions, processes=processes, **kwargs)
     if result is None:
         return
+
+    if save_plot or show_plot:
+        plot_result(result, save_plot=save_plot, show_plot=show_plot)
+
+    return result
+
+
+
+def plot_result(result, save_plot=True, show_plot=True):
+    """
+    Either expects a filename of pickled results or directly the results of
+    evaluate().
+    """
+
+    # makes evaluate() independent from matplotlib
+    from matplotlib import pyplot as plt
     
+    # read result from file
+    if isinstance(result, str):
+        result = pickle.load(open('plotter_results/' + result))
+
     # calculate running time
     time_start = result['time_start']
     time_stop = result['time_stop']
@@ -134,7 +151,7 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
     # either errorbar plot or regular plot
     x_values = result['iter_arg']
     y_values = result['values']
-    if repetitions > 1:
+    if result['repetitions'] > 1:
         plt.errorbar(x_values, np.mean(y_values, axis=1),
                      yerr=np.std(y_values, axis=1))
     else:
@@ -144,8 +161,8 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwa
     plt.xlabel(result['iter_arg_name'])
     plt.suptitle(result['script'])
     plotted_args = result['kwargs'].copy()
-    if repetitions > 1:
-        plotted_args['repetitions'] = repetitions
+    if result['repetitions'] > 1:
+        plotted_args['repetitions'] = result['repetitions']
     plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
               'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()]),
               fontsize=12)
@@ -191,8 +208,27 @@ def _example_func(x, y='ignore me!', z=False):
 
 
 
+def list_results():
+    """
+    Prints a summary of all previous results saved in sub-directory 
+    'plotter_results'.
+    """
+    if os.path.exists('plotter_results'):
+        files = [f for f in os.listdir('plotter_results/') if os.path.splitext(f)[1] == '.pkl']
+        files = sorted(files)
+        for f in files:
+            result = pickle.load(open('plotter_results/' + f))
+            print '%s  <%s>  \t%s, %s' % (result['result_prefix'], 
+                                       os.path.basename(result['script']),
+                                       result['iter_arg_name'],
+                                       ', '.join(['%s=%s' % (k,v) for (k,v) in result['kwargs'].items()]))
+    return
+
+
+
 def main():
     from matplotlib import pyplot as plt
+    list_results()
     plt.subplot(1, 2, 1)
     plot(_example_func, x=0, y=range(10), repetitions=10, show_plot=False)
     plt.subplot(1, 2, 2)
