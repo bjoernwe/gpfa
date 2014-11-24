@@ -10,7 +10,7 @@ import time
 
 
 
-def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
+def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
     """
     Evaluates the real-valued function f using the given keyword arguments. One 
     of the arguments must be an iterable, which is used for parallel evaluation.
@@ -106,7 +106,7 @@ def evaluate(f, repetitions=1, processes=None, save_result=True, **kwargs):
 
 
 
-def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=True, **kwargs):
+def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=False, **kwargs):
     """
     Plots the real-valued function f using the given keyword arguments. One of 
     the arguments must be an iterable, which is used for the x-axis.
@@ -219,7 +219,7 @@ def list_results():
         for f in files:
             result = pickle.load(open('plotter_results/' + f))
             print '%s  <%s>  \t%s, %s' % (result['result_prefix'], 
-                                       os.path.basename(result['script']),
+                                       os.path.basename(str(result['script'])),
                                        result['iter_arg_name'],
                                        ', '.join(['%s=%s' % (k,v) for (k,v) in result['kwargs'].items()]))
     return
