@@ -117,9 +117,7 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=False, **kw
     if result is None:
         return
 
-    if save_plot or show_plot:
-        plot_result(result, save_plot=save_plot, show_plot=show_plot)
-
+    plot_result(result, save_plot=save_plot, show_plot=show_plot)
     return result
 
 
@@ -148,14 +146,20 @@ def plot_result(result, save_plot=True, show_plot=True):
     else:
         time_stop_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
 
-    # either errorbar plot or regular plot
+    # plot
     x_values = result['iter_arg']
     y_values = result['values']
+    y_err = np.zeros(len(x_values))
+    # plot with error interval
     if result['repetitions'] > 1:
-        plt.errorbar(x_values, np.mean(y_values, axis=1),
-                     yerr=np.std(y_values, axis=1))
+        y_err = np.std(y_values, axis=1)
+        y_values = np.mean(y_values, axis=1)
+    # bar plot or numeric x-axis
+    if isinstance(x_values[0], int) or isinstance(x_values[0], float):
+        plt.errorbar(x_values, y_values, yerr=y_err)
     else:
-        plt.plot(x_values, y_values)
+        plt.bar(range(len(x_values)), y_values, yerr=y_err, align='center')
+        plt.xticks(range(len(x_values)), [str(x) for x in x_values])
 
     # describe plot
     plt.xlabel(result['iter_arg_name'])
