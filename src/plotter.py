@@ -6,6 +6,7 @@ import multiprocessing
 import numpy as np
 import os
 import pickle
+import textwrap
 import time
 
 
@@ -167,8 +168,10 @@ def plot_result(result, save_plot=True, show_plot=True):
     plotted_args = result['kwargs'].copy()
     if result['repetitions'] > 1:
         plotted_args['repetitions'] = result['repetitions']
+    parameter_text = 'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()])
+    parameter_text = str.join('\n', textwrap.wrap(parameter_text, 100))
     plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
-              'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()]),
+              parameter_text,
               fontsize=12)
     plt.subplots_adjust(top=0.85)
 
