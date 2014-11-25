@@ -7,6 +7,40 @@ import scipy.spatial.distance
 import mdp
 
 
+
+def calc_predictability_star(data, k):
+
+    # pairwise distances of data points
+    N, _ = data.shape
+    distances = scipy.spatial.distance.pdist(data)
+    distances = scipy.spatial.distance.squareform(distances)
+    neighbors = [set(np.argsort(distances[i])[:k+1]).difference([i]) for i in xrange(N)]
+
+    v = 0
+    for t in range(N-1):
+        x = data[t+1]
+        v += np.mean([np.linalg.norm(x - data[s+1])**2 for s in neighbors[t] if s+1 < N])
+    v /= N-1
+    return v
+
+
+
+def calc_predictability_var(data, k):
+
+    # pairwise distances of data points
+    N, _ = data.shape
+    distances = scipy.spatial.distance.pdist(data)
+    distances = scipy.spatial.distance.squareform(distances)
+    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+
+    v = 0
+    for t in range(N-1):
+        v += np.mean([np.linalg.norm(data[i+1] - data[j+1])**2 for i, j in itertools.combinations(neighbors[t], 2) if i+1 < N and j+1 < N])
+    v /= N-1
+    return v
+
+
+
 class RandomProjection(mdp.Node):
 
     def __init__(self, output_dim, input_dim=None, dtype=None):
@@ -96,7 +130,7 @@ class LPP(mdp.Node):
 
 class gPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=5, iterations=1, iteration_dim=None,
+    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
                  variance_graph=False, neighborhood_graph=True, 
                  constraint_optimization=True, input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
@@ -171,19 +205,14 @@ class gPFA(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
+                iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
                 if self.constraint_optimization:
-                    if type(self.iteration_dim) == int:
-                        _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
-                    else:
-                        _, U = scipy.linalg.eigh(L2, b=D2)
+                    _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, iteration_dim-1))
                     # normalize eigenvectors 
                     for i in range(U.shape[1]):
                         U[:,i] /= np.linalg.norm(U[:,i])
                 else:
-                    if type(self.iteration_dim) == int:
-                        _, U = scipy.linalg.eigh(L2, eigvals=(0, self.output_dim-1))
-                    else:
-                        _, U = scipy.linalg.eigh(L2)
+                    _, U = scipy.linalg.eigh(L2, eigvals=(0, iteration_dim-1))
                 y = x.dot(U)
 
         # add chunk result to global result
@@ -199,18 +228,12 @@ class gPFA(mdp.Node):
 
     def _stop_training(self):
         if self.constraint_optimization:
-            if self.input_dim == self.output_dim:
-                self.E, self.U = scipy.linalg.eigh(self.L, b=self.D)
-            else:
-                self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
             # normalize eigenvectors 
             for i in range(self.U.shape[1]):
                 self.U[:,i] /= np.linalg.norm(self.U[:,i])
         else:
-            if self.input_dim == self.output_dim:
-                self.E, self.U = scipy.linalg.eigh(self.L)
-            else:
-                self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
+            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
     
         # normalize directions
         mask = self.U[0,:] > 0
