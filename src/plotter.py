@@ -107,7 +107,7 @@ def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
 
 
 
-def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=False, **kwargs):
+def plot(f, repetitions=1, processes=None, legend=None, show_plot=True, save_plot=False, **kwargs):
     """
     Plots the real-valued function f using the given keyword arguments. One of 
     the arguments must be an iterable, which is used for the x-axis.
@@ -118,12 +118,12 @@ def plot(f, repetitions=1, processes=None, show_plot=True, save_plot=False, **kw
     if result is None:
         return
 
-    plot_result(result, save_plot=save_plot, show_plot=show_plot)
+    plot_result(result, legend=legend, save_plot=save_plot, show_plot=show_plot)
     return result
 
 
 
-def plot_result(result, save_plot=True, show_plot=True):
+def plot_result(result, legend=None, save_plot=True, show_plot=True):
     """
     Either expects a filename of pickled results or directly the results of
     evaluate().
@@ -174,6 +174,8 @@ def plot_result(result, save_plot=True, show_plot=True):
               parameter_text,
               fontsize=12)
     plt.subplots_adjust(top=0.85)
+    if legend is not None:
+        plt.legend(legend)
 
     # save plot in file
     if save_plot:
