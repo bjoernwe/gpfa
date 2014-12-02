@@ -63,13 +63,16 @@ def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
             f_iter_arg = np.repeat(iter_arg, repetitions)
 
         # start a pool of processes
+        time_start = time.localtime()
         if processes is None:
             processes = multiprocessing.cpu_count()
-        time_start = time.localtime()
-        pool = multiprocessing.Pool(processes=processes)
-        values = pool.map(f_partial, f_iter_arg, chunksize=1)
-        pool.close()
-        pool.join()
+        if processes == 1:
+            values = map(f_partial, f_iter_arg)
+        else:
+            pool = multiprocessing.Pool(processes=processes)
+            values = pool.map(f_partial, f_iter_arg, chunksize=1)
+            pool.close()
+            pool.join()
         time_stop = time.localtime()
 
         # re-arrange repetitions in 2d array
