@@ -176,7 +176,7 @@ def plot_result(result, legend=None, save_plot=True, show_plot=True):
     plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
               parameter_text,
               fontsize=12)
-    plt.subplots_adjust(top=0.85)
+    plt.subplots_adjust(top=0.8)
     if legend is not None:
         plt.legend(legend)
 
