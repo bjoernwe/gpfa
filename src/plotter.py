@@ -241,7 +241,7 @@ def list_results():
 
 def main():
     from matplotlib import pyplot as plt
-    #list_results()
+    list_results()
     plt.subplot(1, 2, 1)
     plot(_example_func, x=0, y=range(10), repetitions=10, show_plot=False)
     plt.subplot(1, 2, 2)
