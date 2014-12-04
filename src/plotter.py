@@ -155,11 +155,9 @@ def plot_result(result, legend=None, save_plot=True, show_plot=True):
     # plot
     x_values = result.iter_arg
     y_values = result.values
-    y_err = np.zeros(len(x_values))
     # plot with error interval
-    if result.repetitions > 1:
-        y_err = np.std(y_values, axis=1)
-        y_values = np.mean(y_values, axis=1)
+    y_err = np.std(y_values, axis=1)
+    y_values = np.mean(y_values, axis=1)
     # bar plot or numeric x-axis
     if isinstance(x_values[0], int) or isinstance(x_values[0], float):
         plt.errorbar(x_values, y_values, yerr=y_err)
