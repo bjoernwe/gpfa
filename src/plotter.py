@@ -13,20 +13,16 @@ import time
 
 def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
     """
-    Evaluates the real-valued function f using the given keyword arguments. One 
-    of the arguments must be an iterable, which is used for parallel evaluation.
+    Evaluates the real-valued function f using the given keyword arguments. 
+    Usually, one of the arguments is an iterable which is used for parallel 
+    evaluation.
     """
     
     # look for iterable arguments
     iterable_arguments = [k for (k, v) in kwargs.items() 
                           if isinstance(v, collections.Iterable) and not isinstance(v, str)]
 
-    if len(iterable_arguments) == 0:
-
-        print 'Warning: No iterable argument found for plotting.'
-        return
-
-    elif len(iterable_arguments) >= 2:
+    if len(iterable_arguments) >= 2:
 
         print 'Warning: More than one iterable argument found for plotting.'
         return
@@ -50,8 +46,12 @@ def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
             return
 
         # the iterable argument and its name
-        iter_arg_name = iterable_arguments[0]
-        iter_arg      = fkwargs.pop(iter_arg_name)
+        if len(iterable_arguments) == 0:
+            iter_arg_name = None
+            iter_arg      = [None]
+        else:
+            iter_arg_name = iterable_arguments[0]
+            iter_arg      = fkwargs.pop(iter_arg_name)
 
         # wrap function f
         f_partial = functools.partial(_f_wrapper, iter_arg_name=iter_arg_name, f=f,
@@ -205,7 +205,8 @@ def _f_wrapper(arg, iter_arg_name, f, **kwargs):
     """
     os.nice(kwargs.pop('niceness', 20))
     np.random.seed()
-    kwargs[iter_arg_name] = arg
+    if iter_arg_name is not None:
+        kwargs[iter_arg_name] = arg
     return f(**kwargs)
 
 
