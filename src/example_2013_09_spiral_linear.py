@@ -12,9 +12,8 @@ Axes3D
 import mdp
 
 import gpfa
-import fpp
 
-#import PFANodeMDP
+import PFANodeMDP
 #import PFANodeMDPRefImp
 
 from envs.env_ribbon import EnvRibbon
@@ -25,17 +24,17 @@ def example_spiral_linear():
 
     # parameters
     k = 10
-    N = 2000
+    N = 4000
     expansion = 1
-    noisy_dims = 100-2
+    noisy_dims = 300-2
     whitening = True
     chunks = 1
 
     # algorithms
     models = []
     models.append(mdp.nodes.SFANode())
-    #models.append(PFANodeMDP.PFANode(p=2, k=4, affine=False, output_dim=2))
-    #models.append(PFANodeMDP.PFANode(p=2, k=8, affine=False, output_dim=2))
+    models.append(PFANodeMDP.PFANode(p=2, k=4, affine=False, output_dim=2))
+    models.append(PFANodeMDP.PFANode(p=2, k=8, affine=False, output_dim=2))
     #models.append(mdp.nodes.LLENode(k=k))
     #models.append(mdp.nodes.HLLENode(k=55))
     #models.append(future_preserving_map.FuturePreservingMap(output_dim=2,
@@ -43,8 +42,8 @@ def example_spiral_linear():
     #                            k=k,
     #                            normalized_laplacian=normalized_laplacian,
     #                            neighbor_edges=neighbor_edges))
-    for i in range(1, 4+1):
-        models.append(gpfa.gPFA(output_dim=2, k=k, iterations=4*i, iteration_dim=10, variance_graph=False))
+    for i in range(1, 3+1):
+        models.append(gpfa.gPFA(output_dim=2, k=k, iterations=4*i, iteration_dim=150, variance_graph=True))
         #models.append(fpp.gPFA(output_dim=2, k=k, iterations=4*i, iteration_dim=10))
         #models.append(fpp.FPP(output_dim=2,
         #                      k=k,
