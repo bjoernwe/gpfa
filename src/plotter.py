@@ -11,6 +11,10 @@ import time
 
 
 
+Result = collections.namedtuple('Result', ['values', 'time_start', 'time_stop', 'iter_arg_name', 'iter_arg', 'kwargs', 'script', 'repetitions', 'result_prefix'])
+
+
+
 def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
     """
     Evaluates the real-valued function f using the given keyword arguments. 
@@ -74,10 +78,9 @@ def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
             pool.close()
             pool.join()
         time_stop = time.localtime()
-
+        
         # re-arrange repetitions in 2d array
-        if repetitions > 1:
-            values = np.reshape(values, (len(iter_arg), repetitions))
+        values = np.reshape(values, (len(iter_arg), repetitions))
             
         # calculate a prefix for result files
         timestamp = time.strftime('%Y%m%d_%H%M%S', time_start)
@@ -87,16 +90,15 @@ def evaluate(f, repetitions=1, processes=None, save_result=False, **kwargs):
         result_prefix = '%s_%02d' % (timestamp, number_of_results)
         
         # prepare result
-        result = {}    
-        result['values'] = values
-        result['time_start'] = time_start
-        result['time_stop'] = time_stop
-        result['iter_arg_name'] = iter_arg_name
-        result['iter_arg'] = iter_arg
-        result['kwargs'] = fkwargs
-        result['script'] = ([s[1] for s in inspect.stack() if os.path.basename(s[1]) != 'plotter.py'] + [None])[0]
-        result['repetitions'] = repetitions
-        result['result_prefix'] = result_prefix
+        result = Result(values=values,
+                        time_start=time_start,
+                        time_stop=time_stop,
+                        iter_arg_name=iter_arg_name,
+                        iter_arg=iter_arg,
+                        kwargs=fkwargs,
+                        script=([s[1] for s in inspect.stack() if os.path.basename(s[1]) != 'plotter.py'] + [None])[0],
+                        repetitions=repetitions,
+                        result_prefix=result_prefix)
         
         if save_result:
             if not os.path.exists('plotter_results'):
@@ -140,8 +142,8 @@ def plot_result(result, legend=None, save_plot=True, show_plot=True):
         result = pickle.load(open('plotter_results/' + result))
 
     # calculate running time
-    time_start = result['time_start']
-    time_stop = result['time_stop']
+    time_start = result.time_start
+    time_stop = result.time_stop
     time_diff = time.mktime(time_stop) - time.mktime(time_start)
     time_delta = datetime.timedelta(seconds=time_diff)
     time_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
@@ -151,11 +153,11 @@ def plot_result(result, legend=None, save_plot=True, show_plot=True):
         time_stop_str = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
 
     # plot
-    x_values = result['iter_arg']
-    y_values = result['values']
+    x_values = result.iter_arg
+    y_values = result.values
     y_err = np.zeros(len(x_values))
     # plot with error interval
-    if result['repetitions'] > 1:
+    if result.repetitions > 1:
         y_err = np.std(y_values, axis=1)
         y_values = np.mean(y_values, axis=1)
     # bar plot or numeric x-axis
@@ -166,11 +168,11 @@ def plot_result(result, legend=None, save_plot=True, show_plot=True):
         plt.xticks(range(len(x_values)), [str(x) for x in x_values])
 
     # describe plot
-    plt.xlabel(result['iter_arg_name'])
-    plt.suptitle(result['script'])
-    plotted_args = result['kwargs'].copy()
-    if result['repetitions'] > 1:
-        plotted_args['repetitions'] = result['repetitions']
+    plt.xlabel(result.iter_arg_name)
+    plt.suptitle(result.script)
+    plotted_args = result.kwargs.copy()
+    if result.repetitions > 1:
+        plotted_args['repetitions'] = result.repetitions
     parameter_text = 'Parameters: %s' % str.join(', ', ['%s=%s' % (k,v) for k,v in plotted_args.items()])
     parameter_text = str.join('\n', textwrap.wrap(parameter_text, 100))
     plt.title('Time: %s - %s (%s)\n' % (time_start_str, time_stop_str, time_delta) + 
@@ -184,7 +186,7 @@ def plot_result(result, legend=None, save_plot=True, show_plot=True):
     if save_plot:
         if not os.path.exists('plotter_results'):
             os.makedirs('plotter_results')
-        plt.savefig('plotter_results/%s.png' % result['result_prefix'])
+        plt.savefig('plotter_results/%s.png' % result.result_prefix)
 
     # show plot
     if show_plot:
@@ -231,17 +233,17 @@ def list_results():
         files = sorted(files)
         for f in files:
             result = pickle.load(open('plotter_results/' + f))
-            print '%s  <%s>  \t%s, %s' % (result['result_prefix'], 
-                                       os.path.basename(str(result['script'])),
-                                       result['iter_arg_name'],
-                                       ', '.join(['%s=%s' % (k,v) for (k,v) in result['kwargs'].items()]))
+            print '%s  <%s>  \t%s, %s' % (result.result_prefix, 
+                                       os.path.basename(str(result.script)),
+                                       result.iter_arg_name,
+                                       ', '.join(['%s=%s' % (k,v) for (k,v) in result.kwargs.items()]))
     return
 
 
 
 def main():
     from matplotlib import pyplot as plt
-    list_results()
+    #list_results()
     plt.subplot(1, 2, 1)
     plot(_example_func, x=0, y=range(10), repetitions=10, show_plot=False)
     plt.subplot(1, 2, 2)
