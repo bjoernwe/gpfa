@@ -114,41 +114,25 @@ def calc_baseline(N, k, data='swiss_roll', measure='var'):
 def main():
     
     # parameters
-    algorithms = ['sfa', 'pfa', 'gpfa', 'random']#, 'foreca']
+    algorithms = ['random', 'foreca', 'pfa', 'gpfa']
     p = 2
     K = 8
     k = 100 # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200]
     N = 2000 #[1000, 2000, 3000, 4000, 5000] 1965
-    noisy_dims = [0, 100, 200, 300]#, 400, 500]#[0, 50, 100, 150, 200, 250, 300, 350, 400]
+    noisy_dims = [0, 1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
     keep_variance = 1. #[.98, .95, .90, .80]
-    iterations = 30 # [1, 10, 20, 30, 40, 50, 100]
+    iterations = 100 # [1, 10, 20, 30, 40, 50, 100]
     iteration_dim = 2 # [2, 5, 10, 20, 50, 100, 200]
     neighborhood_graph=True
     data = 'swiss_roll'
     measure = 'det_var'
     
     # plotter arguments
-    processes = 1#None
-    repetitions = 1
-    save_results = True
+    processes = None
+    repetitions = 50
+    save_results = False
 
-    # plot a baseline    
-    result_baseline = plotter.evaluate(calc_baseline, N=2000, k=k, data=data, measure=measure, repetitions=repetitions)
-    baseline = np.mean(result_baseline.values, axis=1)
-    plt.plot([0, noisy_dims[-1]], [baseline, baseline])
-
-#     print experiment(algorithm='pfa',
-#                      k=k,
-#                      N=N,
-#                      p=p,
-#                      K=K,
-#                      iterations=iterations,
-#                      noisy_dims=noisy_dims,
-#                      iteration_dim=iteration_dim,
-#                      variance_graph=False,
-#                      data=data,
-#                      measure='var')
-                     
+    # plot results from algorithms
     for i, a in enumerate(algorithms):
         is_last_iteration = (i==len(algorithms)-1)
         result = plotter.plot(experiment,
@@ -158,7 +142,7 @@ def main():
                               p=p,
                               K=K,
                               iterations=iterations,
-                              noisy_dims=noisy_dims,
+                              noisy_dims=noisy_dims[:6] if a == 'foreca' else noisy_dims,
                               keep_variance=keep_variance,
                               iteration_dim=iteration_dim,
                               variance_graph=False,
@@ -168,31 +152,40 @@ def main():
                               repetitions=repetitions,
                               measure='det_var',
                               save_result=save_results,
-                              save_plot=is_last_iteration,
-                              show_plot=is_last_iteration)
+                              save_plot=False,#is_last_iteration,
+                              show_plot=False)#is_last_iteration)
+  
+    # plot a baseline
+    result_baseline = plotter.evaluate(calc_baseline, N=2000, k=k, data=data, measure=measure, repetitions=repetitions)
+    baseline = np.mean(result_baseline.values, axis=1)
+    plt.plot([1, noisy_dims[-1]], [baseline, baseline], '--', color='black')
 
-#     plotter.plot(experiment,
-#                  algorithm=algorithms,
-#                  k=k,
-#                  N=N,
-#                  p=p,
-#                  K=K,
-#                  iterations=iterations,
-#                  noisy_dims=noisy_dims,
-#                  iteration_dim=iteration_dim,
-#                  variance_graph=False,
-#                  keep_variance=keep_variance,
-#                  neighborhood_graph=neighborhood_graph,
-#                  data=data,
-#                  processes=processes,
-#                  repetitions=repetitions,
-#                  measure='det_var',
-#                  save_result=save_results,
-#                  save_plot=True,
-#                  show_plot=True)
-
-    plt.legend(['baseline'] + algorithms)
+    # show plot
+    plt.legend(algorithms + ['baseline'], loc='best')
+    plt.gca().set_xscale('log')
     plt.savefig('plotter_results/%s.png' % result.result_prefix)
+    plt.show()
+
+#     result = plotter.plot(experiment,
+#                           algorithm=algorithms,
+#                           k=k,
+#                           N=N,
+#                           p=p,
+#                           K=K,
+#                           iterations=iterations,
+#                           noisy_dims=noisy_dims,
+#                           iteration_dim=iteration_dim,
+#                           variance_graph=False,
+#                           keep_variance=keep_variance,
+#                           neighborhood_graph=neighborhood_graph,
+#                           data=data,
+#                           processes=processes,
+#                           repetitions=repetitions,
+#                           measure='det_var',
+#                           save_result=save_results,
+#                           save_plot=True,
+#                           show_plot=True)
+
     return
 
 
