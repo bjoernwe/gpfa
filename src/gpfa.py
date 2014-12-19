@@ -44,7 +44,35 @@ def calc_predictability_graph_var(data, k):
 
 
 
+# def calc_predictability_det_var(data, k):
+# 
+#     if data.ndim == 1:
+#         data = np.array(data, ndmin=2).T
+# 
+#     # pairwise distances of data points
+#     N, _ = data.shape
+#     distances = scipy.spatial.distance.pdist(data)
+#     distances = scipy.spatial.distance.squareform(distances)
+#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+# 
+#     v = 0
+#     for t in range(N-1):
+#         successors = neighbors[t] + 1
+#         successors = successors[successors<N]
+#         suc_dat = data[successors]
+#         covariance = np.array(np.cov(suc_dat.T), ndmin=2)
+#         det = np.linalg.det(covariance)
+#         v += det
+#     v /= N-1
+#     return v
+
 def calc_predictability_det_var(data, k):
+    
+    def _det(t):
+        successors = neighbors[t] + 1
+        successors = successors[successors<N]
+        suc_dat = data[successors]
+        return np.linalg.det(np.array(np.cov(suc_dat.T), ndmin=2))
 
     if data.ndim == 1:
         data = np.array(data, ndmin=2).T
@@ -54,17 +82,60 @@ def calc_predictability_det_var(data, k):
     distances = scipy.spatial.distance.pdist(data)
     distances = scipy.spatial.distance.squareform(distances)
     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+    
+    determinants = map(_det, range(N-1))
+    #print 'determinant: %f +- %f' % (np.mean(determinants), np.std(determinants))
+    return np.mean(determinants)
 
-    v = 0
-    for t in range(N-1):
+
+
+def calc_predictability_var_det(data, k):
+    
+    def _cov(t):
         successors = neighbors[t] + 1
         successors = successors[successors<N]
         suc_dat = data[successors]
-        covariance = np.array(np.cov(suc_dat.T), ndmin=2)
-        det = np.linalg.det(covariance)
-        v += det
-    v /= N-1
-    return v
+        return np.array(np.cov(suc_dat.T), ndmin=2)
+
+    if data.ndim == 1:
+        data = np.array(data, ndmin=2).T
+
+    # pairwise distances of data points
+    N, _ = data.shape
+    distances = scipy.spatial.distance.pdist(data)
+    distances = scipy.spatial.distance.squareform(distances)
+    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+    
+    covariances = map(_cov, range(N-1))
+    covariance = reduce(lambda x,y: x+y, covariances) / (N-1)
+    return np.linalg.det(covariance)
+
+
+
+def calc_predictability_sum_eig(data, k):
+    
+    def _cov(t):
+        successors = neighbors[t] + 1
+        successors = successors[successors<N]
+        suc_dat = data[successors]
+        return np.array(np.cov(suc_dat.T), ndmin=2)
+    
+    def _eig(C):
+        E, _ = np.linalg.eigh(C)
+        return np.sum(E)
+
+    if data.ndim == 1:
+        data = np.array(data, ndmin=2).T
+
+    # pairwise distances of data points
+    N, _ = data.shape
+    distances = scipy.spatial.distance.pdist(data)
+    distances = scipy.spatial.distance.squareform(distances)
+    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+    
+    covariances = map(_cov, range(N-1))
+    eigenvalues = map(_eig, covariances)
+    return np.mean(eigenvalues)
 
 
 
@@ -83,7 +154,7 @@ class RandomProjection(mdp.Node):
         D = self.input_dim
         A = np.random.random((D, D))
         A = A + A.T
-        _, self.U = scipy.sparse.linalg.eigsh(A, k=self.output_dim)
+        _, self.U = scipy.linalg.eigh(A, eigvals=(0, self.output_dim-1))
         return
 
 

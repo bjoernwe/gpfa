@@ -10,7 +10,7 @@ import PFANodeMDP
 
 import foreca_node
 import gpfa
-import plotter
+import plottr
 
 sys.path.append('/home/weghebvc/workspace/Worldmodel/src/')
 from envs.env_face import EnvFace
@@ -19,7 +19,7 @@ from envs.env_swiss_roll import EnvSwissRoll
 
 
 
-def experiment(algorithm, N, k, p, K, iterations, noisy_dims, variance_graph, neighborhood_graph=False, keep_variance=1., iteration_dim=2, data='swiss_roll', measure='var'):
+def calc_projection(algorithm, N, k, p, K, iterations, noisy_dims, variance_graph, neighborhood_graph=False, keep_variance=1., iteration_dim=2, data='swiss_roll', measure='det_var'):
     
     assert algorithm in ['foreca', 'sfa', 'pfa', 'gpfa', 'random']
     assert data in ['oscillator', 'swiss_roll', 'face']
@@ -32,7 +32,7 @@ def experiment(algorithm, N, k, p, K, iterations, noisy_dims, variance_graph, ne
         data_train = data_train[0]
         data_test = data_test[0]
     elif data == 'oscillator':
-        env = EnvOscillator()
+        env = EnvOscillator(transition_prob=.9)
         data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
         data_train = data_train[0]
         data_test = data_test[0]
@@ -73,6 +73,26 @@ def experiment(algorithm, N, k, p, K, iterations, noisy_dims, variance_graph, ne
     
     # evaluate solution
     result = model.execute(data_test)
+    return result
+
+
+
+def calc_measure(algorithm, N, k, p, K, iterations, noisy_dims, variance_graph, neighborhood_graph=False, keep_variance=1., iteration_dim=2, data='swiss_roll', measure='var'):
+    
+    result = calc_projection(algorithm=algorithm, 
+                         N=N, 
+                         k=k, 
+                         p=p, 
+                         K=K, 
+                         iterations=iterations, 
+                         noisy_dims=noisy_dims, 
+                         variance_graph=variance_graph, 
+                         neighborhood_graph=neighborhood_graph, 
+                         keep_variance=keep_variance, 
+                         iteration_dim=iteration_dim, 
+                         data=data, 
+                         measure=measure)
+     
     if measure == 'det_var':
         return gpfa.calc_predictability_det_var(result, k)
     elif measure == 'graph_var':
@@ -114,49 +134,49 @@ def calc_baseline(N, k, data='swiss_roll', measure='var'):
 def main():
     
     # parameters
-    algorithms = ['random', 'foreca', 'pfa', 'gpfa']
+    algorithms = ['gpfa']#['random', 'sfa', 'foreca', 'pfa', 'gpfa']
     p = 2
     K = 8
-    k = 100 # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200]
+    k = 30 # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200]
     N = 2000 #[1000, 2000, 3000, 4000, 5000] 1965
-    noisy_dims = [1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
+    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]#, 200, 300, 400, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
     keep_variance = 1. #[.98, .95, .90, .80]
-    iterations = 100 # [1, 10, 20, 30, 40, 50, 100]
+    iterations = 50 # [1, 10, 20, 30, 40, 50, 100]
     iteration_dim = 2 # [2, 5, 10, 20, 50, 100, 200]
     neighborhood_graph=True
-    data = 'swiss_roll'
+    data = 'oscillator'
     measure = 'det_var'
     
     # plotter arguments
     processes = None
-    repetitions = 50
+    repetitions = 10
     save_results = False
 
     # plot results from algorithms
     for i, a in enumerate(algorithms):
         is_last_iteration = (i==len(algorithms)-1)
-        result = plotter.plot(experiment,
-                              algorithm=a,
-                              k=k,
-                              N=N,
-                              p=p,
-                              K=K,
-                              iterations=iterations,
-                              noisy_dims=noisy_dims[:6] if a == 'foreca' else noisy_dims,
-                              keep_variance=keep_variance,
-                              iteration_dim=iteration_dim,
-                              variance_graph=False,
-                              neighborhood_graph=neighborhood_graph,
-                              data=data,
-                              processes=processes,
-                              repetitions=repetitions,
-                              measure='det_var',
-                              save_result=save_results,
-                              save_plot=False,#is_last_iteration,
-                              show_plot=False)#is_last_iteration)
+        result = plottr.plot(calc_measure,
+                             algorithm=a,
+                             k=k,
+                             N=N,
+                             p=p,
+                             K=K,
+                             iterations=iterations,
+                             noisy_dims=noisy_dims[:6] if a == 'foreca' else noisy_dims,
+                             keep_variance=keep_variance,
+                             iteration_dim=iteration_dim,
+                             variance_graph=False,
+                             neighborhood_graph=neighborhood_graph,
+                             data=data,
+                             processes=processes,
+                             repetitions=repetitions,
+                             measure='det_var',
+                             save_result=save_results,
+                             save_plot=False,#is_last_iteration,
+                             show_plot=False)#is_last_iteration)
   
     # plot a baseline
-    result_baseline = plotter.evaluate(calc_baseline, N=2000, k=k, data=data, measure=measure, repetitions=repetitions)
+    result_baseline = plottr.evaluate(calc_baseline, N=2000, k=k, data=data, measure=measure, repetitions=repetitions)
     baseline = np.mean(result_baseline.values, axis=1)
     plt.plot([1, noisy_dims[-1]], [baseline, baseline], '--', color='black')
 
