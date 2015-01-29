@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 import scipy.linalg
-import scipy.sparse.linalg
 import scipy.spatial.distance
 
 import mdp
@@ -9,6 +8,9 @@ import mdp
 
 
 def calc_predictability_graph_star(data, k):
+    """
+    Averages the squared distances in a star-like graph.
+    """
 
     # pairwise distances of data points
     N, _ = data.shape
@@ -26,6 +28,10 @@ def calc_predictability_graph_star(data, k):
 
 
 def calc_predictability_graph_var(data, k):
+    """
+    Averages the squared distances in a fully connected graph.
+    """
+
 
     if data.ndim == 1:
         data = np.array(data, ndmin=2).T
@@ -40,33 +46,17 @@ def calc_predictability_graph_var(data, k):
     for t in range(N-1):
         v += np.mean([np.linalg.norm(data[i+1] - data[j+1])**2 for i, j in itertools.combinations(neighbors[t], 2) if i+1 < N and j+1 < N])
     v /= N-1
-    return .5*v
+    return v / 2.
 
 
 
-# def calc_predictability_det_var(data, k):
-# 
-#     if data.ndim == 1:
-#         data = np.array(data, ndmin=2).T
-# 
-#     # pairwise distances of data points
-#     N, _ = data.shape
-#     distances = scipy.spatial.distance.pdist(data)
-#     distances = scipy.spatial.distance.squareform(distances)
-#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-# 
-#     v = 0
-#     for t in range(N-1):
-#         successors = neighbors[t] + 1
-#         successors = successors[successors<N]
-#         suc_dat = data[successors]
-#         covariance = np.array(np.cov(suc_dat.T), ndmin=2)
-#         det = np.linalg.det(covariance)
-#         v += det
-#     v /= N-1
-#     return v
-
-def calc_predictability_det_var(data, k):
+def calc_predictability_avg_det_of_cov(data, k):
+    """
+    The assumption in the paper that the noise covariance is the same everywhere
+    probably doesn't hold on real-world data sets. Therefore this measure of
+    predictability calculated the determinant of the covariance for each time
+    step and returns the average.  
+    """
     
     def _det(t):
         successors = neighbors[t] + 1
@@ -84,12 +74,17 @@ def calc_predictability_det_var(data, k):
     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
     
     determinants = map(_det, range(N-1))
-    #print 'determinant: %f +- %f' % (np.mean(determinants), np.std(determinants))
     return np.mean(determinants)
 
 
 
-def calc_predictability_var_det(data, k):
+def calc_predictability_det_of_avg_cov(data, k):
+    """
+    Calculates the predictability as written in the paper. There it is assumed
+    that the noise covariance is the same everywhere. Therefore the empirical
+    covariances of all time steps are averaged and the determinant calculated in
+    the end.
+    """
     
     def _cov(t):
         successors = neighbors[t] + 1
@@ -141,8 +136,9 @@ def calc_predictability_sum_eig(data, k):
 
 class RandomProjection(mdp.Node):
 
-    def __init__(self, output_dim, input_dim=None, dtype=None):
+    def __init__(self, output_dim, input_dim=None, dtype=None, seed=None):
         super(RandomProjection, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        self.rnd = np.random.RandomState(seed=seed)
         return
     
     
@@ -152,7 +148,7 @@ class RandomProjection(mdp.Node):
 
     def _stop_training(self):
         D = self.input_dim
-        A = np.random.random((D, D))
+        A = self.rnd.rand(D, D)
         A = A + A.T
         _, self.U = scipy.linalg.eigh(A, eigvals=(0, self.output_dim-1))
         return
