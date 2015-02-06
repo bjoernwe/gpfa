@@ -11,9 +11,10 @@ class ForeCA(mdp.Node):
     A wrapper node for the ForeCA implementation in R.
     '''
 
-    def __init__(self, output_dim, input_dim=None, dtype=None):
+    def __init__(self, output_dim, input_dim=None, dtype=None, seed=None):
         super(ForeCA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.W = None
+        self.rnd = np.random.RandomState(seed)
         return
     
         
@@ -21,7 +22,7 @@ class ForeCA(mdp.Node):
     def _train(self, x):
         
         # save training data in CSV
-        run_id = str(np.random.randint(100000, 1000000))
+        run_id = str(self.rnd.randint(100000, 1000000))
         np.savetxt("foreca_node_train_%s.csv" % run_id, x, delimiter=",")
 
         # run R script and load result (extraction matrix)
