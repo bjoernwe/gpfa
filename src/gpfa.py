@@ -27,11 +27,10 @@ def calc_predictability_graph_star(data, k):
 
 
 
-def calc_predictability_graph_var(data, k):
+def calc_predictability_graph_full(data, k):
     """
     Averages the squared distances in a fully connected graph.
     """
-
 
     if data.ndim == 1:
         data = np.array(data, ndmin=2).T
@@ -46,7 +45,7 @@ def calc_predictability_graph_var(data, k):
     for t in range(N-1):
         v += np.mean([np.linalg.norm(data[i+1] - data[j+1])**2 for i, j in itertools.combinations(neighbors[t], 2) if i+1 < N and j+1 < N])
     v /= N-1
-    return v / 2.
+    return v
 
 
 
@@ -151,6 +150,7 @@ class RandomProjection(mdp.Node):
         A = self.rnd.rand(D, D)
         A = A + A.T
         _, self.U = scipy.linalg.eigh(A, eigvals=(0, self.output_dim-1))
+        assert np.allclose(self.U.T.dot(self.U), np.eye(self.output_dim, self.output_dim))
         return
 
 
