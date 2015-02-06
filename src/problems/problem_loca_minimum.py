@@ -1,3 +1,6 @@
+import sys
+
+sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
 import easyexplot as eep
 
 import experiments.experiment_base as exp
@@ -6,26 +9,25 @@ import experiments.experiment_base as exp
 
 def main():
     """
-    Shows how the objective function grows because the whitening is calculated
-    on the training data, not on the test data.
+    Shows a problem with gPFA on the Oscillation data set.
     """
 
-    algorithm = 'random' 
+    algorithm = 'gpfa' 
     N = 2000
-    k = 100
+    k = 50
     p = 2
     K = 1
     iterations = 50
-    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400, 500]
+    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]#, 20, 50, 100, 200, 300, 400, 500]
     variance_graph = False
     neighborhood_graph = True 
     keep_variance = 1.
     iteration_dim = 2
      
-    data = 'random'
+    data = 'oscillation'
     measure = 'avg_det_of_cov'
     seed = 0
-    repetitions = 10 
+    repetitions = 10
     processes = None
     argument_order = None 
     cachedir = None
