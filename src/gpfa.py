@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 import scipy.linalg
+import scipy.spatial
 import scipy.spatial.distance
 
 import mdp
@@ -58,6 +59,7 @@ def calc_predictability_avg_det_of_cov(data, k):
     """
     
     def _det(t):
+        neighbors = np.array(kdtree.query(k=k)[1])
         successors = neighbors[t] + 1
         successors = successors[successors<N]
         suc_dat = data[successors]
@@ -66,12 +68,9 @@ def calc_predictability_avg_det_of_cov(data, k):
     if data.ndim == 1:
         data = np.array(data, ndmin=2).T
 
-    # pairwise distances of data points
+    # calculate average of determinants
     N, _ = data.shape
-    distances = scipy.spatial.distance.pdist(data)
-    distances = scipy.spatial.distance.squareform(distances)
-    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-    
+    kdtree = scipy.spatial.KDTree(data)
     determinants = map(_det, range(N-1))
     return np.mean(determinants)
 
