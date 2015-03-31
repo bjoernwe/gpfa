@@ -248,15 +248,15 @@ def calc_baseline(N, k, data, measure, seed=None, repetition_index=None):
 def main():
     
     # parameters
-    algorithms = ['random', 'sfa', 'pfa', 'gpfa', 'foreca']
+    algorithms = ['random', 'sfa', 'pfa', 'gpfa']#, 'foreca']
     p = 2
     K = 1
-    k = 100 # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500]
+    k = [20, 100] # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500]
     N = 2000 #[1000, 2000, 3000, 4000, 5000] 1965
-    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100]#, 200, 300, 400]#, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
+    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400]#, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
     #noisy_dims = [0, 50, 100]#, 150, 200, 250, 300, 350, 400]
     keep_variance = 1. #[.99, .98, .95, .90, .80]
-    iterations = 100 #[1, 10, 20, 30, 40, 50, 100]
+    iterations = [50, 100] #[1, 10, 20, 30, 40, 50, 100]
     iteration_dim = 2 # [2, 5, 10, 20, 50, 100, 200]
     neighborhood_graph=True
     data = 'oscillation' # 'swiss_roll'

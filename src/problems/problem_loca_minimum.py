@@ -1,5 +1,7 @@
 import sys
 
+from matplotlib import pyplot as plt
+
 sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
 import easyexplot as eep
 
@@ -14,11 +16,11 @@ def main():
 
     algorithm = 'gpfa' 
     N = 2000
-    k = 50
+    k = [10, 20, 50, 100]
     p = 2
     K = 1
     iterations = 50
-    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]#, 20, 50, 100, 200, 300, 400, 500]
+    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400, 500]
     variance_graph = False
     neighborhood_graph = True 
     keep_variance = 1.
@@ -27,12 +29,12 @@ def main():
     data = 'oscillation'
     measure = 'avg_det_of_cov'
     seed = 0
-    repetitions = 10
+    repetitions = 20
     processes = None
-    argument_order = None 
+    argument_order = ['noisy_dims']
     cachedir = None
     plot_elapsed_time = False
-    show_plot = True
+    show_plot = False
     save_plot = False
     
     eep.plot(exp.prediction_error,
@@ -57,7 +59,9 @@ def main():
              plot_elapsed_time=plot_elapsed_time, 
              show_plot=show_plot,
              save_plot=save_plot)
-
+    plt.gca().set_xscale('log')
+    plt.gca().set_yscale('log')
+    plt.show()
 
 
 if __name__ == '__main__':

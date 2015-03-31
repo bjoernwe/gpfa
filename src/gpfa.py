@@ -59,8 +59,8 @@ def calc_predictability_avg_det_of_cov(data, k):
     """
     
     def _det(t):
-        neighbors = np.array(kdtree.query(k=k)[1])
-        successors = neighbors[t] + 1
+        neighbors = np.array(kdtree.query(data[t], k=k)[1])
+        successors = neighbors + 1
         successors = successors[successors<N]
         suc_dat = data[successors]
         return np.linalg.det(np.array(np.cov(suc_dat.T), ndmin=2))
