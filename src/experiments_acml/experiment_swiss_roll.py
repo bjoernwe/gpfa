@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
 import easyexplot as eep
 
+sys.path.append('/home/weghebvc/workspace/Worldmodel/src/')
 from envs.env_swiss_roll import EnvSwissRoll
 
 import experiments.experiment_base as eb
@@ -14,126 +15,103 @@ import experiments.experiment_base as eb
 
 def experiment():
     
-    plt.figure()
-    eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-             N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=3,#range(3, 16),#[3, 5, 10, 15, 20, 30, 50], 
-             p=2, 
-             K=1, 
-             iterations=[5, 10, 20, 30, 50, 100, 200, 300, 400, 500], 
-             noisy_dims=400,#[100, 200, 300, 400, 500, 600], 
-             neighborhood_graph=True,
-             weighted_edges=True, 
-             iteration_dim=2, 
-             output_dim=2, 
-             data='swiss_roll', 
-             measure='avg_det_of_cov', 
-             repetitions=25, 
-             processes=None, 
-             argument_order=None, 
-             cachedir='/tmp', 
-             plot_elapsed_time=False, 
-             show_plot=False, 
-             save_plot=True)
-    #plt.gca().set_yscale('log')
+    repeptitions = 20
     
     plt.figure()
     eep.plot(eb.prediction_error,
              #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
+             algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=30,#range(3, 16),#[3, 5, 10, 15, 20, 30, 50], 
-             p=2, 
+             k=[3, 50],#[3, 5, 10, 15, 20, 30, 40, 50], 
+             p=1, 
              K=1, 
-             iterations=[5, 10, 20, 30, 50, 100, 200, 300, 400, 500], 
-             noisy_dims=400,#[100, 200, 300, 400, 500, 600], 
-             neighborhood_graph=True,
+             iterations=500,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
+             noisy_dims=[0, 100, 200, 300, 400, 500],#, 600], 
+             neighborhood_graph=True,#[False, True],
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
              data='swiss_roll', 
-             measure='avg_det_of_cov', 
-             repetitions=25, 
+             measure='det_of_avg_cov', 
+             repetitions=repeptitions, 
              processes=None, 
              argument_order=None, 
-             cachedir='/tmp', 
+             cachedir='/scratch/weghebvc', 
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)
-    #plt.gca().set_yscale('log')
-    
+    plt.gca().set_yscale('log')
+     
     plt.figure()
     eep.plot(eb.prediction_error,
              #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-             N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=50,#range(3, 16),#[3, 5, 10, 15, 20, 30, 50], 
-             p=2, 
-             K=1, 
-             iterations=[5, 10, 20, 30, 50, 100, 200, 300, 400, 500], 
-             noisy_dims=400,#[100, 200, 300, 400, 500, 600], 
-             neighborhood_graph=True,
-             weighted_edges=True, 
-             iteration_dim=2, 
-             output_dim=2, 
-             data='swiss_roll', 
-             measure='avg_det_of_cov', 
-             repetitions=25, 
-             processes=None, 
-             argument_order=None, 
-             cachedir='/tmp', 
-             plot_elapsed_time=False, 
-             show_plot=False, 
-             save_plot=True)
-    #plt.gca().set_yscale('log')
-    
-    plt.figure()
-    eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-             N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=[3, 5, 10, 15, 20, 30, 50], 
-             p=2, 
-             K=1, 
-             iterations=500,#[5, 10, 20, 30, 50, 100, 200, 300, 400, 500], 
-             noisy_dims=400,#[100, 200, 300, 400, 500, 600], 
-             neighborhood_graph=True,
-             weighted_edges=True, 
-             iteration_dim=2, 
-             output_dim=2, 
-             data='swiss_roll', 
-             measure='avg_det_of_cov', 
-             repetitions=25, 
-             processes=None, 
-             argument_order=None, 
-             cachedir='/tmp', 
-             plot_elapsed_time=False, 
-             show_plot=False, 
-             save_plot=True)
-    #plt.gca().set_yscale('log')
-    
-    plt.figure()
-    eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
+             algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              N=[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=[3, 30, 50],#range(3, 16),#[3, 5, 10, 15, 20, 30, 50], 
-             p=2, 
+             k=[3, 50],#[3, 5, 10, 15, 20, 30, 40, 50], 
+             p=1, 
              K=1, 
-             iterations=500,#[5, 10, 20, 30, 50, 100, 200, 300, 400, 500], 
-             noisy_dims=400,#[100, 200, 300, 400, 500, 600], 
-             neighborhood_graph=True,
+             iterations=500,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
+             noisy_dims=300,#[0, 100, 200, 300, 400, 500],#, 600], 
+             neighborhood_graph=True,#[False, True],
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
              data='swiss_roll', 
-             measure='avg_det_of_cov', 
-             repetitions=25, 
+             measure='det_of_avg_cov', 
+             repetitions=repeptitions, 
              processes=None, 
              argument_order=None, 
-             cachedir='/tmp', 
+             cachedir='/scratch/weghebvc', 
+             plot_elapsed_time=False, 
+             show_plot=False, 
+             save_plot=True)
+    plt.gca().set_yscale('log')
+    
+    plt.figure()
+    eep.plot(eb.prediction_error,
+             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
+             algorithm=['gpfa-1', 'gpfa-2'], 
+             N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
+             k=[3, 50],#[3, 5, 10, 15, 20, 30, 40, 50], 
+             p=1, 
+             K=1, 
+             iterations=[1, 20, 50, 75, 100, 200, 300, 400, 500, 600], 
+             noisy_dims=300,#[0, 100, 200, 300, 400, 500],#, 600], 
+             neighborhood_graph=[False, True],
+             weighted_edges=True, 
+             iteration_dim=2, 
+             output_dim=2, 
+             data='swiss_roll', 
+             measure='det_of_avg_cov', 
+             repetitions=repeptitions, 
+             processes=None, 
+             argument_order=None, 
+             cachedir='/scratch/weghebvc', 
+             plot_elapsed_time=False, 
+             show_plot=False, 
+             save_plot=True)
+    plt.gca().set_yscale('log')
+
+    plt.figure()
+    eep.plot(eb.prediction_error,
+             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
+             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
+             N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
+             k=[3, 5, 10, 15, 20, 30, 40, 50], 
+             p=1, 
+             K=1, 
+             iterations=500,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
+             noisy_dims=300,#[0, 100, 200, 300, 400, 500],#, 600], 
+             neighborhood_graph=True,#[False, True],
+             weighted_edges=True, 
+             iteration_dim=2, 
+             output_dim=2, 
+             data='swiss_roll', 
+             measure='det_of_avg_cov', 
+             repetitions=repeptitions, 
+             processes=None, 
+             argument_order=None, 
+             cachedir='/scratch/weghebvc', 
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)
