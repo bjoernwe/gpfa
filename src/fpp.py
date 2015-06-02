@@ -333,14 +333,14 @@ class FPPnl(mdp.Node):
 class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 variance_graph=False, normalized_objective=False,
+                 variance_graph=False, #normalized_objective=False,
                  input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.iteration_dim = iteration_dim
         self.variance_graph = variance_graph
-        self.normalized_objective = normalized_objective
+        #self.normalized_objective = normalized_objective
         if self.iteration_dim is None:
             self.iteration_dim = self.output_dim
         self.C = None
