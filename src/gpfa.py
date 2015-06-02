@@ -132,6 +132,24 @@ def calc_predictability_sum_eig(data, k):
 
 
 
+def calc_predictability_avg_variance(data, k):
+    """
+    Calculates the average future variance for each component.
+    """
+    
+    if data.ndim == 1:
+        data = np.array(data, ndmin=2).T
+        
+    dims = data.shape[1]
+    result = np.zeros(dims)
+        
+    for i in range(dims):
+        result[i] = calc_predictability_avg_det_of_cov(data[:,i], k=k)
+        
+    return result
+
+
+
 class RandomProjection(mdp.Node):
 
     def __init__(self, output_dim, input_dim=None, dtype=None, seed=None):
@@ -160,37 +178,53 @@ class RandomProjection(mdp.Node):
 
 class LPP(mdp.Node):
 
-    def __init__(self, output_dim, k=10, input_dim=None, dtype=None):
+    def __init__(self, output_dim, k=10, weighted_edges=False, constraint_optimization=True, input_dim=None, dtype=None):
         super(LPP, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
+        self.weighted_edges = weighted_edges
+        self.constraint_optimization = constraint_optimization
         self.L = None
         self.D = None
         return
-    
-    
+
+
     def _train(self, x):
 
         # number of samples
         N, _ = x.shape
-        
-        # initialize weight matrix W
-        W = scipy.sparse.dok_matrix((N, N))
-    
+
         # pairwise distances of data points
         distances = scipy.spatial.distance.pdist(x)
         distances = scipy.spatial.distance.squareform(distances)
-        neighbors = [np.argsort(distances[i])[:self.k+1] for i in range(N)]
-        
-        # neighbor graph
+        if isinstance(self.k, int):
+            neighbors = [np.argsort(distances[i])[:self.k+1] for i in xrange(N)]
+        elif isinstance(self.k, float):
+            neighbors = [np.array([j for (j, d) in enumerate(distances[i]) if d <= self.k], dtype=int) for i in xrange(N)]
+        else:
+            assert False
+
+        # neighborhood graph
+        index_list = []
         for s in range(N):
-            for t in neighbors[s]:
-                W[s,t] = 1
-                W[t,s] = 1
+            index_list += [(s,t) for t in neighbors[s]]
+            index_list += [(t,s) for t in neighbors[s]]
+
+        # count edges only once
+        if not self.weighted_edges:
+            index_list = list(set(index_list))
+            
+        # weight matrix from index list
+        index_list = np.array(index_list)
+        W = scipy.sparse.coo_matrix((np.ones(index_list.shape[0]), (index_list[:,0], index_list[:,1])), shape=(N+1,N+1))
+        W = W.tocsr()
+        W = W[:N,:N]    # cut the N+1 elements
 
         # graph Laplacian
         d = W.sum(axis=1).T
+        #d[d==0] = float('inf') 
         D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
         L = D - W
+        L = L.tocsr()
 
         # projected graph laplacian
         D2 = x.T.dot(D.dot(x))
@@ -208,7 +242,13 @@ class LPP(mdp.Node):
 
 
     def _stop_training(self):
-        self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+        if self.constraint_optimization:
+            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+            # normalize eigenvectors 
+            for i in range(self.U.shape[1]):
+                self.U[:,i] /= np.linalg.norm(self.U[:,i])
+        else:
+            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
     
         # normalize directions
         mask = self.U[0,:] > 0
@@ -224,13 +264,14 @@ class LPP(mdp.Node):
 class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 variance_graph=False, neighborhood_graph=True, 
+                 variance_graph=False, neighborhood_graph=True, weighted_edges=True, 
                  constraint_optimization=True, input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
         self.variance_graph = variance_graph
         self.neighborhood_graph = neighborhood_graph
+        self.weighted_edges = weighted_edges
         self.iteration_dim = iteration_dim
         self.constraint_optimization = constraint_optimization
         self.L = None
@@ -281,7 +322,7 @@ class gPFA(mdp.Node):
                         index_list += [(t,s) for t in neighbors[s]]
 
             # count edges only once
-            if not self.variance_graph:
+            if not self.weighted_edges:
                 index_list = list(set(index_list))
                 
             # weight matrix from index list
