@@ -1,7 +1,5 @@
 library('ForeCA')
 
-print(getwd())
-
 args <- commandArgs(trailingOnly = TRUE)
 arg_id <- args[1]
 arg_cwd <- args[2]
