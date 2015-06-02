@@ -15,19 +15,18 @@ import experiments.experiment_base as eb
 
 def experiment():
     
-    repeptitions = 20
+    repeptitions = 50
     
     plt.figure()
     eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=[3, 50],#[3, 5, 10, 15, 20, 30, 40, 50], 
+             k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
-             iterations=500,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
-             noisy_dims=[0, 100, 200, 300, 400, 500],#, 600], 
-             neighborhood_graph=True,#[False, True],
+             iterations=300,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
+             noisy_dims=[0, 10, 20, 50, 100, 200, 300, 400, 500],#, 600], 
+             neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
@@ -44,15 +43,14 @@ def experiment():
      
     plt.figure()
     eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              N=[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=[3, 50],#[3, 5, 10, 15, 20, 30, 40, 50], 
+             k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
-             iterations=500,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
+             iterations=300,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
              noisy_dims=300,#[0, 100, 200, 300, 400, 500],#, 600], 
-             neighborhood_graph=True,#[False, True],
+             neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
@@ -66,18 +64,17 @@ def experiment():
              show_plot=False, 
              save_plot=True)
     plt.gca().set_yscale('log')
-    
+     
     plt.figure()
     eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['gpfa-1', 'gpfa-2'], 
+             algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
-             k=[3, 50],#[3, 5, 10, 15, 20, 30, 40, 50], 
+             k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
-             iterations=[1, 20, 50, 75, 100, 200, 300, 400, 500, 600], 
+             iterations=[1, 20, 50, 75, 100, 200, 300],#, 400, 500], 
              noisy_dims=300,#[0, 100, 200, 300, 400, 500],#, 600], 
-             neighborhood_graph=[False, True],
+             neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
@@ -91,18 +88,17 @@ def experiment():
              show_plot=False, 
              save_plot=True)
     plt.gca().set_yscale('log')
-
+ 
     plt.figure()
     eep.plot(eb.prediction_error,
-             #algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'random'], 
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
+             algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'random'], 
              N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
              k=[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
-             iterations=500,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
+             iterations=300,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
              noisy_dims=300,#[0, 100, 200, 300, 400, 500],#, 600], 
-             neighborhood_graph=True,#[False, True],
+             neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
@@ -115,7 +111,7 @@ def experiment():
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)
-    #plt.gca().set_yscale('log')
+    plt.gca().set_yscale('log')
     
     plt.show()
     

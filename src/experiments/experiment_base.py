@@ -13,24 +13,27 @@ sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
 import easyexplot as eep
 
 sys.path.append('/home/weghebvc/workspace/Worldmodel/src/')
+from envs.env_event import EnvEvent
 from envs.env_face import EnvFace
+from envs.env_ladder import EnvLadder
 from envs.env_oscillator import EnvOscillator
 from envs.env_random import EnvRandom
+from envs.env_ribbon import EnvRibbon
 from envs.env_swiss_roll import EnvSwissRoll
 
-import foreca_node
+import foreca.foreca_node as foreca_node
 import gpfa
 
 
 # prepare joblib.Memory
-cachedir = '/home/weghebvc/workspace/FuturePreservingProjection'
+cachedir = '/scratch/weghebvc'
 mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 
 
-def generate_training_data(N, noisy_dims, keep_variance=1., data='swiss_roll', seed=None, repetition_index=None):
+def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, data='swiss_roll', seed=None, repetition_index=None):
     
-    assert data in ['random', 'oscillation', 'swiss_roll', 'face']
+    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon']
     
     # generate data
     if data == 'random':
@@ -52,8 +55,31 @@ def generate_training_data(N, noisy_dims, keep_variance=1., data='swiss_roll', s
         data_train, data_test = generate_training_data_face(N=N, 
                                                             noisy_dims=noisy_dims, 
                                                             keep_variance=keep_variance)
+    elif data == 'event':
+        data_train, data_test = generate_training_data_event(N=N,
+                                                             noisy_dims=noisy_dims,
+                                                             seed=seed,
+                                                             prob=event_prob, 
+                                                             repetition_index=repetition_index)
+    elif data == 'ribbon':
+        data_train, data_test = generate_training_data_ribbon(N=N,
+                                                              noisy_dims=noisy_dims,
+                                                              seed=seed,
+                                                              repetition_index=repetition_index)
+    elif data == 'ladder':
+        data_train, data_test = generate_training_data_ladder(N=N,
+                                                             noisy_dims=noisy_dims,
+                                                             seed=seed,
+                                                             num_states=num_states,
+                                                             max_steps=max_steps, 
+                                                             repetition_index=repetition_index)
     else:
         assert False
+        
+    if expansion > 1:
+        ex = mdp.nodes.PolynomialExpansionNode(degree=expansion)
+        data_train = ex.execute(data_train)
+        data_test = ex.execute(data_test)
     
     return data_train, data_test
 
@@ -74,6 +100,17 @@ def generate_training_data_random(N, noisy_dims, seed=None, repetition_index=Non
 def generate_training_data_swiss_roll(N, noisy_dims, seed=None, repetition_index=None):
     unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index))))
     env = EnvSwissRoll(seed=unique_seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+
+
+
+@mem.cache
+def generate_training_data_ribbon(N, noisy_dims, sigma_noise=.05, seed=None, repetition_index=None):
+    unique_seed = abs(hash(joblib.hash((N, noisy_dims, sigma_noise, seed, repetition_index))))
+    env = EnvRibbon(seed=unique_seed, step_size=.1, sigma_noise=sigma_noise)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -105,15 +142,37 @@ def generate_training_data_face(N, noisy_dims, keep_variance=1.):
     data_train = whitening.execute(data_train)
     data_test = whitening.execute(data_test)
     return data_train, data_test
+
+
+
+@mem.cache
+def generate_training_data_event(N, noisy_dims, prob=.1, seed=None, repetition_index=None):
+    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, prob, repetition_index))))
+    env = EnvEvent(prob=prob, seed=unique_seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
     
 
 
 @mem.cache
-def calc_projection_random(data_train, data_test, seed=None, repetition_index=None):
-
-    unique_seed = abs(hash(joblib.hash((data_train, data_test, seed, repetition_index))))
+def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, seed=None, repetition_index=None):
+    unique_seed = abs(hash(joblib.hash((N, num_states, max_steps, noisy_dims, seed, repetition_index))))
+    env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=unique_seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
     
-    model = gpfa.RandomProjection(output_dim=2, seed=unique_seed)
+
+
+@mem.cache
+def calc_projection_random(data_train, data_test, output_dim=1, seed=None, repetition_index=None):
+
+    unique_seed = abs(hash(joblib.hash((data_train, data_test, output_dim, seed, repetition_index))))
+    
+    model = gpfa.RandomProjection(output_dim=output_dim, seed=unique_seed)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -122,9 +181,9 @@ def calc_projection_random(data_train, data_test, seed=None, repetition_index=No
 
 
 @mem.cache
-def calc_projection_sfa(data_train, data_test):
+def calc_projection_sfa(data_train, data_test, output_dim=1):
     
-    model = mdp.nodes.SFANode(output_dim=2)
+    model = mdp.nodes.SFANode(output_dim=output_dim)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -133,11 +192,12 @@ def calc_projection_sfa(data_train, data_test):
 
 
 @mem.cache
-def calc_projection_foreca(data_train, data_test, seed=None, repetition_index=None):
-
-    unique_seed = abs(hash(joblib.hash((data_train, data_test, seed, repetition_index))))
+def calc_projection_foreca(data_train, data_test, output_dim=1, seed=None, repetition_index=None):
+    # rv: 2
     
-    model = foreca_node.ForeCA(output_dim=2, seed=unique_seed)
+    unique_seed = abs(hash(joblib.hash((data_train, data_test, output_dim, seed, repetition_index))))
+    
+    model = foreca_node.ForeCA(output_dim=output_dim, seed=unique_seed)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -146,9 +206,9 @@ def calc_projection_foreca(data_train, data_test, seed=None, repetition_index=No
 
 
 @mem.cache
-def calc_projection_pfa(data_train, data_test, p, K):
+def calc_projection_pfa(data_train, data_test, p, K, output_dim=1):
     
-    model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=2)
+    model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=output_dim)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -157,14 +217,26 @@ def calc_projection_pfa(data_train, data_test, p, K):
 
 
 @mem.cache
-def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, variance_graph, neighborhood_graph):
+def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, variance_graph, neighborhood_graph, weighted_edges, output_dim=1):
     
     model = gpfa.gPFA(k=k, 
-                      output_dim=2, 
+                      output_dim=output_dim, 
                       iterations=iterations, 
                       iteration_dim=iteration_dim, 
                       variance_graph=variance_graph,
-                      neighborhood_graph=neighborhood_graph)    
+                      neighborhood_graph=neighborhood_graph,
+                      weighted_edges=weighted_edges)    
+    model.train(data_train)
+    
+    result = model.execute(data_test)
+    return result
+
+
+
+@mem.cache
+def calc_projection_lpp(data_train, data_test, k, weighted_edges, output_dim=1):
+    
+    model = gpfa.LPP(k=k, weighted_edges=weighted_edges, output_dim=output_dim)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -188,12 +260,22 @@ def calc_error(data, k, measure='det_of_avg_cov'):
 
 
 
-def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, variance_graph, neighborhood_graph=False, keep_variance=1., iteration_dim=2, data='swiss_roll', measure='det_var', seed=None, repetition_index=None):
+def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, expansion=1, 
+                     neighborhood_graph=None, weighted_edges=True, keep_variance=1., 
+                     iteration_dim=2, event_prob=.1, num_states=10, max_steps=4, 
+                     data='swiss_roll', measure='det_var', output_dim=1, seed=None, 
+                     repetition_index=None):
+    # rv: 5
+    assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'gpfa-1', 'gpfa-2', 'lpp']
     
     # generate training data
     data_train, data_test = generate_training_data(N=N, 
                                                    noisy_dims=noisy_dims, 
-                                                   keep_variance=keep_variance, 
+                                                   expansion=expansion,
+                                                   keep_variance=keep_variance,
+                                                   event_prob=event_prob,
+                                                   num_states=num_states,
+                                                   max_steps=max_steps, 
                                                    data=data, 
                                                    seed=seed,
                                                    repetition_index=repetition_index)
@@ -202,29 +284,55 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, variance_gra
     if algorithm == 'random':
         data_test_projected = calc_projection_random(data_train=data_train, 
                                                      data_test=data_test, 
+                                                     output_dim=output_dim,
                                                      seed=seed,
                                                      repetition_index=repetition_index)
     elif algorithm == 'foreca':
         data_test_projected = calc_projection_foreca(data_train=data_train, 
                                                      data_test=data_test,
+                                                     output_dim=output_dim,
                                                      seed=seed,
                                                      repetition_index=repetition_index)
     elif algorithm == 'sfa':
         data_test_projected = calc_projection_sfa(data_train=data_train, 
-                                                  data_test=data_test)
+                                                  data_test=data_test,
+                                                  output_dim=output_dim)
     elif algorithm == 'pfa':
         data_test_projected = calc_projection_pfa(data_train=data_train, 
-                                                  data_test=data_test, 
+                                                  data_test=data_test,
+                                                  output_dim=output_dim, 
                                                   p=p, 
                                                   K=K)
-    elif algorithm == 'gpfa':
+    elif algorithm == 'gpfa-1':
+        if not neighborhood_graph:
+            neighborhood_graph = False
         data_test_projected = calc_projection_gpfa(data_train=data_train, 
                                                    data_test=data_test, 
                                                    k=k, 
                                                    iterations=iterations, 
                                                    iteration_dim=iteration_dim, 
-                                                   variance_graph=variance_graph, 
-                                                   neighborhood_graph=neighborhood_graph)
+                                                   variance_graph=True, 
+                                                   neighborhood_graph=neighborhood_graph,
+                                                   weighted_edges=weighted_edges,
+                                                   output_dim=output_dim)
+    elif algorithm == 'gpfa-2':
+        if not neighborhood_graph:
+            neighborhood_graph = True
+        data_test_projected = calc_projection_gpfa(data_train=data_train, 
+                                                   data_test=data_test, 
+                                                   k=k, 
+                                                   iterations=iterations, 
+                                                   iteration_dim=iteration_dim, 
+                                                   variance_graph=False, 
+                                                   neighborhood_graph=neighborhood_graph,
+                                                   weighted_edges=weighted_edges,
+                                                   output_dim=output_dim)
+    elif algorithm == 'lpp':
+        data_test_projected = calc_projection_lpp(data_train=data_train, 
+                                                  data_test=data_test, 
+                                                  k=k,
+                                                  weighted_edges=False,
+                                                  output_dim=output_dim)
         
     # return prediction error
     return calc_error(data=data_test_projected, k=k, measure=measure)
@@ -251,15 +359,19 @@ def main():
     algorithms = ['random', 'sfa', 'pfa', 'gpfa']#, 'foreca']
     p = 2
     K = 1
-    k = [20, 100] # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500]
+    k = 20#[20, 100] # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500]
     N = 2000 #[1000, 2000, 3000, 4000, 5000] 1965
-    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400]#, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
+    noisy_dims = 20#[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400]#, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
     #noisy_dims = [0, 50, 100]#, 150, 200, 250, 300, 350, 400]
+    expansion = 2
     keep_variance = 1. #[.99, .98, .95, .90, .80]
-    iterations = [50, 100] #[1, 10, 20, 30, 40, 50, 100]
+    iterations = 50#[50, 100] #[1, 10, 20, 30, 40, 50, 100]
     iteration_dim = 2 # [2, 5, 10, 20, 50, 100, 200]
     neighborhood_graph=True
-    data = 'oscillation' # 'swiss_roll'
+    event_prob = .1#[.1, .2, .3, .4, .5]
+    num_states = 10
+    max_steps = 4
+    data = 'ladder' #'oscillation' # 'swiss_roll'
     measure = 'avg_det_of_cov' #'det_of_avg_cov'
     seed = 0
     
@@ -275,12 +387,16 @@ def main():
                       N=N,
                       p=p,
                       K=K,
+                      expansion=expansion,
                       iterations=iterations,
                       noisy_dims=noisy_dims,
                       keep_variance=keep_variance,
                       iteration_dim=iteration_dim,
                       variance_graph=False,
                       neighborhood_graph=neighborhood_graph,
+                      event_prob=event_prob,
+                      num_states=num_states,
+                      max_steps=max_steps,
                       data=data,
                       processes=processes,
                       repetitions=repetitions,
@@ -298,8 +414,8 @@ def main():
     # show plot
     #plt.legend(algorithms, loc='best')
     #plt.legend(algorithms + ['baseline'], loc='best')
-    plt.gca().set_xscale('log')
-    plt.gca().set_yscale('log')
+    #plt.gca().set_xscale('log')
+    #plt.gca().set_yscale('log')
     #plt.savefig('plottr_results/%s.png' % result.result_prefix)
     plt.show()
     return
