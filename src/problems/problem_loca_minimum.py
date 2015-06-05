@@ -14,13 +14,13 @@ def main():
     Shows a problem with gPFA on the Oscillation data set.
     """
 
-    algorithm = 'gpfa' 
+    algorithm = ['gpfa', 'foreca'] 
     N = 2000
-    k = [10, 20, 50, 100]
+    k = 50#[10, 20, 50, 100]
     p = 2
     K = 1
     iterations = 50
-    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400, 500]
+    noisy_dims = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50]#, 100, 200, 300, 400, 500]
     variance_graph = False
     neighborhood_graph = True 
     keep_variance = 1.
@@ -32,7 +32,7 @@ def main():
     repetitions = 20
     processes = None
     argument_order = ['noisy_dims']
-    cachedir = None
+    cachedir = '.'
     plot_elapsed_time = False
     show_plot = False
     save_plot = False
