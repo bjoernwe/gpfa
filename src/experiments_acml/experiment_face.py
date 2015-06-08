@@ -12,16 +12,16 @@ import experiments.experiment_base as eb
 
 def main():
     eep.plot(eb.prediction_error,
-             algorithm=['sfa', 'foreca', 'pfa', 'gpfa-1', 'gpfa-2', 'lpp'],#, 'random'], 
+             algorithm=['foreca', 'pfa', 'gpfa-1', 'gpfa-2'],#, 'random'], 
              N=2000, 
-             k=[3, 5, 10, 15, 20, 30, 40, 50], 
+             k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
              iterations=100,#[100, 200, 300, 400], 
              noisy_dims=0, 
-             neighborhood_graph=True,
+             neighborhood_graph=False,
              weighted_edges=True, 
-             keep_variance=.9,#np.arange(.85, .96, .01), 
+             keep_variance=np.arange(.85, .98, .01), 
              iteration_dim=1, 
              output_dim=1, 
              data='face', 
@@ -33,7 +33,7 @@ def main():
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=False)
-    #plt.gca().set_yscale('log')
+    plt.gca().set_yscale('log')
     plt.show()
 
 
