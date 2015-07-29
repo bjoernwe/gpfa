@@ -42,7 +42,7 @@ def experiment():
     
     
     
-def plot_experiment(N=2000, k=40, noisy_dims=20, iterations=50, repetitions=50, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2000, k=40, noisy_dims=20, iterations=100, repetitions=50, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = eep.evaluate(eb.prediction_error,

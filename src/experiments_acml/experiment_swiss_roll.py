@@ -16,13 +16,13 @@ def experiment():
     
     plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm='gpfa-2', 
+             algorithm='gpfa-1', 
              N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
              k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
              iterations=[1, 20, 50, 100, 200],#, 300, 400, 500], 
-             noisy_dims=200,# 400, 500],#, 600], 
+             noisy_dims=400, 
              neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=2, 
@@ -43,7 +43,7 @@ def experiment():
     
     
     
-def plot_experiment(N=2000, k=40, noisy_dims=200, iterations=50, repetitions=20, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2000, k=40, noisy_dims=200, iterations=100, repetitions=50, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = eep.evaluate(eb.prediction_error,
@@ -156,7 +156,7 @@ def main():
     plot_experiment(N=[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200], x_offset=0, y_label=False)
     plt.subplot(2, 2, 3)
     plt.title('(c)')
-    plot_experiment(iterations=[1, 10, 20, 30, 40, 50], x_offset=0)
+    plot_experiment(iterations=[1, 10, 20, 30, 40, 50, 100], x_offset=0)
     plt.subplot(2, 2, 4)
     plt.title('(d)')
     plot_experiment(k=[3, 5, 10, 15, 20, 30, 40, 50], x_offset=0, y_label=False, legend=True)

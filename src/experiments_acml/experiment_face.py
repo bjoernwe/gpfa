@@ -43,7 +43,7 @@ def experiment():
     
     
     
-def plot_experiment(N=2000, keep_variance=0.95, k=40, noisy_dims=200, iterations=50, repetitions=1, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2000, keep_variance=0.95, k=40, noisy_dims=0, iterations=100, repetitions=1, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = eep.evaluate(eb.prediction_error,
@@ -112,7 +112,7 @@ def plot_experiment(N=2000, keep_variance=0.95, k=40, noisy_dims=200, iterations
                           K=1, 
                           iterations=iterations,
                           noisy_dims=noisy_dims, 
-                          neighborhood_graph=False,
+                          neighborhood_graph=True,
                           weighted_edges=True, 
                           iteration_dim=1, 
                           output_dim=1, 

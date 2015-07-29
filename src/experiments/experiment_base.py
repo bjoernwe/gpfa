@@ -54,8 +54,7 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
                                                                    repetition_index=repetition_index)
     elif data == 'face':
         data_train, data_test = generate_training_data_face(N=N, 
-                                                            noisy_dims=noisy_dims, 
-                                                            keep_variance=keep_variance)
+                                                            noisy_dims=noisy_dims)
     elif data == 'event':
         data_train, data_test = generate_training_data_event(N=N,
                                                              noisy_dims=noisy_dims,
@@ -157,7 +156,7 @@ def generate_training_data_oscillation(N, noisy_dims, seed=None, repetition_inde
 
 
 @mem.cache
-def generate_training_data_face(N, noisy_dims, keep_variance=1.):
+def generate_training_data_face(N, noisy_dims):
     env = EnvFace()
     data_train, data_test = env.generate_training_data(num_steps=[1500, 465], noisy_dims=noisy_dims, whitening=False, chunks=2)
     #pca = mdp.nodes.PCANode(output_dim=keep_variance)
