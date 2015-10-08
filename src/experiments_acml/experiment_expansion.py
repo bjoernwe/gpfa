@@ -22,7 +22,7 @@ def experiment():
              p=1, 
              K=1, 
              iterations=50, 
-             noisy_dims=[0, 10, 20, 30, 40],# 400, 500],#, 600], 
+             noisy_dims=[0, 10, 20, 30],#, 40],# 400, 500],#, 600], 
              neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=1, 
@@ -44,7 +44,7 @@ def experiment():
     
     
     
-def plot_experiment(N=2000, k=40, noisy_dims=10, iterations=50, repetitions=5, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2000, k=40, noisy_dims=10, iterations=200, repetitions=5, ipython_profile=None, include_foreca=False, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = eep.evaluate(eb.prediction_error,
@@ -154,16 +154,16 @@ def plot_experiment(N=2000, k=40, noisy_dims=10, iterations=50, repetitions=5, i
 
 
 def main():
-    experiment()
-#     plt.subplot(2, 2, 1)
-#     plot_experiment(noisy_dims=[0, 10, 20, 30, 40], x_offset=0)
+    #experiment()
+    plt.subplot(2, 2, 1)
+    plot_experiment(noisy_dims=[0, 10, 20, 30, 40], x_offset=0)
 #     plt.subplot(2, 2, 2)
 #     plot_experiment(N=[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200], x_offset=0, y_label=False)
 #     plt.subplot(2, 2, 3)
 #     plot_experiment(iterations=[1, 10, 20, 30, 40, 50], x_offset=0)
 #     plt.subplot(2, 2, 4)
 #     plot_experiment(k=[3, 5, 10, 15, 20, 30, 40, 50], x_offset=0, y_label=False, legend=True)
-#     plt.show()
+    plt.show()
 
 
 

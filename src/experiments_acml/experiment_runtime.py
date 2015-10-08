@@ -12,314 +12,159 @@ import experiments.experiment_base as eb
 
 def experiment():
     
-    repeptitions = 20
+    repeptitions = 5
     
     plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm=['random', 'foreca'],#['foreca', 'pfa', 'gpfa-1', 'gpfa-2'], 
+             algorithm='gpfa-1', 
              N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
              k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
              p=1, 
              K=1, 
-             iterations=300,#[1, 20, 50, 75, 100, 200, 300, 400, 500], 
-             noisy_dims=300,#[0, 20, 50, 100, 200, 300],#, 400, 500], 
+             iterations=[1, 20, 50, 100, 200],#, 300, 400, 500], 
+             noisy_dims=400, 
              neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=2, 
              output_dim=2, 
              data='swiss_roll', 
-             measure='det_of_avg_cov', 
+             measure='trace_of_avg_cov', 
              repetitions=repeptitions, 
-             processes=1, 
+             processes=None, 
              argument_order=None, 
-             cachedir='/scratch/weghebvc/time',
-             ipython_profile='ssh', 
-             plot_elapsed_time=True, 
+             cachedir='/scratch/weghebvc',
+             #ipython_profile='ssh', 
+             plot_elapsed_time=False, 
              show_plot=False, 
-             save_plot=False)
+             save_plot=True)
     plt.gca().set_yscale('log')
+
+    plt.show()
     
-
-
-def visualize_noisy_dims():
-
-    iter_arg = 'noisy_dims'
-    repeptitions = 20
     
-    plt.figure()
+    
+def plot_experiment(N=2000, k=40, noisy_dims=200, iterations=100, repetitions=20, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
+    
+    #plt.figure()
     result = eep.evaluate(eb.prediction_error,
-                          algorithm='foreca', 
-                          N=2000, 
-                          k=40, 
+                          algorithm='random', 
+                          N=N, 
+                          k=k, 
                           p=1, 
                           K=1, 
-                          iterations=300, 
-                          noisy_dims=[0, 20, 50, 100, 200, 300], 
+                          iterations=iterations,
+                          noisy_dims=noisy_dims, 
                           neighborhood_graph=False,
                           weighted_edges=True, 
                           iteration_dim=2, 
                           output_dim=2, 
                           data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=3, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-#     m = np.mean(values_from_result(result), axis=-1)
-#     s = np.std(values_from_result(result), axis=-1)
-#     plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color='red', marker=None, linestyle='-')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
+                          measure='trace_of_avg_cov', 
+                          repetitions=repetitions, 
+                          processes=None, 
+                          cachedir='/scratch/weghebvc/time2',
+                          ipython_profile=ipython_profile)
+
+    # determine iter_arg
+    iter_arg = result.iter_args.keys()[0]
     
+    # plot error bars
+    m = np.mean(result.elapsed_times / 1000., axis=-1)
+    s = np.std(result.elapsed_times / 1000., axis=-1)
+    x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
+    #plt.errorbar(x=x, y=m, yerr=s, linewidth=1, color='green', marker=None, linestyle=':')
+    
+    if include_foreca:
+        noisy_dims_foreca = noisy_dims
+        if type(noisy_dims) is list:
+            noisy_dims_foreca = [d for d in noisy_dims if d <= 200]
+        result = eep.evaluate(eb.prediction_error,
+                              algorithm='foreca', 
+                              N=N, 
+                              k=k,
+                              p=1, 
+                              K=1, 
+                              iterations=iterations,
+                              noisy_dims=noisy_dims_foreca, 
+                              neighborhood_graph=False,
+                              weighted_edges=True, 
+                              iteration_dim=2, 
+                              output_dim=2, 
+                              data='swiss_roll', 
+                              measure='trace_of_avg_cov', 
+                              repetitions=repetitions, 
+                              processes=10, 
+                              cachedir='/scratch/weghebvc/time2',
+                              ipython_profile=ipython_profile)
+        m = np.mean(result.elapsed_times / 1000., axis=-1)
+        s = np.std(result.elapsed_times / 1000., axis=-1)
+        x = np.array(result.iter_args[iter_arg]) - x_offset
+        plt.errorbar(x=x, y=m, yerr=s, linewidth=1, color='red', marker=None, linestyle='-')
+     
     result = eep.evaluate(eb.prediction_error,
                           algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-                          N=2000, 
-                          k=40, 
+                          N=N, 
+                          k=k,
                           p=1, 
                           K=1, 
-                          iterations=300, 
-                          noisy_dims=[0, 20, 50, 100, 200, 300], 
+                          iterations=iterations,
+                          noisy_dims=noisy_dims, 
                           neighborhood_graph=False,
                           weighted_edges=True, 
                           iteration_dim=2, 
                           output_dim=2, 
                           data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=None, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-#     fig = plt.gcf()
-#     ax = plt.gca()
-#     ax.set_title('')
-#     fig.subplots_adjust(left=.125, right=.9, bottom=.1, top=.9)
-#     fig.suptitle('')
-#     linestyles = ['--', '-', '-']
-#     colors = ['red', 'blue', 'blue']
-#     markers = [None, 'o', 'o']
-#     facecolors = [None, 'blue', 'white']
-#     for i, line in enumerate(ax.get_lines()[2::3]):
-#         line.set_linestyle(linestyles[i])
-#         line.set_color(colors[i])
-#         line.set_marker(markers[i])
-#         line.set_markerfacecolor(facecolors[i])
-    #for i, _ in enumerate(result.iter_args['algorithm']):
-    #    m = np.mean(values_from_result(result)[:,i], axis=-1)
-    #    s = np.std(values_from_result(result)[:,i], axis=-1)
-    #    plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-    #plt.legend(['ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best') 
+                          measure='trace_of_avg_cov', 
+                          repetitions=repetitions, 
+                          processes=None,
+                          argument_order=['algorithm'], 
+                          cachedir='/scratch/weghebvc/time2',
+                          ipython_profile=ipython_profile)
+    linestyles = ['--', '-', '-']
+    colors = ['red', 'blue', 'blue']
+    markers = [None, 'o', 'o']
+    facecolors = [None, 'blue', 'white']
+    for i, _ in enumerate(result.iter_args['algorithm']):
+        m = np.mean(result.elapsed_times[i] / 1000., axis=-1)
+        s = np.std(result.elapsed_times[i] / 1000., axis=-1)
+        x = np.array(result.iter_args[iter_arg]) + i * x_offset
+        plt.errorbar(x=x, y=m, yerr=s, linewidth=1, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
+    if legend:
+        plt.legend(['ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best', prop={'size':12}) 
     
-    plt.xlabel('number of noisy dimensions')
-    plt.ylabel('runtime in minutes (log scale)')
-    plt.gca().set_yscale('log')
-    #plt.show()
-
-
-
-def visualize_n():
-
-    iter_arg = 'N'
-    repeptitions = 20
-    
-    plt.figure()
-    result = eep.evaluate(eb.prediction_error,
-                          algorithm='foreca', 
-                          N=[500, 1000, 1500, 2000], 
-                          k=40,
-                          p=1, 
-                          K=1, 
-                          iterations=300, 
-                          noisy_dims=300, 
-                          neighborhood_graph=False,
-                          weighted_edges=True, 
-                          iteration_dim=2, 
-                          output_dim=2, 
-                          data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=3, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-#     m = np.mean(values_from_result(result), axis=-1)
-#     s = np.std(values_from_result(result), axis=-1)
-#     plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color='red', marker=None, linestyle='-')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-    
-    result = eep.evaluate(eb.prediction_error,
-                          algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-                          N=[500, 1000, 1500, 2000], 
-                          k=40,
-                          p=1, 
-                          K=1, 
-                          iterations=300, 
-                          noisy_dims=300, 
-                          neighborhood_graph=False,
-                          weighted_edges=True, 
-                          iteration_dim=2, 
-                          output_dim=2, 
-                          data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=None, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-#     linestyles = ['--', '-', '-']
-#     colors = ['red', 'blue', 'blue']
-#     markers = [None, 'o', 'o']
-#     facecolors = [None, 'blue', 'white']
-#     for i, _ in enumerate(result.iter_args['algorithm']):
-#         m = np.mean(values_from_result(result)[:,i], axis=-1)
-#         s = np.std(values_from_result(result)[:,i], axis=-1)
-#         print i
-#         print result.iter_args
-#         print result.values.shape
-#         plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-#     plt.legend(['ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best') 
-#     
-#     plt.xlabel('number of samples for training')
-#     plt.ylabel('runtime in minutes (log scale)')
-    plt.gca().set_yscale('log')
-    #plt.show()
-
-
-
-def visualize_iterations():
-
-    iter_arg = 'iterations'
-    repeptitions = 20
-    
-    plt.figure()
-    result = eep.evaluate(eb.prediction_error,
-                          algorithm='foreca', 
-                          N=2000, 
-                          k=40,
-                          p=1, 
-                          K=1, 
-                          iterations=[1, 20, 50, 75, 100, 200, 300], 
-                          noisy_dims=300, 
-                          neighborhood_graph=False,
-                          weighted_edges=True, 
-                          iteration_dim=2, 
-                          output_dim=2, 
-                          data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=3, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-#     m = np.mean(values_from_result(result), axis=-1)
-#     s = np.std(values_from_result(result), axis=-1)
-#     plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color='red', marker=None, linestyle='-')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-    
-    result = eep.evaluate(eb.prediction_error,
-                          algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-                          N=2000, 
-                          k=40,
-                          p=1, 
-                          K=1, 
-                          iterations=[1, 20, 50, 75, 100, 200, 300], 
-                          noisy_dims=300, 
-                          neighborhood_graph=False,
-                          weighted_edges=True, 
-                          iteration_dim=2, 
-                          output_dim=2, 
-                          data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=None, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-#     linestyles = ['--', '-', '-']
-#     colors = ['red', 'blue', 'blue']
-#     markers = [None, 'o', 'o']
-#     facecolors = [None, 'blue', 'white']
-#     for i, _ in enumerate(result.iter_args['algorithm']):
-#         m = np.mean(values_from_result(result)[:,i], axis=-1)
-#         s = np.std(values_from_result(result)[:,i], axis=-1)
-#         plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-#     plt.legend(['ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best') 
-#     
-#     plt.xlabel('iterations')
-#     plt.ylabel('runtime in minutes (log scale)')
-    plt.gca().set_yscale('log')
-    #plt.show()
-
-
-
-def visualize_k():
-
-    iter_arg = 'k'
-    repeptitions = 20
-    
-    plt.figure()
-    result = eep.evaluate(eb.prediction_error,
-                          algorithm='foreca', 
-                          N=2000, 
-                          k=[3, 5, 10, 15, 20, 30, 40, 50],
-                          p=1, 
-                          K=1, 
-                          iterations=300, 
-                          noisy_dims=300, 
-                          neighborhood_graph=False,
-                          weighted_edges=True, 
-                          iteration_dim=2, 
-                          output_dim=2, 
-                          data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=3, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-#     m = np.mean(values_from_result(result), axis=-1)
-#     s = np.std(values_from_result(result), axis=-1)
-#     plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color='red', marker=None, linestyle='-')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-    
-    result = eep.evaluate(eb.prediction_error,
-                          algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
-                          N=2000, 
-                          k=[3, 5, 10, 15, 20, 30, 40, 50],
-                          p=1, 
-                          K=1, 
-                          iterations=300, 
-                          noisy_dims=300, 
-                          neighborhood_graph=False,
-                          weighted_edges=True, 
-                          iteration_dim=2, 
-                          output_dim=2, 
-                          data='swiss_roll', 
-                          measure='det_of_avg_cov', 
-                          repetitions=repeptitions, 
-                          processes=None, 
-                          cachedir='/scratch/weghebvc/time',
-                          ipython_profile='ssh')
-    eep.plot_result(result, plot_elapsed_time=True, save_plot=False, show_plot=False)
-#     linestyles = ['--', '-', '-']
-#     colors = ['red', 'blue', 'blue']
-#     markers = [None, 'o', 'o']
-#     facecolors = [None, 'blue', 'white']
-#     for i, _ in enumerate(result.iter_args['algorithm']):
-#         m = np.mean(values_from_result(result)[:,i], axis=-1)
-#         s = np.std(values_from_result(result)[:,i], axis=-1)
-#         plt.errorbar(x=result.iter_args[iter_arg], y=m, yerr=s, linewidth=1.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-#     plt.legend(['ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best') 
-#     
-#     plt.xlabel('k')
-#     plt.ylabel('runtime in minutes (log scale)')
-    plt.gca().set_yscale('log')
+    plt.xlabel(iter_arg)
+    if True:
+        if y_label:
+            plt.ylabel('runtime in sec. (log-scale)')
+        plt.gca().set_yscale('log')
+    else:
+        if y_label:
+            plt.ylabel('runtime in sec.')
+            
+    #plt.gca().set_yscale('log')
     #plt.show()
 
 
 
 def main():
     #experiment()
-    visualize_noisy_dims()
-    visualize_n()
-    visualize_iterations()
-    visualize_k()
+    plt.subplot(2, 2, 1)
+    plt.gca().set_ylim([7e-1, 1e5])
+    plt.title('(a)')
+    plot_experiment(noisy_dims=[0, 50, 100, 200, 300, 400, 500], x_offset=0)
+    plt.subplot(2, 2, 2)
+    plt.gca().set_ylim([7e-1, 1e5])
+    plt.title('(b)')
+    plot_experiment(N=[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200], x_offset=0, y_label=False)
+    plt.xlabel('S')
+    plt.subplot(2, 2, 3)
+    plt.gca().set_ylim([7e-1, 1e5])
+    plt.title('(c)')
+    plot_experiment(iterations=[1, 10, 20, 30, 40, 50, 100], x_offset=0)
+    plt.subplot(2, 2, 4)
+    plt.gca().set_ylim([7e-1, 1e5])
+    plt.title('(d)')
+    plot_experiment(k=[3, 5, 10, 15, 20, 30, 40, 50], x_offset=0, y_label=False, legend=True)
     plt.show()
 
 

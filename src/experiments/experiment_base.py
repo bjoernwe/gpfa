@@ -12,9 +12,10 @@ import PFANodeMDP
 sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
 import easyexplot as eep
 
-sys.path.append('/home/weghebvc/workspace/Worldmodel/src/')
+sys.path.append('/home/weghebvc/workspace/git/Environments/src/')
 from envs.env_event import EnvEvent
 from envs.env_face import EnvFace
+from envs.env_kai import EnvKai
 from envs.env_ladder import EnvLadder
 from envs.env_oscillator import EnvOscillator
 from envs.env_random import EnvRandom
@@ -34,7 +35,7 @@ mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, data='swiss_roll', seed=None, repetition_index=None):
     
-    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise']
+    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise', 'kai']
     
     # generate data
     if data == 'random':
@@ -81,6 +82,11 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
         noise_node = NonlinearNoiseNode.NonlinearNoiseNode(dims_modified=2, seed=seed)
         data_train = noise_node.execute(data_train)
         data_test = noise_node.execute(data_test)
+    elif data == 'kai':
+        data_train, data_test = generate_training_data_kai(N=N, 
+                                                           noisy_dims=noisy_dims, 
+                                                           seed=seed, 
+                                                           repetition_index=repetition_index)
     else:
         assert False
 
@@ -177,6 +183,17 @@ def generate_training_data_face(N, noisy_dims):
 def generate_training_data_event(N, noisy_dims, prob=.1, seed=None, repetition_index=None):
     unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, prob, repetition_index))))
     env = EnvEvent(prob=prob, seed=unique_seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
+def generate_training_data_kai(N, noisy_dims, seed=None, repetition_index=None):
+    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index))))
+    env = EnvKai(seed=unique_seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -291,7 +308,7 @@ def calc_projection_lpp(data_train, data_test, k, weighted_edges, output_dim=1):
 
 
 @mem.cache
-def calc_error(data, k, measure='trace_of_avg_cov'):
+def calc_error(data, k=10, measure='trace_of_avg_cov'):
     
     if measure == 'trace_of_avg_cov':
         return gpfa.calc_predictability_trace_of_avg_cov(data, k)

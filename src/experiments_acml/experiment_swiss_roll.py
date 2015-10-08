@@ -154,6 +154,7 @@ def main():
     plt.subplot(2, 2, 2)
     plt.title('(b)')
     plot_experiment(N=[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200], x_offset=0, y_label=False)
+    plt.xlabel('S')
     plt.subplot(2, 2, 3)
     plt.title('(c)')
     plot_experiment(iterations=[1, 10, 20, 30, 40, 50, 100], x_offset=0)

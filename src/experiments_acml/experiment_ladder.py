@@ -17,12 +17,12 @@ def experiment():
     plt.figure()
     eep.plot(eb.prediction_error,
              algorithm='gpfa-1', 
-             N=2000,#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
+             N=[2000, 3000, 4000],#[600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000], 
              k=40,#[3, 5, 10, 15, 20, 30, 40, 50], 
-             p=1, 
+             p=2, 
              K=1, 
-             iterations=[1, 20, 50, 100],#, 200, 300, 400, 500], 
-             noisy_dims=25,# 400, 500],#, 600], 
+             iterations=100,#[100, 200],#, 200, 300, 400, 500], 
+             noisy_dims=40,# 400, 500],#, 600], 
              neighborhood_graph=False,
              weighted_edges=True, 
              iteration_dim=1, 
@@ -42,7 +42,7 @@ def experiment():
     
     
     
-def plot_experiment(N=2000, k=40, noisy_dims=20, iterations=100, repetitions=50, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=4000, k=40, noisy_dims=20, iterations=200, repetitions=20, ipython_profile=None, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = eep.evaluate(eb.prediction_error,
@@ -92,7 +92,7 @@ def plot_experiment(N=2000, k=40, noisy_dims=20, iterations=100, repetitions=50,
                               data='ladder',
                               measure='trace_of_avg_cov', 
                               repetitions=repetitions, 
-                              processes=8, 
+                              processes=None, 
                               cachedir='/scratch/weghebvc',
                               ipython_profile=ipython_profile)
         m = np.mean(result.values, axis=-1)
@@ -147,7 +147,8 @@ def main():
     #experiment()
     plt.subplot(1, 2, 1)
     plt.title('(a)')
-    plot_experiment(noisy_dims=[1, 5, 10, 15, 20, 25, 30, 35, 40], x_offset=0.)
+    #plot_experiment(noisy_dims=[1, 5, 10, 15, 20, 25, 30, 35, 40], x_offset=0.)
+    plot_experiment(noisy_dims=[1, 10, 20, 30, 40, 50], x_offset=0.)
     plt.subplot(1, 2, 2)
     plt.title('(b)')
     plot_experiment(k=[3, 5, 10, 15, 20, 30, 40, 50], x_offset=0., y_label=False, legend=True)

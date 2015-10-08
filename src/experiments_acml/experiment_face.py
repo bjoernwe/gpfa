@@ -70,10 +70,10 @@ def plot_experiment(N=2000, keep_variance=0.95, k=40, noisy_dims=0, iterations=1
     iter_arg = result.iter_args.keys()[0]
      
 #     # plot error bars
-#     m = np.mean(result.values, axis=-1)
-#     s = np.std(result.values, axis=-1)
-#     x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
-#     plt.errorbar(x=x, y=m, yerr=s, linewidth=1, color='green', marker=None, linestyle=':')
+    m = np.mean(result.values, axis=-1)
+    s = np.std(result.values, axis=-1)
+    x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
+    #plt.errorbar(x=x, y=m, yerr=s, linewidth=1, color='green', marker=None, linestyle=':')
     
     if include_foreca:
         keep_variance_foreca = keep_variance
@@ -152,7 +152,7 @@ def main():
     #experiment()
     plt.subplot(1, 2, 1)
     plt.title('(a)')
-    plot_experiment(keep_variance=list(np.arange(.85, .99, .01)), x_offset=.001)
+    plot_experiment(keep_variance=list(np.arange(.85, 1., .01)), x_offset=.001)
     plt.subplot(1, 2, 2)
     plt.title('(b)')
     plot_experiment(k=[3, 5, 10, 15, 20, 30, 40, 50], x_offset=.5, y_label=False, legend=True)
