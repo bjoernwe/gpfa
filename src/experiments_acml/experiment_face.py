@@ -112,7 +112,7 @@ def plot_experiment(N=2000, keep_variance=0.95, k=40, noisy_dims=0, iterations=1
                           K=1, 
                           iterations=iterations,
                           noisy_dims=noisy_dims, 
-                          neighborhood_graph=True,
+                          neighborhood_graph=False,
                           weighted_edges=True, 
                           iteration_dim=1, 
                           output_dim=1, 
@@ -152,7 +152,7 @@ def main():
     #experiment()
     plt.subplot(1, 2, 1)
     plt.title('(a)')
-    plot_experiment(keep_variance=list(np.arange(.85, 1., .01)), x_offset=.001)
+    plot_experiment(keep_variance=list(np.arange(.85, .99, .01)), x_offset=.001)
     plt.subplot(1, 2, 2)
     plt.title('(b)')
     plot_experiment(k=[3, 5, 10, 15, 20, 30, 40, 50], x_offset=.5, y_label=False, legend=True)
