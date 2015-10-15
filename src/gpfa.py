@@ -8,71 +8,71 @@ import mdp
 
 
 
-def calc_predictability_graph_star(data, k):
-    """
-    Averages the squared distances in a star-like graph.
-    """
-
-    # pairwise distances of data points
-    N, _ = data.shape
-    distances = scipy.spatial.distance.pdist(data)
-    distances = scipy.spatial.distance.squareform(distances)
-    neighbors = [set(np.argsort(distances[i])[:k+1]).difference([i]) for i in xrange(N)]
-
-    v = 0
-    for t in range(N-1):
-        x = data[t+1]
-        v += np.mean([np.linalg.norm(x - data[s+1])**2 for s in neighbors[t] if s+1 < N])
-    v /= N-1
-    return v
-
-
-
-def calc_predictability_graph_full(data, k):
-    """
-    Averages the squared distances in a fully connected graph.
-    """
-
-    if data.ndim == 1:
-        data = np.array(data, ndmin=2).T
-
-    # pairwise distances of data points
-    N, _ = data.shape
-    distances = scipy.spatial.distance.pdist(data)
-    distances = scipy.spatial.distance.squareform(distances)
-    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-
-    v = 0
-    for t in range(N-1):
-        v += np.mean([np.linalg.norm(data[i+1] - data[j+1])**2 for i, j in itertools.combinations(neighbors[t], 2) if i+1 < N and j+1 < N])
-    v /= N-1
-    return v
+# def calc_predictability_graph_star(data, k):
+#     """
+#     Averages the squared distances in a star-like graph.
+#     """
+# 
+#     # pairwise distances of data points
+#     N, _ = data.shape
+#     distances = scipy.spatial.distance.pdist(data)
+#     distances = scipy.spatial.distance.squareform(distances)
+#     neighbors = [set(np.argsort(distances[i])[:k+1]).difference([i]) for i in xrange(N)]
+# 
+#     v = 0
+#     for t in range(N-1):
+#         x = data[t+1]
+#         v += np.mean([np.linalg.norm(x - data[s+1])**2 for s in neighbors[t] if s+1 < N])
+#     v /= N-1
+#     return v
 
 
 
-def calc_predictability_avg_det_of_cov(data, k):
-    """
-    The assumption in the paper that the noise covariance is the same everywhere
-    probably doesn't hold on real-world data sets. Therefore this measure of
-    predictability calculated the determinant of the covariance for each time
-    step and returns the average.  
-    """
-    
-    def _det(t):
-        neighbors = np.array(kdtree.query(data[t], k=k)[1])
-        successors = neighbors + 1
-        successors = successors[successors<N]
-        suc_dat = data[successors]
-        return np.linalg.det(np.array(np.cov(suc_dat.T), ndmin=2))
+# def calc_predictability_graph_full(data, k):
+#     """
+#     Averages the squared distances in a fully connected graph.
+#     """
+# 
+#     if data.ndim == 1:
+#         data = np.array(data, ndmin=2).T
+# 
+#     # pairwise distances of data points
+#     N, _ = data.shape
+#     distances = scipy.spatial.distance.pdist(data)
+#     distances = scipy.spatial.distance.squareform(distances)
+#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+# 
+#     v = 0
+#     for t in range(N-1):
+#         v += np.mean([np.linalg.norm(data[i+1] - data[j+1])**2 for i, j in itertools.combinations(neighbors[t], 2) if i+1 < N and j+1 < N])
+#     v /= N-1
+#     return v
 
-    if data.ndim == 1:
-        data = np.array(data, ndmin=2).T
 
-    # calculate average of determinants
-    N, _ = data.shape
-    kdtree = scipy.spatial.KDTree(data)
-    determinants = map(_det, range(N-1))
-    return np.mean(determinants)
+
+# def calc_predictability_avg_det_of_cov(data, k):
+#     """
+#     The assumption in the paper that the noise covariance is the same everywhere
+#     probably doesn't hold on real-world data sets. Therefore this measure of
+#     predictability calculated the determinant of the covariance for each time
+#     step and returns the average.  
+#     """
+#     
+#     def _det(t):
+#         neighbors = np.array(kdtree.query(data[t], k=k)[1])
+#         successors = neighbors + 1
+#         successors = successors[successors<N]
+#         suc_dat = data[successors]
+#         return np.linalg.det(np.array(np.cov(suc_dat.T), ndmin=2))
+# 
+#     if data.ndim == 1:
+#         data = np.array(data, ndmin=2).T
+# 
+#     # calculate average of determinants
+#     N, _ = data.shape
+#     kdtree = scipy.spatial.KDTree(data)
+#     determinants = map(_det, range(N-1))
+#     return np.mean(determinants)
 
 
 
@@ -169,7 +169,7 @@ def calc_predictability_avg_variance(data, k):
     result = np.zeros(dims)
         
     for i in range(dims):
-        result[i] = calc_predictability_avg_det_of_cov(data[:,i], k=k)
+        result[i] = calc_predictability_det_of_avg_cov(data[:,i], k=k)
         
     return result
 
@@ -290,7 +290,8 @@ class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
                  variance_graph=False, neighborhood_graph=True, weighted_edges=True, 
-                 constraint_optimization=True, input_dim=None, dtype=None):
+                 causal_features=False, constraint_optimization=True, input_dim=None, 
+                 dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.iterations = iterations
@@ -298,6 +299,7 @@ class gPFA(mdp.Node):
         self.neighborhood_graph = neighborhood_graph
         self.weighted_edges = weighted_edges
         self.iteration_dim = iteration_dim
+        self.causal_features = causal_features
         self.constraint_optimization = constraint_optimization
         self.L = None
         self.D = None
@@ -305,6 +307,9 @@ class gPFA(mdp.Node):
 
 
     def _train(self, x):
+
+        if self.causal_features:
+            x = x[::-1,:]
 
         # number of samples
         N, _ = x.shape
