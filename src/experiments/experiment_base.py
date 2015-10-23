@@ -12,7 +12,8 @@ import PFANodeMDP
 sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
 import easyexplot as eep
 
-sys.path.append('/home/weghebvc/workspace/git/Environments/src/')
+sys.path.append('/home/weghebvc/workspace/git/environments/src/')
+from envs.env_dead_corners import EnvDeadCorners
 from envs.env_event import EnvEvent
 from envs.env_face import EnvFace
 from envs.env_kai import EnvKai
@@ -33,9 +34,9 @@ mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 
 
-def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, data='swiss_roll', seed=None, repetition_index=None):
+def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, corner_size=.2, data='swiss_roll', seed=None, repetition_index=None):
     
-    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise', 'kai']
+    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise', 'kai', 'dead_corners']
     
     # generate data
     if data == 'random':
@@ -87,6 +88,12 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
                                                            noisy_dims=noisy_dims, 
                                                            seed=seed, 
                                                            repetition_index=repetition_index)
+    elif data == 'dead_corners':
+        data_train, data_test = generate_training_data_dead_corners(N=N,
+                                                                    corner_size=corner_size, 
+                                                                    noisy_dims=noisy_dims, 
+                                                                    seed=seed, 
+                                                                    repetition_index=repetition_index)
     else:
         assert False
 
@@ -127,7 +134,7 @@ def generate_training_data_random(N, noisy_dims, seed=None, repetition_index=Non
 
 @mem.cache
 def generate_training_data_swiss_roll(N, noisy_dims, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index))))
+    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
     env = EnvSwissRoll(seed=unique_seed)
     #data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
@@ -202,6 +209,17 @@ def generate_training_data_kai(N, noisy_dims, seed=None, repetition_index=None):
 
 
 @mem.cache
+def generate_training_data_dead_corners(N, noisy_dims, corner_size=.2, seed=None, repetition_index=None):
+    unique_seed = abs(hash(joblib.hash((N, noisy_dims, corner_size, seed, repetition_index))))
+    env = EnvDeadCorners(corner_size=corner_size, seed=unique_seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
 def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, seed=None, repetition_index=None):
     unique_seed = abs(hash(joblib.hash((N, num_states, max_steps, noisy_dims, seed, repetition_index))))
     env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=unique_seed)
@@ -216,7 +234,7 @@ def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, see
 @mem.cache
 def calc_projection_random(data_train, data_test, output_dim=1, seed=None, repetition_index=None):
 
-    unique_seed = abs(hash(joblib.hash((data_train, data_test, output_dim, seed, repetition_index))))
+    unique_seed = abs(hash(joblib.hash((data_train, data_test, output_dim, seed, repetition_index)))) % np.iinfo(np.uint32).max
     
     model = gpfa.RandomProjection(output_dim=output_dim, seed=unique_seed)
     model.train(data_train)
@@ -252,7 +270,11 @@ def calc_projection_foreca(data_train, data_test, output_dim=1, seed=None, repet
 
 
 @mem.cache
-def calc_projection_pfa(data_train, data_test, p, K, output_dim=1):
+def calc_projection_pfa(data_train, data_test, p, K, causal_features=False, output_dim=1):
+    # rev 1
+    
+    if causal_features:
+        data_train = data_train[::-1]
     
     model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=output_dim)
     model.train(data_train)
@@ -263,7 +285,8 @@ def calc_projection_pfa(data_train, data_test, p, K, output_dim=1):
 
 
 @mem.cache
-def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, variance_graph, neighborhood_graph, weighted_edges, output_dim=1):
+def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, variance_graph, neighborhood_graph, weighted_edges, causal_features, output_dim=1):
+    # rev 6
     
     model = gpfa.gPFA(k=k, 
                       output_dim=output_dim, 
@@ -271,7 +294,8 @@ def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, va
                       iteration_dim=iteration_dim, 
                       variance_graph=variance_graph,
                       neighborhood_graph=neighborhood_graph,
-                      weighted_edges=weighted_edges)    
+                      weighted_edges=weighted_edges,
+                      causal_features=causal_features)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -308,18 +332,21 @@ def calc_projection_lpp(data_train, data_test, k, weighted_edges, output_dim=1):
 
 
 @mem.cache
-def calc_error(data, k=10, measure='trace_of_avg_cov'):
+def calc_error(data, k=10, measure='trace_of_avg_cov', reverse_error=False):
+    
+    if reverse_error:
+        data = data[::-1,:]
     
     if measure == 'trace_of_avg_cov':
         return gpfa.calc_predictability_trace_of_avg_cov(data, k)
     elif measure == 'det_of_avg_cov':
         return gpfa.calc_predictability_det_of_avg_cov(data, k)
-    elif measure == 'avg_det_of_cov':
-        return gpfa.calc_predictability_avg_det_of_cov(data, k)
-    elif measure == 'graph_full':
-        return gpfa.calc_predictability_graph_full(data, k)
-    elif measure == 'graph_star':
-        return gpfa.calc_predictability_graph_star(data, k)
+    #elif measure == 'avg_det_of_cov':
+    #    return gpfa.calc_predictability_avg_det_of_cov(data, k)
+    #elif measure == 'graph_full':
+    #    return gpfa.calc_predictability_graph_full(data, k)
+    #elif measure == 'graph_star':
+    #    return gpfa.calc_predictability_graph_star(data, k)
     else:
         assert False
 
@@ -328,10 +355,10 @@ def calc_error(data, k=10, measure='trace_of_avg_cov'):
 def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_degree=2,
                      expansion=1, neighborhood_graph=None, weighted_edges=True, 
                      keep_variance=1., iteration_dim=2, event_prob=.1, num_states=10, 
-                     max_steps=4, data='swiss_roll', measure='det_var', output_dim=1, 
-                     seed=None, repetition_index=None):
+                     max_steps=4, corner_size=.2, data='swiss_roll', measure='det_var', 
+                     output_dim=1, reverse_error=False, seed=None, repetition_index=None):
     # rv: 7
-    assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'gpfa-1', 'gpfa-2', 'gpfa-1-kernelized', 'gpfa-2-kernelized', 'lpp']
+    assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'cfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2', 'gpfa-1-kernelized', 'gpfa-2-kernelized', 'lpp']
     
     # generate training data
     data_train, data_test = generate_training_data(N=N, 
@@ -340,7 +367,8 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                    keep_variance=keep_variance,
                                                    event_prob=event_prob,
                                                    num_states=num_states,
-                                                   max_steps=max_steps, 
+                                                   max_steps=max_steps,
+                                                   corner_size=corner_size, 
                                                    data=data, 
                                                    seed=seed,
                                                    repetition_index=repetition_index)
@@ -367,7 +395,15 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                   data_test=data_test,
                                                   output_dim=output_dim, 
                                                   p=p, 
-                                                  K=K)
+                                                  K=K,
+                                                  causal_features=False)
+    elif algorithm == 'cfa':
+        data_test_projected = calc_projection_pfa(data_train=data_train, 
+                                                  data_test=data_test,
+                                                  output_dim=output_dim, 
+                                                  p=p, 
+                                                  K=K,
+                                                  causal_features=True)
     elif algorithm == 'gpfa-1':
         if not neighborhood_graph:
             neighborhood_graph = False
@@ -379,6 +415,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                    variance_graph=True, 
                                                    neighborhood_graph=neighborhood_graph,
                                                    weighted_edges=weighted_edges,
+                                                   causal_features=False,
                                                    output_dim=output_dim)
     elif algorithm == 'gpfa-2':
         if not neighborhood_graph:
@@ -391,6 +428,33 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                    variance_graph=False, 
                                                    neighborhood_graph=neighborhood_graph,
                                                    weighted_edges=weighted_edges,
+                                                   causal_features=False,
+                                                   output_dim=output_dim)
+    elif algorithm == 'gcfa-1':
+        if not neighborhood_graph:
+            neighborhood_graph = False
+        data_test_projected = calc_projection_gpfa(data_train=data_train, 
+                                                   data_test=data_test, 
+                                                   k=k, 
+                                                   iterations=iterations, 
+                                                   iteration_dim=iteration_dim, 
+                                                   variance_graph=True, 
+                                                   neighborhood_graph=neighborhood_graph,
+                                                   weighted_edges=weighted_edges,
+                                                   causal_features=True,
+                                                   output_dim=output_dim)
+    elif algorithm == 'gcfa-2':
+        if not neighborhood_graph:
+            neighborhood_graph = True
+        data_test_projected = calc_projection_gpfa(data_train=data_train, 
+                                                   data_test=data_test, 
+                                                   k=k, 
+                                                   iterations=iterations, 
+                                                   iteration_dim=iteration_dim, 
+                                                   variance_graph=False, 
+                                                   neighborhood_graph=neighborhood_graph,
+                                                   weighted_edges=weighted_edges,
+                                                   causal_features=True,
                                                    output_dim=output_dim)
     elif algorithm == 'gpfa-1-kernelized':
         if not neighborhood_graph:
@@ -403,6 +467,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                               iteration_dim=iteration_dim, 
                                                               variance_graph=True, 
                                                               weighted_edges=weighted_edges,
+                                                              causal_features=False,
                                                               output_dim=output_dim)
     elif algorithm == 'gpfa-2-kernelized':
         if not neighborhood_graph:
@@ -415,6 +480,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                               iteration_dim=iteration_dim, 
                                                               variance_graph=False, 
                                                               weighted_edges=weighted_edges,
+                                                              causal_features=False,
                                                               output_dim=output_dim)
     elif algorithm == 'lpp':
         data_test_projected = calc_projection_lpp(data_train=data_train, 
@@ -424,7 +490,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, kernel_poly_
                                                   output_dim=output_dim)
         
     # return prediction error
-    return calc_error(data=data_test_projected, k=k, measure=measure)
+    return calc_error(data=data_test_projected, k=k, measure=measure, reverse_error=reverse_error)
 
 
 
