@@ -308,9 +308,6 @@ class gPFA(mdp.Node):
 
     def _train(self, x):
 
-        if self.causal_features:
-            x = x[::-1,:]
-
         # number of samples
         N, _ = x.shape
 
@@ -341,6 +338,15 @@ class gPFA(mdp.Node):
                     index_list += [(s+1,t) for t in neighbors[s]+1]
                     index_list += [(t,s+1) for t in neighbors[s]+1]
 
+            if self.causal_features:
+                if self.variance_graph:
+                    for t in range(1, N):
+                        index_list += itertools.permutations(neighbors[t]-1, 2)
+                else:
+                    for s in range(1, N):
+                        index_list += [(s-1,t) for t in neighbors[s]-1]
+                        index_list += [(t,s-1) for t in neighbors[s]-1]
+
             # neighborhood graph
             if self.neighborhood_graph:
                 if self.variance_graph:
@@ -357,6 +363,8 @@ class gPFA(mdp.Node):
                 
             # weight matrix from index list
             index_list = np.array(index_list)
+            index_list = np.delete(index_list, np.where(index_list[:,0] < 0), axis=0)
+            index_list = np.delete(index_list, np.where(index_list[:,1] < 0), axis=0)
             W = scipy.sparse.coo_matrix((np.ones(index_list.shape[0]), (index_list[:,0], index_list[:,1])), shape=(N+1,N+1))
             W = W.tocsr()
             W = W[:N,:N]    # cut the N+1 elements
