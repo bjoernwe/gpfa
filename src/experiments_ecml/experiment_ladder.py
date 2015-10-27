@@ -10,17 +10,17 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, k=40, iterations=50, noisy_dims=20, data='ladder'):
+def experiment(N=2500, k=40, iterations=50, noisy_dims=40, data='ladder'):
     
-    repeptitions = 5
+    repeptitions = 20
     
-    plt.figure()
+    #plt.figure()
     eep.plot(eb.prediction_error,
              algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
              N=N, 
              k=k, 
-             p=1, 
-             K=0, 
+             p=2, 
+             K=1, 
              iterations=iterations, 
              noisy_dims=noisy_dims, 
              neighborhood_graph=False,
