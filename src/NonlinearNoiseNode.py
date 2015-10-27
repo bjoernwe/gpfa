@@ -46,7 +46,7 @@ if __name__ == '__main__':
     noise_node = NonlinearNoiseNode(dims_modified=1)
     X = noise_node.execute(X)
     
-    sfa = mdp.nodes.SFANode(output_dim=1)
+    sfa = mdp.nodes.SFA2Node(output_dim=1)
     sfa.train(X)
     plt.plot(sfa.execute(X))
     #plt.plot(X[:,0])
