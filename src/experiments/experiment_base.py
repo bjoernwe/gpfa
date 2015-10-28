@@ -206,7 +206,7 @@ def generate_training_data_event(N, noisy_dims, prob=.1, seed=None, repetition_i
 
 @mem.cache
 def generate_training_data_kai(N, noisy_dims, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index))))
+    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
     env = EnvKai(seed=unique_seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
     data_train = data_train[0]
@@ -241,7 +241,7 @@ def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, see
 
 @mem.cache
 def generate_training_data_mario(N, window_only, noisy_dims, seed=None, repetition_index=None):
-    # rev: 3
+    # rev: 4
     unique_seed = abs(hash(joblib.hash((N, window_only, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
     env = EnvMarioCanned(window_only=window_only, seed=unique_seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
