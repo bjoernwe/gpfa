@@ -16,7 +16,7 @@ def experiment(N=2500, k=40, iterations=50, noisy_dims=40, data='ladder'):
     
     #plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
+             algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
              N=N, 
              k=k, 
              p=2, 
