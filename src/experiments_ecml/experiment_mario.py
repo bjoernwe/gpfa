@@ -10,11 +10,11 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, keep_variance=.95, k=20, iterations=50, data='mario_window'):
+def experiment(N=2000, keep_variance=.95, k=20, iterations=40, data='mario_window'):
     
     #plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
+             algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
              N=N, 
              keep_variance=keep_variance,
              k=k,
@@ -31,8 +31,8 @@ def experiment(N=2000, keep_variance=.95, k=20, iterations=50, data='mario_windo
              reverse_error=False,
              repetitions=1, 
              processes=None,
-             argument_order=['algorithm'], 
-             cachedir=None,#'/scratch/weghebvc',
+             argument_order=['algorithm'],
+             cachedir='/scratch/weghebvc',
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)
@@ -50,7 +50,7 @@ def main():
     plt.subplot(2, 2, 2)
     experiment(N=[1500, 2000, 2500])
     plt.subplot(2, 2, 3)
-    experiment(iterations=[20, 50, 100])
+    experiment(iterations=[20, 40, 60, 80, 100])
     plt.subplot(2, 2, 4)
     experiment(k=range(5,51,5))
 
