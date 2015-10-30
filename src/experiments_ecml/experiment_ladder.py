@@ -10,17 +10,17 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2500, k=40, iterations=50, noisy_dims=40, data='ladder'):
+def experiment(N=2500, k=30, iterations=50, noisy_dims=40, data='ladder'):
     
     repeptitions = 20
     
     #plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
+             algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
              N=N, 
              k=k, 
              p=2, 
-             K=1, 
+             K=2, 
              iterations=iterations, 
              noisy_dims=noisy_dims, 
              neighborhood_graph=False,
@@ -32,7 +32,8 @@ def experiment(N=2500, k=40, iterations=50, noisy_dims=40, data='ladder'):
              repetitions=repeptitions, 
              processes=None, 
              argument_order=None, 
-             cachedir=None,
+             non_numeric_args=['p', 'K'], 
+             cachedir='/scratch/weghebvc',
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)

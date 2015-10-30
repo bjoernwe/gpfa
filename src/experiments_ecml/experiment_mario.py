@@ -32,6 +32,7 @@ def experiment(N=2000, keep_variance=.95, k=20, iterations=40, data='mario_windo
              repetitions=1, 
              processes=None,
              argument_order=['algorithm'],
+             non_numeric_args=['p', 'K'], 
              cachedir='/scratch/weghebvc',
              plot_elapsed_time=False, 
              show_plot=False, 

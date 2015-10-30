@@ -16,10 +16,10 @@ def experiment(N=2000, k=15, iterations=50, noisy_dims=400):
     
     #plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
+             algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
              N=N, 
              k=k, 
-             p=2, 
+             p=1, 
              K=1, 
              iterations=iterations, 
              noisy_dims=noisy_dims, 
@@ -33,7 +33,8 @@ def experiment(N=2000, k=15, iterations=50, noisy_dims=400):
              repetitions=repeptitions, 
              processes=None, 
              argument_order=None, 
-             cachedir=None,
+             non_numeric_args=['p', 'K'], 
+             cachedir='/scratch/weghebvc',
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)

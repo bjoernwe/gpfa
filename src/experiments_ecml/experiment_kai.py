@@ -15,11 +15,11 @@ def experiment(N=2000, k=30, iterations=100, noisy_dims=300, data='kai'):
     
     #plt.figure()
     eep.plot(eb.prediction_error,
-             algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
+             algorithm='pfa',#['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
              N=N, 
              k=k, 
              p=1, 
-             K=2, 
+             K=0, 
              iterations=iterations, 
              noisy_dims=noisy_dims, 
              neighborhood_graph=False,
@@ -31,7 +31,8 @@ def experiment(N=2000, k=30, iterations=100, noisy_dims=300, data='kai'):
              repetitions=repeptitions, 
              processes=None, 
              argument_order=None, 
-             cachedir=None,
+             non_numeric_args=['p', 'K'], 
+             cachedir='/scratch/weghebvc',
              plot_elapsed_time=False, 
              show_plot=False, 
              save_plot=True)
@@ -45,7 +46,7 @@ def main():
     # dead corners
     plt.figure()
     plt.subplot(2, 2, 1)
-    experiment(noisy_dims=[0, 50, 100, 200, 300])
+    experiment(noisy_dims=[0, 50, 100, 200, 300, 400])
     plt.subplot(2, 2, 2)
     experiment(N=[500, 1000, 1500, 2000, 2500])
     plt.subplot(2, 2, 3)
