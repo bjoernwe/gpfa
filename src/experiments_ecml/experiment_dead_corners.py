@@ -9,7 +9,7 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, k=30, iterations=50, noisy_dims=300):
+def experiment(N=2000, k=20, iterations=50, noisy_dims=300):
     
     repeptitions = 20
     
@@ -27,7 +27,7 @@ def experiment(N=2000, k=30, iterations=50, noisy_dims=300):
              iteration_dim=1, 
              output_dim=1, 
              data='dead_corners',
-             corner_size=0.1, 
+             corner_size=.05, 
              measure='trace_of_avg_cov', 
              repetitions=repeptitions, 
              processes=None, 
