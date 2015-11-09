@@ -288,9 +288,9 @@ class LPP(mdp.Node):
 
 class gPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 variance_graph=False, neighborhood_graph=True, weighted_edges=True, 
-                 causal_features=False, constraint_optimization=True, input_dim=None, 
+    def __init__(self, output_dim, k=10, iterations=10, iteration_dim=None,
+                 variance_graph=True, neighborhood_graph=False, weighted_edges=True, 
+                 causal_features=True, constraint_optimization=True, input_dim=None, 
                  dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
@@ -318,15 +318,9 @@ class gPFA(mdp.Node):
         # run algorithm several times e
         for l in range(self.iterations):
 
-            # pairwise distances of data points
-            distances = scipy.spatial.distance.pdist(y)
-            distances = scipy.spatial.distance.squareform(distances)
-            if isinstance(self.k, int):
-                neighbors = [np.argsort(distances[i])[:self.k+1] for i in xrange(N)]
-            elif isinstance(self.k, float):
-                neighbors = [np.array([j for (j, d) in enumerate(distances[i]) if d <= self.k], dtype=int) for i in xrange(N)]
-            else:
-                assert False
+            # index lists for neighbors
+            tree = scipy.spatial.cKDTree(y)
+            neighbors = [tree.query(y[i], k=self.k+1)[1] for i in xrange(N)]
 
             # future-preserving graph
             index_list = []
