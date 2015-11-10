@@ -9,16 +9,18 @@ import mdp
 sys.path.append('/home/weghebvc/workspace/git/GNUPFA/src/')
 import PFANodeMDP
 
-sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
-import easyexplot as eep
+sys.path.append('/home/weghebvc/workspace/git/explot/src/')
+import explot as ep
 
 sys.path.append('/home/weghebvc/workspace/git/environments/src/')
 from envs.env_dead_corners import EnvDeadCorners
 from envs.env_event import EnvEvent
+from envs.env_eeg import EnvEEG
 from envs.env_face import EnvFace
 from envs.env_kai import EnvKai
 from envs.env_ladder import EnvLadder
 from envs.env_mario_canned import EnvMarioCanned
+from envs.env_meg import EnvMEG
 from envs.env_oscillator import EnvOscillator
 from envs.env_random import EnvRandom
 from envs.env_ribbon import EnvRibbon
@@ -35,26 +37,23 @@ mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 
 
-def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, corner_size=.2, data='swiss_roll', seed=None, repetition_index=None):
+def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, corner_size=.2, data='swiss_roll', seed=None):
     
-    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise', 'kai', 'dead_corners', 'mario_window']
+    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise', 'kai', 'dead_corners', 'mario_window', 'eeg', 'meg']
     
     # generate data
     if data == 'random':
         data_train, data_test = generate_training_data_random(N=N, 
                                                               noisy_dims=noisy_dims, 
-                                                              seed=seed, 
-                                                              repetition_index=repetition_index)
+                                                              seed=seed)
     elif data == 'swiss_roll':
         data_train, data_test = generate_training_data_swiss_roll(N=N, 
                                                                   noisy_dims=noisy_dims, 
-                                                                  seed=seed, 
-                                                                  repetition_index=repetition_index)
+                                                                  seed=seed)
     elif data == 'oscillation':
         data_train, data_test = generate_training_data_oscillation(N=N, 
                                                                    noisy_dims=noisy_dims, 
-                                                                   seed=seed, 
-                                                                   repetition_index=repetition_index)
+                                                                   seed=seed)
     elif data == 'face':
         data_train, data_test = generate_training_data_face(N=N, 
                                                             noisy_dims=noisy_dims)
@@ -62,45 +61,46 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
         data_train, data_test = generate_training_data_event(N=N,
                                                              noisy_dims=noisy_dims,
                                                              seed=seed,
-                                                             prob=event_prob, 
-                                                             repetition_index=repetition_index)
+                                                             prob=event_prob)
     elif data == 'ribbon':
         data_train, data_test = generate_training_data_ribbon(N=N,
                                                               noisy_dims=noisy_dims,
-                                                              seed=seed,
-                                                              repetition_index=repetition_index)
+                                                              seed=seed)
     elif data == 'ladder':
         data_train, data_test = generate_training_data_ladder(N=N,
                                                               noisy_dims=noisy_dims,
-                                                              seed=seed,
                                                               num_states=num_states,
-                                                              max_steps=max_steps, 
-                                                              repetition_index=repetition_index)
+                                                              max_steps=max_steps,
+                                                              seed=seed)
     elif data == 'swiss_roll_squared_noise':
         data_train, data_test = generate_training_data_swiss_roll(N=N, 
                                                                   noisy_dims=noisy_dims, 
-                                                                  seed=seed, 
-                                                                  repetition_index=repetition_index)
+                                                                  seed=seed)
         noise_node = NonlinearNoiseNode.NonlinearNoiseNode(dims_modified=2, seed=seed)
         data_train = noise_node.execute(data_train)
         data_test = noise_node.execute(data_test)
     elif data == 'kai':
         data_train, data_test = generate_training_data_kai(N=N, 
                                                            noisy_dims=noisy_dims, 
-                                                           seed=seed, 
-                                                           repetition_index=repetition_index)
+                                                           seed=seed)
     elif data == 'dead_corners':
         data_train, data_test = generate_training_data_dead_corners(N=N,
                                                                     corner_size=corner_size, 
                                                                     noisy_dims=noisy_dims, 
-                                                                    seed=seed, 
-                                                                    repetition_index=repetition_index)
+                                                                    seed=seed)
     elif data == 'mario_window':
         data_train, data_test = generate_training_data_mario(N=N,
                                                              window_only=True,
                                                              noisy_dims=noisy_dims, 
-                                                             seed=seed, 
-                                                             repetition_index=repetition_index)
+                                                             seed=seed)
+    elif data == 'eeg':
+        data_train, data_test = generate_training_data_eeg(N=N,
+                                                           noisy_dims=noisy_dims, 
+                                                           seed=seed)
+    elif data == 'meg':
+        data_train, data_test = generate_training_data_meg(N=[N,75],
+                                                           noisy_dims=noisy_dims, 
+                                                           seed=seed)
     else:
         assert False
 
@@ -128,10 +128,8 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
 
 
 @mem.cache
-def generate_training_data_random(N, noisy_dims, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index))))
-    env = EnvRandom(ndim=2, seed=unique_seed)
-    #data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+def generate_training_data_random(N, noisy_dims, seed=None):
+    env = EnvRandom(ndim=2, seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -140,10 +138,8 @@ def generate_training_data_random(N, noisy_dims, seed=None, repetition_index=Non
 
 
 @mem.cache
-def generate_training_data_swiss_roll(N, noisy_dims, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
-    env = EnvSwissRoll(seed=unique_seed)
-    #data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+def generate_training_data_swiss_roll(N, noisy_dims, seed=None):
+    env = EnvSwissRoll(seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -152,10 +148,8 @@ def generate_training_data_swiss_roll(N, noisy_dims, seed=None, repetition_index
 
 
 @mem.cache
-def generate_training_data_ribbon(N, noisy_dims, sigma_noise=.05, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, sigma_noise, seed, repetition_index))))
-    env = EnvRibbon(seed=unique_seed, step_size=.1, sigma_noise=sigma_noise)
-    #data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+def generate_training_data_ribbon(N, noisy_dims, sigma_noise=.05, seed=None):
+    env = EnvRibbon(seed=seed, step_size=.1, sigma_noise=sigma_noise)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -164,10 +158,8 @@ def generate_training_data_ribbon(N, noisy_dims, sigma_noise=.05, seed=None, rep
 
 
 @mem.cache
-def generate_training_data_oscillation(N, noisy_dims, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index))))
-    env = EnvOscillator(transition_prob=.9, seed=unique_seed)
-    #data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+def generate_training_data_oscillation(N, noisy_dims, seed=None):
+    env = EnvOscillator(transition_prob=.9, seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -179,14 +171,6 @@ def generate_training_data_oscillation(N, noisy_dims, seed=None, repetition_inde
 def generate_training_data_face(N, noisy_dims):
     env = EnvFace()
     data_train, data_test = env.generate_training_data(num_steps=[1500, 465], noisy_dims=noisy_dims, whitening=False, chunks=2)
-    #pca = mdp.nodes.PCANode(output_dim=keep_variance)
-    #pca.train(data_train[0])
-    #data_train = pca.execute(data_train[0])
-    #data_test = pca.execute(data_test[0])
-    #whitening = mdp.nodes.WhiteningNode()
-    #whitening.train(data_train)
-    #data_train = whitening.execute(data_train)
-    #data_test = whitening.execute(data_test)
     data_train = data_train[0]
     data_test = data_test[0]
     return data_train, data_test
@@ -194,44 +178,8 @@ def generate_training_data_face(N, noisy_dims):
 
 
 @mem.cache
-def generate_training_data_event(N, noisy_dims, prob=.1, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, prob, repetition_index))))
-    env = EnvEvent(prob=prob, seed=unique_seed)
-    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
-    data_train = data_train[0]
-    data_test = data_test[0]
-    return data_train, data_test
-    
-
-
-@mem.cache
-def generate_training_data_kai(N, noisy_dims, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
-    env = EnvKai(seed=unique_seed)
-    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
-    data_train = data_train[0]
-    data_test = data_test[0]
-    return data_train, data_test
-    
-
-
-@mem.cache
-def generate_training_data_dead_corners(N, noisy_dims, corner_size=.1, seed=None, repetition_index=None):
-    # rev: 2
-    unique_seed = abs(hash(joblib.hash((N, noisy_dims, corner_size, seed, repetition_index)))) % np.iinfo(np.uint32).max
-    env = EnvDeadCorners(corner_size=corner_size, seed=unique_seed)
-    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
-    data_train = data_train[0]
-    data_test = data_test[0]
-    return data_train, data_test
-    
-
-
-@mem.cache
-def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, seed=None, repetition_index=None):
-    unique_seed = abs(hash(joblib.hash((N, num_states, max_steps, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
-    env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=unique_seed)
-    #data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=True, chunks=2)
+def generate_training_data_event(N, noisy_dims, prob=.1, seed=None):
+    env = EnvEvent(prob=prob, seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -240,10 +188,8 @@ def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, see
 
 
 @mem.cache
-def generate_training_data_mario(N, window_only, noisy_dims, seed=None, repetition_index=None):
-    # rev: 4
-    unique_seed = abs(hash(joblib.hash((N, window_only, noisy_dims, seed, repetition_index)))) % np.iinfo(np.uint32).max
-    env = EnvMarioCanned(window_only=window_only, seed=unique_seed)
+def generate_training_data_kai(N, noisy_dims, seed=None):
+    env = EnvKai(seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -252,11 +198,59 @@ def generate_training_data_mario(N, window_only, noisy_dims, seed=None, repetiti
 
 
 @mem.cache
-def calc_projection_random(data_train, data_test, output_dim=1, seed=None, repetition_index=None):
-
-    unique_seed = abs(hash(joblib.hash((data_train, data_test, output_dim, seed, repetition_index)))) % np.iinfo(np.uint32).max
+def generate_training_data_dead_corners(N, noisy_dims, corner_size=.1, seed=None):
+    env = EnvDeadCorners(corner_size=corner_size, seed=seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
     
-    model = gpfa.RandomProjection(output_dim=output_dim, seed=unique_seed)
+
+
+@mem.cache
+def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, seed=None):
+    env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
+def generate_training_data_mario(N, window_only, noisy_dims, seed=None):
+    env = EnvMarioCanned(window_only=window_only, seed=seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
+def generate_training_data_eeg(N, noisy_dims, seed=None):
+    env = EnvEEG(seed=seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
+def generate_training_data_meg(N, noisy_dims, seed=None):
+    env = EnvMEG(seed=seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
+def calc_projection_random(data_train, data_test, output_dim=1, seed=None):
+
+    model = gpfa.RandomProjection(output_dim=output_dim, seed=seed)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -276,12 +270,9 @@ def calc_projection_sfa(data_train, data_test, output_dim=1):
 
 
 @mem.cache
-def calc_projection_foreca(data_train, data_test, output_dim=1, seed=None, repetition_index=None):
-    # rv: 2
+def calc_projection_foreca(data_train, data_test, output_dim=1, seed=None):
     
-    unique_seed = abs(hash(joblib.hash((data_train, data_test, output_dim, seed, repetition_index)))) % np.iinfo(np.uint32).max
-    
-    model = foreca_node.ForeCA(output_dim=output_dim, seed=unique_seed)
+    model = foreca_node.ForeCA(output_dim=output_dim, seed=seed)
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -361,12 +352,6 @@ def calc_error(data, k=10, measure='trace_of_avg_cov', reverse_error=False):
         return gpfa.calc_predictability_trace_of_avg_cov(data, k)
     elif measure == 'det_of_avg_cov':
         return gpfa.calc_predictability_det_of_avg_cov(data, k)
-    #elif measure == 'avg_det_of_cov':
-    #    return gpfa.calc_predictability_avg_det_of_cov(data, k)
-    #elif measure == 'graph_full':
-    #    return gpfa.calc_predictability_graph_full(data, k)
-    #elif measure == 'graph_star':
-    #    return gpfa.calc_predictability_graph_star(data, k)
     else:
         assert False
 
@@ -376,7 +361,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                      kernel_poly_degree=2, expansion=1, weighted_edges=True, 
                      keep_variance=1., iteration_dim=2, event_prob=.1, num_states=10, 
                      max_steps=4, corner_size=.2, data='swiss_roll', measure='det_var', 
-                     output_dim=1, reverse_error=False, seed=None, repetition_index=None):
+                     output_dim=1, reverse_error=False, seed=None):
     # rv: 7
     assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'cfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2', 'gpfa-1-kernelized', 'gpfa-2-kernelized', 'lpp']
     
@@ -390,22 +375,19 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                                                    max_steps=max_steps,
                                                    corner_size=corner_size, 
                                                    data=data, 
-                                                   seed=seed,
-                                                   repetition_index=repetition_index)
+                                                   seed=seed)
     
     # train algorithm
     if algorithm == 'random':
         data_test_projected = calc_projection_random(data_train=data_train, 
                                                      data_test=data_test, 
                                                      output_dim=output_dim,
-                                                     seed=seed,
-                                                     repetition_index=repetition_index)
+                                                     seed=seed)
     elif algorithm == 'foreca':
         data_test_projected = calc_projection_foreca(data_train=data_train, 
                                                      data_test=data_test,
                                                      output_dim=output_dim,
-                                                     seed=seed,
-                                                     repetition_index=repetition_index)
+                                                     seed=seed)
     elif algorithm == 'sfa':
         data_test_projected = calc_projection_sfa(data_train=data_train, 
                                                   data_test=data_test,
@@ -502,13 +484,13 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
 
 
 
-def calc_baseline(N, k, data, measure, seed=None, repetition_index=None):
+def calc_baseline(N, k, data, measure, seed=None):
     
     # generate data
     if data == 'swiss_roll':
-        data, _ = generate_training_data_swiss_roll(N=N, noisy_dims=0, seed=seed, repetition_index=repetition_index)
+        data, _ = generate_training_data_swiss_roll(N=N, noisy_dims=0, seed=seed)
     elif data == 'oscillation':
-        data, _ = generate_training_data_oscillation(N=N, noisy_dims=0, seed=seed, repetition_index=repetition_index)
+        data, _ = generate_training_data_oscillation(N=N, noisy_dims=0, seed=seed)
     else:
         assert False
         
@@ -516,74 +498,5 @@ def calc_baseline(N, k, data, measure, seed=None, repetition_index=None):
 
 
 
-def main():
-    
-    # parameters
-    algorithms = ['random', 'sfa', 'pfa', 'gpfa']#, 'foreca']
-    p = 2
-    K = 1
-    k = 20#[20, 100] # [2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500]
-    N = 2000 #[1000, 2000, 3000, 4000, 5000] 1965
-    noisy_dims = 20#[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 300, 400]#, 500] #[0, 50, 100, 150, 200, 250, 300, 350, 400]
-    #noisy_dims = [0, 50, 100]#, 150, 200, 250, 300, 350, 400]
-    expansion = 2
-    keep_variance = 1. #[.99, .98, .95, .90, .80]
-    iterations = 50#[50, 100] #[1, 10, 20, 30, 40, 50, 100]
-    iteration_dim = 2 # [2, 5, 10, 20, 50, 100, 200]
-    neighborhood_graph=True
-    event_prob = .1#[.1, .2, .3, .4, .5]
-    num_states = 10
-    max_steps = 4
-    data = 'ladder' #'oscillation' # 'swiss_roll'
-    measure = 'avg_det_of_cov' #'det_of_avg_cov'
-    seed = 0
-    
-    # plotter arguments
-    processes = None
-    repetitions = 10
-    plot_elapsed_time = False
-
-    # plot results from algorithms
-    result = eep.plot(prediction_error,
-                      algorithm=algorithms,
-                      k=k,
-                      N=N,
-                      p=p,
-                      K=K,
-                      expansion=expansion,
-                      iterations=iterations,
-                      noisy_dims=noisy_dims,
-                      keep_variance=keep_variance,
-                      iteration_dim=iteration_dim,
-                      variance_graph=False,
-                      neighborhood_graph=neighborhood_graph,
-                      event_prob=event_prob,
-                      num_states=num_states,
-                      max_steps=max_steps,
-                      data=data,
-                      processes=processes,
-                      repetitions=repetitions,
-                      measure=measure,
-                      save_plot=False,
-                      show_plot=False,
-                      seed=seed,
-                      plot_elapsed_time=plot_elapsed_time)
-  
-    # plot a baseline
-    #result_baseline = eep.evaluate(calc_baseline, N=N, k=k, data=data, measure=measure, repetitions=repetitions, processes=1)
-    #baseline = np.mean(result_baseline.values, axis=-1)
-    #plt.plot([1, noisy_dims[-1]], [baseline, baseline], '--', color='black')
-
-    # show plot
-    #plt.legend(algorithms, loc='best')
-    #plt.legend(algorithms + ['baseline'], loc='best')
-    #plt.gca().set_xscale('log')
-    #plt.gca().set_yscale('log')
-    #plt.savefig('plottr_results/%s.png' % result.result_prefix)
-    plt.show()
-    return
-
-
-
 if __name__ == '__main__':
-    main()
+    pass
