@@ -10,29 +10,28 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, k=15, iterations=50, noisy_dims=400):
-    
-    repeptitions = 20
+def experiment(N=2000, keep_variance=.98, k=5, iterations=50, output_dim=5):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
-            k=k, 
+            keep_variance=keep_variance,
+            k=k,
             p=1, 
             K=1, 
             seed=0,
-            iterations=iterations, 
-            noisy_dims=noisy_dims, 
+            iterations=iterations,
+            noisy_dims=0, 
             neighborhood_graph=False,
             weighted_edges=True, 
-            iteration_dim=2, 
-            output_dim=2, 
-            data='swiss_roll',
-            corner_size=0.1, 
+            iteration_dim=output_dim, 
+            output_dim=output_dim, 
+            data='face',
             measure='trace_of_avg_cov', 
-            repetitions=repeptitions, 
-            processes=None, 
+            reverse_error=False,
+            repetitions=1, 
+            processes=None,
             argument_order=['N', 'iterations'], 
             cachedir='/scratch/weghebvc',
             plot_elapsed_time=False, 
@@ -42,19 +41,19 @@ def experiment(N=2000, k=15, iterations=50, noisy_dims=400):
     #plt.show()
     
     
-
+    
 def main():
     
-    # swiss roll
+    # mario
     plt.figure()
     plt.subplot(2, 2, 1)
-    experiment(noisy_dims=[0, 50, 100, 200, 300, 400, 500])
+    experiment(keep_variance=list(np.arange(.85, 1., .01)))
     plt.subplot(2, 2, 2)
-    experiment(N=[500, 1000, 1500, 2000, 2500])
+    experiment(N=[1500, 1750, 2000, 2250, 2500])
     plt.subplot(2, 2, 3)
-    experiment(iterations=[1, 10, 30, 50])
+    experiment(iterations=[20, 40, 60, 80, 100, 150])
     plt.subplot(2, 2, 4)
-    experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50])
+    experiment(k=range(5,51,5))
 
     plt.show()
 

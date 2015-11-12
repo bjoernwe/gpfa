@@ -3,39 +3,40 @@ import sys
 
 from matplotlib import pyplot as plt
 
-sys.path.append('/home/weghebvc/workspace/git/easyexplot/src/')
-import easyexplot as eep
+sys.path.append('/home/weghebvc/workspace/git/explot/src/')
+import explot as ep
 
 import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, keep_variance=1., k=20, iterations=50):
+def experiment(N=2000, keep_variance=1., k=20, iterations=50, output_dim=1):
     
     #plt.figure()
-    eep.plot(eb.prediction_error,
-             algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
-             N=N, 
-             keep_variance=keep_variance,
-             k=k,
-             p=1, 
-             K=0, 
-             iterations=iterations,
-             noisy_dims=0, 
-             neighborhood_graph=False,
-             weighted_edges=True, 
-             iteration_dim=1, 
-             output_dim=1, 
-             data='eeg',
-             measure='trace_of_avg_cov', 
-             reverse_error=False,
-             repetitions=1, 
-             processes=None,
-             argument_order=['algorithm'],
-             cachedir='/scratch/weghebvc',
-             plot_elapsed_time=False, 
-             show_plot=False, 
-             save_plot=True)
+    ep.plot(eb.prediction_error,
+            algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            N=N, 
+            keep_variance=keep_variance,
+            k=k,
+            p=1, 
+            K=0, 
+            seed=0,
+            iterations=iterations,
+            noisy_dims=0, 
+            neighborhood_graph=False,
+            weighted_edges=True, 
+            iteration_dim=output_dim, 
+            output_dim=output_dim, 
+            data='eeg',
+            measure='trace_of_avg_cov', 
+            reverse_error=False,
+            repetitions=1, 
+            processes=None,
+            argument_order=['N', 'iterations'], 
+            cachedir='/scratch/weghebvc',
+            plot_elapsed_time=False, 
+            show_plot=False, 
+            save_plot_path='./plots')
     #plt.gca().set_yscale('log')
     #plt.show()
     
