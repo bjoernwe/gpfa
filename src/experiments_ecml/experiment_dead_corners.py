@@ -11,11 +11,13 @@ import experiments.experiment_base as eb
 
 def experiment(N=2000, k=20, iterations=100, noisy_dims=300):
     
-    repeptitions = 20
+    repeptitions = 5
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            #algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
+            #algorithm=['random', 'pfa', 'gcfa-2'], 
             N=N, 
             k=k, 
             p=1, 
@@ -28,7 +30,7 @@ def experiment(N=2000, k=20, iterations=100, noisy_dims=300):
             iteration_dim=1, 
             output_dim=1, 
             data='dead_corners',
-            corner_size=.05, 
+            corner_size=.1,#[.025, .05, .1, .2], 
             measure='trace_of_avg_cov', 
             repetitions=repeptitions, 
             processes=None, 

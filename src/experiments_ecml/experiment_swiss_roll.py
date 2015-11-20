@@ -16,7 +16,8 @@ def experiment(N=2000, k=15, iterations=50, noisy_dims=400):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            #algorithm=['random', 'pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             k=k, 
             p=1, 
