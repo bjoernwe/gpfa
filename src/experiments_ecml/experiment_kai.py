@@ -42,7 +42,7 @@ def experiment(N=2500, k=30, iterations=50, noisy_dims=300, data='kai'):
     #plt.show()
     
     
-def plot_experiment(N=2500, k=30, noisy_dims=300, iterations=50, repetitions=20, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = ep.evaluate(eb.prediction_error,
@@ -134,6 +134,7 @@ def plot_experiment(N=2500, k=30, noisy_dims=300, iterations=50, repetitions=20,
         plt.legend(['random', 'ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best', prop={'size':12}) 
     
     plt.xlabel(iter_arg if iter_arg != 'N' else 'S')
+    plt.xlabel(iter_arg if iter_arg != 'noisy_dims' else '# noisy dimensions')
     if False:
         if y_label:
             plt.ylabel('prediction error (log-scale)')

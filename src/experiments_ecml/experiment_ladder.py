@@ -132,6 +132,7 @@ def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=50, repetitions=20, 
         plt.legend(['random', 'ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best', prop={'size':12}) 
     
     plt.xlabel(iter_arg if iter_arg != 'N' else 'S')
+    plt.xlabel(iter_arg if iter_arg != 'noisy_dims' else '# noisy dimensions')
     if False:
         if y_label:
             plt.ylabel('prediction error (log-scale)')
