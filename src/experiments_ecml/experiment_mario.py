@@ -25,7 +25,7 @@ def experiment(N=2500, keep_variance=.84, k=2, iterations=150, output_dim=6):
             noisy_dims=0, 
             neighborhood_graph=False,
             weighted_edges=True, 
-            iteration_dim=output_dim, 
+            #iteration_dim=output_dim, 
             output_dim=output_dim, 
             data='mario_window',
             measure='trace_of_avg_cov', 
@@ -56,7 +56,7 @@ def plot_experiment(N=2500, k=2, keep_variance=.84, iterations=150, output_dim=6
                          keep_variance=keep_variance, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
-                         iteration_dim=output_dim, 
+                         #iteration_dim=output_dim, 
                          output_dim=output_dim, 
                          data='mario_window', 
                          measure='trace_of_avg_cov', 
@@ -89,7 +89,7 @@ def plot_experiment(N=2500, k=2, keep_variance=.84, iterations=150, output_dim=6
                              keep_variance=keep_variance_foreca, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
-                             iteration_dim=output_dim, 
+                             #iteration_dim=output_dim, 
                              output_dim=output_dim, 
                              data='mario_window',
                              measure='trace_of_avg_cov', 
@@ -115,7 +115,7 @@ def plot_experiment(N=2500, k=2, keep_variance=.84, iterations=150, output_dim=6
                          keep_variance=keep_variance, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
-                         iteration_dim=output_dim, 
+                         #iteration_dim=output_dim, 
                          output_dim=output_dim, 
                          data='mario_window',
                          measure='trace_of_avg_cov', 
@@ -165,14 +165,14 @@ def main():
     # mario
     plt.figure()
     #plt.subplot(1, 2, 1)
-    experiment(keep_variance=list(np.arange(.75, 1., .01)))
+    #experiment(keep_variance=list(np.arange(.75, 1., .01)))
     #plt.subplot(2, 2, 2)
     #experiment(N=[1500, 1750, 2000, 2250, 2500])
     #plt.subplot(2, 2, 3)
     #experiment(iterations=[20, 40, 60, 80, 100, 150])
     #plt.subplot(1, 2, 2)
     #experiment(k=range(2,5) + range(5,21,5))
-    #experiment(output_dim=10)
+    experiment(output_dim=range(1,11))
 
     plt.show()
 
@@ -191,7 +191,7 @@ def main_plot():
     #plt.subplot(1, 2, 2)
     #plt.title('(b)')
     plt.figure()
-    plot_experiment(k=range(2,5) + range(5,21,5), include_foreca=True, x_offset=0., y_label=False, legend=True)
+    plot_experiment(k=range(2,5) + range(5,21,5), include_foreca=True, x_offset=0., legend=True)
     plt.show()
 
 
