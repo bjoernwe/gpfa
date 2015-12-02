@@ -419,6 +419,124 @@ class gPFA(mdp.Node):
 
 
 
+class gPFAsr(mdp.Node):
+
+    def __init__(self, output_dim, k=10, iterations=10, variance_graph=True, 
+                 neighborhood_graph=False, weighted_edges=True, 
+                 causal_features=True, input_dim=None, dtype=None):
+        super(gPFAsr, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+        self.k = k
+        self.iterations = iterations
+        self.variance_graph = variance_graph
+        self.neighborhood_graph = neighborhood_graph
+        self.weighted_edges = weighted_edges
+        self.causal_features = causal_features
+        #self.W = None
+        #self.D = None
+        return
+
+
+    def _train(self, X):
+
+        # number of samples
+        N, _ = X.shape
+
+        # from Y we calculate the euclidean distances
+        # after the first iteration it contains the projected data
+        Y = X
+
+        # run algorithm several times e
+        for l in range(self.iterations):
+
+            # index lists for neighbors
+            tree = scipy.spatial.cKDTree(Y)
+            neighbors = [tree.query(Y[i], k=self.k+1)[1] for i in xrange(N)]
+
+            # future-preserving graph
+            index_list = []
+            if self.variance_graph:
+                for t in range(N-1):
+                    index_list += itertools.permutations(neighbors[t]+1, 2)
+            else:
+                for s in range(N-1):
+                    index_list += [(s+1,t) for t in neighbors[s]+1]
+                    index_list += [(t,s+1) for t in neighbors[s]+1]
+
+            if self.causal_features:
+                if self.variance_graph:
+                    for t in range(1, N):
+                        index_list += itertools.permutations(neighbors[t]-1, 2)
+                else:
+                    for s in range(1, N):
+                        index_list += [(s-1,t) for t in neighbors[s]-1]
+                        index_list += [(t,s-1) for t in neighbors[s]-1]
+
+            # neighborhood graph
+            if self.neighborhood_graph:
+                if self.variance_graph:
+                    for t in range(N):
+                        index_list += itertools.permutations(neighbors[t], 2)
+                else:
+                    for s in range(N):
+                        index_list += [(s,t) for t in neighbors[s]]
+                        index_list += [(t,s) for t in neighbors[s]]
+
+            # count edges only once
+            if not self.weighted_edges:
+                index_list = list(set(index_list))
+                
+            # weight matrix from index list
+            index_list = np.array(index_list)
+            index_list = np.delete(index_list, np.where(index_list[:,0] < 0), axis=0)
+            index_list = np.delete(index_list, np.where(index_list[:,1] < 0), axis=0)
+            W = scipy.sparse.coo_matrix((np.ones(index_list.shape[0]), (index_list[:,0], index_list[:,1])), shape=(N+1,N+1))
+            W = W.tocsr()
+            W = W[:N,:N]    # cut the N+1 elements
+    
+            # graph Laplacian
+            d = W.sum(axis=1).T
+            #d[d==0] = float('inf') 
+            #D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
+            Dinv = scipy.sparse.dia_matrix((1./d, 0), shape=(N, N))
+            V = Dinv.dot(W)
+            #L = D - W
+            #L = L.tocsr()
+    
+            #iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
+            #_, B = scipy.sparse.linalg.eigh(W, b=D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+            _, B = scipy.sparse.linalg.eigsh(V, k=self.output_dim)
+            self.U, _, _, _ = np.linalg.lstsq(X, B)
+            assert self.U.shape == (self.input_dim, self.output_dim)
+            
+            # normalize eigenvectors 
+            for i in range(self.U.shape[1]):
+                self.U[:,i] /= np.linalg.norm(self.U[:,i])
+                    
+            # (if not the last iteration:) solve and project
+            if l < self.iterations-1:
+                Y = X.dot(self.U)
+
+        self.stop_training()
+        return
+
+
+    def _stop_training(self):
+        #self.E, self.U = scipy.linalg.eigh(self.W, b=self.D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+        # normalize eigenvectors 
+        #for i in range(self.U.shape[1]):
+        #    self.U[:,i] /= np.linalg.norm(self.U[:,i])
+    
+        # normalize directions
+        mask = self.U[0,:] > 0
+        self.U = self.U * mask - self.U * ~mask
+        return
+
+
+    def _execute(self, x):
+        return x.dot(self.U)
+
+
+
 class gPFAkernel(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=10, degree=3, 

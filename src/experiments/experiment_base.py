@@ -33,6 +33,7 @@ import NonlinearNoiseNode
 
 # prepare joblib.Memory
 cachedir = '/scratch/weghebvc'
+cachedir = None
 mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 
@@ -116,7 +117,7 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
         pca.train(data_train)
         data_train = pca.execute(data_train)
         data_test = pca.execute(data_test)
-        
+
     # whitening
     whitening = mdp.nodes.WhiteningNode(reduce=True)
     whitening.train(data_train)
@@ -219,6 +220,7 @@ def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, see
 
 @mem.cache
 def generate_training_data_mario(N, window_only, noisy_dims, seed=None):
+    # rev: 2
     env = EnvMarioCanned(window_only=window_only, seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
@@ -239,6 +241,7 @@ def generate_training_data_eeg(N, noisy_dims, seed=None):
 
 @mem.cache
 def generate_training_data_meg(N, noisy_dims, seed=None):
+    #rev: 2
     env = EnvMEG(seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
@@ -296,13 +299,13 @@ def calc_projection_pfa(data_train, data_test, p, K, causal_features=False, outp
 
 
 @mem.cache
-def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, variance_graph, neighborhood_graph, weighted_edges, causal_features, output_dim=1):
+def calc_projection_gpfa(data_train, data_test, k, iterations, variance_graph, neighborhood_graph, weighted_edges, causal_features, output_dim=1):
     # rev 6
     
     model = gpfa.gPFA(k=k, 
                       output_dim=output_dim, 
                       iterations=iterations, 
-                      iteration_dim=iteration_dim, 
+                      #iteration_dim=iteration_dim, 
                       variance_graph=variance_graph,
                       neighborhood_graph=neighborhood_graph,
                       weighted_edges=weighted_edges,
@@ -315,15 +318,27 @@ def calc_projection_gpfa(data_train, data_test, k, iterations, iteration_dim, va
 
 
 @mem.cache
-def calc_projection_gpfa_kernelized(data_train, data_test, k, kernel_poly_degree, iterations, iteration_dim, variance_graph, weighted_edges, output_dim=1):
+def calc_projection_gpfa_kernel(data_train, data_test, k, degree, iterations, variance_graph, output_dim=1):
     
-    model = gpfa.gPFAkernelized(k=k,
-                                kernel_poly_degree=kernel_poly_degree, 
-                                output_dim=output_dim, 
-                                iterations=iterations, 
-                                iteration_dim=iteration_dim, 
-                                variance_graph=variance_graph,
-                                weighted_edges=weighted_edges)    
+    model = gpfa.gPFAkernel(k=k,
+                            degree=degree, 
+                            output_dim=output_dim, 
+                            iterations=iterations, 
+                            variance_graph=variance_graph)    
+    model.train(data_train)
+    
+    result = model.execute(data_test)
+    return result
+
+
+
+@mem.cache
+def calc_projection_gpfa_sr(data_train, data_test, k, iterations, variance_graph, output_dim=1):
+    
+    model = gpfa.gPFAsr(k=k,
+                        output_dim=output_dim, 
+                        iterations=iterations, 
+                        variance_graph=variance_graph)    
     model.train(data_train)
     
     result = model.execute(data_test)
@@ -358,12 +373,13 @@ def calc_error(data, k=10, measure='trace_of_avg_cov', reverse_error=False):
 
 
 def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood_graph, 
-                     kernel_poly_degree=2, expansion=1, weighted_edges=True, 
-                     keep_variance=1., iteration_dim=2, event_prob=.1, num_states=10, 
+                     kernel_poly_degree=3, expansion=1, weighted_edges=True, 
+                     keep_variance=1., #iteration_dim=2, 
+                     event_prob=.1, num_states=10, 
                      max_steps=4, corner_size=.2, data='swiss_roll', measure='det_var', 
                      output_dim=1, reverse_error=False, seed=None):
-    # rv: 7
-    assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'cfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2', 'gpfa-1-kernelized', 'gpfa-2-kernelized', 'lpp']
+    # rv: 8
+    assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'cfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2', 'gcfa-1-kernel', 'gcfa-2-kernel', 'gcfa-1-sr', 'gcfa-2-sr', 'lpp']
     
     # generate training data
     data_train, data_test = generate_training_data(N=N, 
@@ -411,7 +427,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                                                    data_test=data_test, 
                                                    k=k, 
                                                    iterations=iterations, 
-                                                   iteration_dim=iteration_dim, 
+                                                   #iteration_dim=iteration_dim, 
                                                    variance_graph=True, 
                                                    neighborhood_graph=neighborhood_graph,
                                                    weighted_edges=weighted_edges,
@@ -422,7 +438,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                                                    data_test=data_test, 
                                                    k=k, 
                                                    iterations=iterations, 
-                                                   iteration_dim=iteration_dim, 
+                                                   #iteration_dim=iteration_dim, 
                                                    variance_graph=False, 
                                                    neighborhood_graph=neighborhood_graph,
                                                    weighted_edges=weighted_edges,
@@ -433,7 +449,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                                                    data_test=data_test, 
                                                    k=k, 
                                                    iterations=iterations, 
-                                                   iteration_dim=iteration_dim, 
+                                                   #iteration_dim=iteration_dim, 
                                                    variance_graph=True, 
                                                    neighborhood_graph=neighborhood_graph,
                                                    weighted_edges=weighted_edges,
@@ -444,34 +460,42 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                                                    data_test=data_test, 
                                                    k=k, 
                                                    iterations=iterations, 
-                                                   iteration_dim=iteration_dim, 
+                                                   #iteration_dim=iteration_dim, 
                                                    variance_graph=False, 
                                                    neighborhood_graph=neighborhood_graph,
                                                    weighted_edges=weighted_edges,
                                                    causal_features=True,
                                                    output_dim=output_dim)
-    elif algorithm == 'gpfa-1-kernelized':
-        data_test_projected = calc_projection_gpfa_kernelized(data_train=data_train, 
-                                                              data_test=data_test, 
-                                                              k=k,
-                                                              kernel_poly_degree=kernel_poly_degree, 
-                                                              iterations=iterations, 
-                                                              iteration_dim=iteration_dim, 
-                                                              variance_graph=True, 
-                                                              weighted_edges=weighted_edges,
-                                                              causal_features=False,
-                                                              output_dim=output_dim)
-    elif algorithm == 'gpfa-2-kernelized':
-        data_test_projected = calc_projection_gpfa_kernelized(data_train=data_train, 
-                                                              data_test=data_test, 
-                                                              k=k, 
-                                                              kernel_poly_degree=kernel_poly_degree, 
-                                                              iterations=iterations, 
-                                                              iteration_dim=iteration_dim, 
-                                                              variance_graph=False, 
-                                                              weighted_edges=weighted_edges,
-                                                              causal_features=False,
-                                                              output_dim=output_dim)
+    elif algorithm == 'gcfa-1-kernel':
+        data_test_projected = calc_projection_gpfa_kernel(data_train=data_train, 
+                                                          data_test=data_test, 
+                                                          k=k,
+                                                          degree=kernel_poly_degree, 
+                                                          iterations=iterations, 
+                                                          variance_graph=True, 
+                                                          output_dim=output_dim)
+    elif algorithm == 'gcfa-2-kernel':
+        data_test_projected = calc_projection_gpfa_kernel(data_train=data_train, 
+                                                          data_test=data_test, 
+                                                          k=k, 
+                                                          degree=kernel_poly_degree, 
+                                                          iterations=iterations, 
+                                                          variance_graph=False, 
+                                                          output_dim=output_dim)
+    elif algorithm == 'gcfa-1-sr':
+        data_test_projected = calc_projection_gpfa_sr(data_train=data_train, 
+                                                      data_test=data_test, 
+                                                      k=k,
+                                                      iterations=iterations, 
+                                                      variance_graph=True, 
+                                                      output_dim=output_dim)
+    elif algorithm == 'gcfa-2-sr':
+        data_test_projected = calc_projection_gpfa_sr(data_train=data_train, 
+                                                      data_test=data_test, 
+                                                      k=k, 
+                                                      iterations=iterations, 
+                                                      variance_graph=False, 
+                                                      output_dim=output_dim)
     elif algorithm == 'lpp':
         data_test_projected = calc_projection_lpp(data_train=data_train, 
                                                   data_test=data_test, 
