@@ -14,7 +14,7 @@ def experiment(N=2500, keep_variance=.84, k=2, iterations=150, output_dim=6):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['pfa', 'gcfa-2'], 
+            algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             keep_variance=keep_variance,
             k=k,
@@ -33,7 +33,7 @@ def experiment(N=2500, keep_variance=.84, k=2, iterations=150, output_dim=6):
             repetitions=1, 
             processes=None,
             argument_order=['N', 'iterations'], 
-            cachedir=None,#'/scratch/weghebvc',
+            cachedir='/scratch/weghebvc',
             plot_elapsed_time=False, 
             show_plot=False, 
             save_plot_path='./plots')
@@ -163,17 +163,16 @@ def calc_dimensions(keep_variance, N=2500):
 def main():
     
     # mario
-    #plt.figure()
-    plt.subplot(1, 2, 1)
-    #experiment()
-    experiment(keep_variance=list(np.arange(.80, 1.01, .02)))
+    plt.figure()
+    #plt.subplot(1, 2, 1)
+    #experiment(keep_variance=list(np.arange(.75, 1., .01)))
     #plt.subplot(2, 2, 2)
     #experiment(N=[1500, 1750, 2000, 2250, 2500])
     #plt.subplot(2, 2, 3)
     #experiment(iterations=[20, 40, 60, 80, 100, 150])
     #plt.subplot(1, 2, 2)
     #experiment(k=range(2,5) + range(5,21,5))
-    #experiment(output_dim=range(1,11))
+    experiment(output_dim=range(1,11))
 
     plt.show()
 
@@ -197,6 +196,6 @@ def main_plot():
 
 
 if __name__ == '__main__':
-    main()
-    #main_plot()
+    #main()
+    main_plot()
     #calc_dimensions(keep_variance=list(np.arange(.8, 1.01, .01)))
