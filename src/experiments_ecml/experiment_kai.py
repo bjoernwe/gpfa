@@ -9,6 +9,9 @@ import explot as ep
 import experiments.experiment_base as eb
 
 
+#cachedir = '/scratch/weghebvc'
+cachedir = '/scratch/weghebvc/timing'
+
 
 def experiment(N=2500, k=30, iterations=50, noisy_dims=300, data='kai'):
     
@@ -42,9 +45,10 @@ def experiment(N=2500, k=30, iterations=50, noisy_dims=300, data='kai'):
     #plt.show()
     
     
-def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20, include_random=False, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
-    #plt.figure()
+    plot_elapsed_time = True
+    
     result = ep.evaluate(eb.prediction_error,
                          algorithm='random', 
                          N=N, 
@@ -56,24 +60,29 @@ def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20
                          noisy_dims=noisy_dims, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
-                         iteration_dim=2, 
+                         #iteration_dim=2, 
                          output_dim=2, 
                          data='kai', 
                          measure='trace_of_avg_cov', 
                          repetitions=repetitions, 
                          processes=None, 
-                         cachedir='/scratch/weghebvc')
+                         cachedir=cachedir)
 
     # determine iter_arg
     iter_arg = result.iter_args.keys()[0]
-    
+        
     # plot error bars
-    m = np.mean(result.values, axis=-1)
-    s = np.std(result.values, axis=-1)
-    x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
-    plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle=':')
+    legends = []
+    if include_random:
+        legends.append('random')
+        values = result.elapsed_times / 1000. if plot_elapsed_time else result.values
+        m = np.mean(values, axis=-1)
+        s = np.std(values, axis=-1)
+        x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
+        plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle=':')
     
     if include_foreca:
+        legends.append('ForeCA')
         noisy_dims_foreca = noisy_dims
         if type(noisy_dims) is list:
             noisy_dims_foreca = [d for d in noisy_dims if d <= 100]
@@ -88,15 +97,16 @@ def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20
                              noisy_dims=noisy_dims_foreca, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
-                             iteration_dim=2, 
+                             #iteration_dim=2, 
                              output_dim=2, 
                              data='kai',
                              measure='trace_of_avg_cov', 
                              repetitions=repetitions, 
                              processes=10, 
-                             cachedir='/scratch/weghebvc')
-        m = np.mean(result.values, axis=-1)
-        s = np.std(result.values, axis=-1)
+                             cachedir=cachedir)
+        values = result.elapsed_times / 1000. if plot_elapsed_time else result.values
+        m = np.mean(values, axis=-1)
+        s = np.std(values, axis=-1)
         x = np.array(result.iter_args[iter_arg]) - x_offset
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='red', marker=None, linestyle='-')
     else:
@@ -113,31 +123,37 @@ def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20
                          noisy_dims=noisy_dims, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
-                         iteration_dim=2, 
+                         #iteration_dim=2, 
                          output_dim=2, 
                          data='kai',
                          measure='trace_of_avg_cov', 
                          repetitions=repetitions, 
                          processes=None,
                          argument_order=['algorithm'], 
-                         cachedir='/scratch/weghebvc')
+                         cachedir=cachedir)
     linestyles = ['--', '-', '-']
     colors = ['red', 'blue', 'blue']
     markers = [None, 'o', 'o']
     facecolors = [None, 'blue', 'white']
     for i, _ in enumerate(result.iter_args['algorithm']):
-        m = np.mean(result.values[i], axis=-1)
-        s = np.std(result.values[i], axis=-1)
+        values = result.elapsed_times / 1000. if plot_elapsed_time else result.values
+        m = np.mean(values[i], axis=-1)
+        s = np.std(values[i], axis=-1)
         x = np.array(result.iter_args[iter_arg]) + i * x_offset
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
     if legend:
-        plt.legend(['random', 'ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best', prop={'size':12}) 
+        legends += ['PFA', 'GPFA (1)', 'GPFA (2)']
+        plt.legend(legends, loc='best', prop={'size':12})
     
-    plt.xlabel(iter_arg if iter_arg != 'N' else 'S')
-    plt.xlabel(iter_arg if iter_arg != 'noisy_dims' else '# noisy dimensions')
-    if False:
+    xlabel = iter_arg
+    if iter_arg == 'N':
+        xlabel = 'S'
+    elif iter_arg == 'noisy_dims':
+        xlabel = '# noisy dimensions'
+    plt.xlabel(xlabel)
+    if plot_elapsed_time:
         if y_label:
-            plt.ylabel('prediction error (log-scale)')
+            plt.ylabel('runtime in sec. (log-scale)')
         plt.gca().set_yscale('log')
     else:
         if y_label:
@@ -169,7 +185,7 @@ def main_plot():
     plt.figure()
     plot_experiment(iterations=[1, 10, 30, 50, 100], x_offset=0., include_foreca=False)
     plt.figure()
-    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0., legend=True, include_foreca=False)
+    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0., include_foreca=False, legend=False)
 
     #plt.subplot(4, 1, 1)
     #plt.title('(a)')
