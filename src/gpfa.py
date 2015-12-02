@@ -294,7 +294,7 @@ class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, iterations=10, #iteration_dim=None,
                  variance_graph=True, neighborhood_graph=False, weighted_edges=True, 
-                 causal_features=True, constraint_optimization=True, input_dim=None, 
+                 causal_features=True, input_dim=None, 
                  dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
@@ -304,8 +304,9 @@ class gPFA(mdp.Node):
         self.weighted_edges = weighted_edges
         #self.iteration_dim = iteration_dim
         self.causal_features = causal_features
-        self.constraint_optimization = constraint_optimization
-        self.L = None
+        #self.constraint_optimization = constraint_optimization
+        #self.L = None
+        self.W = None
         self.D = None
         return
 
@@ -371,44 +372,41 @@ class gPFA(mdp.Node):
             d = W.sum(axis=1).T
             #d[d==0] = float('inf') 
             D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
-            L = D - W
-            L = L.tocsr()
+            #L = D - W
+            #L = L.tocsr()
     
             # projected graph laplacian
             D2 = x.T.dot(D.dot(x))
-            L2 = x.T.dot(L.dot(x))
+            #L2 = x.T.dot(L.dot(x))
+            W2 = x.T.dot(W.dot(x))
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
                 #iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
-                if self.constraint_optimization:
-                    _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
-                    # normalize eigenvectors 
-                    for i in range(U.shape[1]):
-                        U[:,i] /= np.linalg.norm(U[:,i])
-                else:
-                    _, U = scipy.linalg.eigh(L2, eigvals=(0, self.output_dim-1))
+                #_, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
+                _, U = scipy.linalg.eigh(W2, b=D2, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+                # normalize eigenvectors 
+                for i in range(U.shape[1]):
+                    U[:,i] /= np.linalg.norm(U[:,i])
                 y = x.dot(U)
 
         # add chunk result to global result
-        if self.L is None:
-            self.L = L2
+        if self.W is None:
+            self.W = W2
             self.D = D2
         else:
-            self.L += L2
+            self.W += W2
             self.D += D2
 
         return
 
 
     def _stop_training(self):
-        if self.constraint_optimization:
-            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
-            # normalize eigenvectors 
-            for i in range(self.U.shape[1]):
-                self.U[:,i] /= np.linalg.norm(self.U[:,i])
-        else:
-            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
+        #self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+        self.E, self.U = scipy.linalg.eigh(self.W, b=self.D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+        # normalize eigenvectors 
+        for i in range(self.U.shape[1]):
+            self.U[:,i] /= np.linalg.norm(self.U[:,i])
     
         # normalize directions
         mask = self.U[0,:] > 0
