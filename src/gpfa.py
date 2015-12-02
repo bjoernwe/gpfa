@@ -4,6 +4,10 @@ import scipy.linalg
 import scipy.spatial
 import scipy.spatial.distance
 
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import polynomial_kernel
+from sklearn.metrics.pairwise import rbf_kernel
+
 import mdp
 
 
@@ -288,7 +292,7 @@ class LPP(mdp.Node):
 
 class gPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=10, iteration_dim=None,
+    def __init__(self, output_dim, k=10, iterations=10, #iteration_dim=None,
                  variance_graph=True, neighborhood_graph=False, weighted_edges=True, 
                  causal_features=True, constraint_optimization=True, input_dim=None, 
                  dtype=None):
@@ -298,7 +302,7 @@ class gPFA(mdp.Node):
         self.variance_graph = variance_graph
         self.neighborhood_graph = neighborhood_graph
         self.weighted_edges = weighted_edges
-        self.iteration_dim = iteration_dim
+        #self.iteration_dim = iteration_dim
         self.causal_features = causal_features
         self.constraint_optimization = constraint_optimization
         self.L = None
@@ -376,14 +380,14 @@ class gPFA(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
+                #iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
                 if self.constraint_optimization:
-                    _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, iteration_dim-1))
+                    _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
                     # normalize eigenvectors 
                     for i in range(U.shape[1]):
                         U[:,i] /= np.linalg.norm(U[:,i])
                 else:
-                    _, U = scipy.linalg.eigh(L2, eigvals=(0, iteration_dim-1))
+                    _, U = scipy.linalg.eigh(L2, eigvals=(0, self.output_dim-1))
                 y = x.dot(U)
 
         # add chunk result to global result
@@ -417,38 +421,34 @@ class gPFA(mdp.Node):
 
 
 
-class gPFAkernelized(mdp.Node):
+class gPFAkernel(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=1, iteration_dim=None,
-                 variance_graph=False, weighted_edges=True, kernel_poly_degree=2, 
-                 constraint_optimization=True, input_dim=None, dtype=None):
-        super(gPFAkernelized, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
+    def __init__(self, output_dim, k=10, iterations=10, degree=3, 
+                 variance_graph=True, input_dim=None, dtype=None):
+        super(gPFAkernel, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
+        self.degree = degree
         self.iterations = iterations
         self.variance_graph = variance_graph
-        self.weighted_edges = weighted_edges
-        self.kernel_poly_degree = kernel_poly_degree
-        self.iteration_dim = iteration_dim
-        self.constraint_optimization = constraint_optimization
         self.L = None
         self.D = None
-        self.X = None
         return
 
 
+    def _remove_duplicates(self, X, tol=1e-6):
+        D = pairwise_distances(X)
+        idc = np.sum(np.tril(D < tol), axis=1) <= 1
+        return X[idc]
+    
+    
     def _train(self, x):
-
-        # remember training data
-        assert self.X is None        
+        
+        x = self._remove_duplicates(x, tol=1e-4)
         self.X = x
 
-        # kernel matrix
-        K = np.dot(x, x.T)**self.kernel_poly_degree
-        self.K = K
-        
         # number of samples
         N, _ = x.shape
-        
+
         # from y we calculate the euclidean distances
         # after the first iteration it contains the projected data
         y = x
@@ -456,70 +456,64 @@ class gPFAkernelized(mdp.Node):
         # run algorithm several times e
         for l in range(self.iterations):
 
-            # pairwise distances of data points
-            distances = scipy.spatial.distance.pdist(y)
-            distances = scipy.spatial.distance.squareform(distances)
-            #if isinstance(self.k, int):
-            neighbors = [np.argsort(distances[i])[:self.k+1] for i in xrange(N)]
-            #elif isinstance(self.k, float):
-            #    neighbors = [np.array([j for (j, d) in enumerate(distances[i]) if d <= self.k], dtype=int) for i in xrange(N)]
-            #else:
-            #    assert False
+            # index lists for neighbors
+            tree = scipy.spatial.cKDTree(y)
+            neighbors = [tree.query(y[i], k=self.k+1)[1] for i in xrange(N)]
 
             # future-preserving graph
             index_list = []
             if self.variance_graph:
                 for t in range(N-1):
                     index_list += itertools.permutations(neighbors[t]+1, 2)
+                for t in range(1, N):
+                    index_list += itertools.permutations(neighbors[t]-1, 2)
             else:
                 for s in range(N-1):
                     index_list += [(s+1,t) for t in neighbors[s]+1]
                     index_list += [(t,s+1) for t in neighbors[s]+1]
+                for s in range(1, N):
+                    index_list += [(s-1,t) for t in neighbors[s]-1]
+                    index_list += [(t,s-1) for t in neighbors[s]-1]
 
-            # count edges only once
-            if not self.weighted_edges:
-                index_list = list(set(index_list))
-                
             # weight matrix from index list
             index_list = np.array(index_list)
+            index_list = np.delete(index_list, np.where(index_list[:,0] < 0), axis=0)
+            index_list = np.delete(index_list, np.where(index_list[:,1] < 0), axis=0)
             W = scipy.sparse.coo_matrix((np.ones(index_list.shape[0]), (index_list[:,0], index_list[:,1])), shape=(N+1,N+1))
-            #W = W.tocsr()
-            W = W.todense()
+            W = W.tocsr()
             W = W[:N,:N]    # cut the N+1 elements
     
             # graph Laplacian
             d = W.sum(axis=1).T
-            if d[0,0] == 0:
-                W[0,1:] = 1
-                W[1:,0] = 1
-                d = W.sum(axis=1).T
-            print np.sum(d==0)
-            D = scipy.sparse.dia_matrix((d, 0), shape=(N, N)).todense()
+            #d[d==0] = float('inf') 
+            D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
             L = D - W
+            L = L.tocsr()
     
-            #print scipy.linalg.eigh(L)[0]
-
-            # projected graph laplacian
-            #D2 = x.T.dot(D.dot(x))
-            #L2 = x.T.dot(L.dot(x))
-            
-            # kernalized eigenvalue problem
-            D2 = K.dot(D.dot(K))
-            L2 = K.dot(L.dot(K))
+            # gram matrix
+            #K = polynomial_kernel(y, degree=self.degree)
+            K = rbf_kernel(y, gamma=.1)
+            self.K = K
+            #print N, K.shape, '***', np.linalg.matrix_rank(K)
+            D2 = K.T.dot(D.dot(K))
+            #L2 = K.T.dot(L.dot(K))
+            L2 = K.T.dot(W.dot(K))
 
             # (if not the last iteration:) solve and project
-#             if l < self.iterations-1:
-#                 iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
-#                 if self.constraint_optimization:
-#                     _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, iteration_dim-1))
-#                     # normalize eigenvectors 
-#                     for i in range(U.shape[1]):
-#                         U[:,i] /= np.linalg.norm(U[:,i])
-#                 else:
-#                     _, U = scipy.linalg.eigh(L2, eigvals=(0, iteration_dim-1))
-#                 y = x.dot(U)
+            if l < self.iterations-1:
+                #_, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
+                _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(N-self.output_dim-1, N-1))
+                # normalize eigenvectors 
+                for i in range(U.shape[1]):
+                    U[:,i] /= np.linalg.norm(U[:,i])
+                #print x.T.shape, U.shape
+                #y = x.T.dot(U)
+                #alphas = polynomial_kernel(y, x, degree=self.degree)
+                #print alphas.shape
+                y = K.dot(U)
 
         # add chunk result to global result
+        # TODO: no chunks in kernel-version!
         if self.L is None:
             self.L = L2
             self.D = D2
@@ -531,36 +525,20 @@ class gPFAkernelized(mdp.Node):
 
 
     def _stop_training(self):
-        if self.constraint_optimization:
-            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(1, self.output_dim))
-            # only consider real EVs
-            #real_idc = [i for i, e in enumerate(self.E) if e.imag == 0]
-            #print len(real_idc)
-            #self.E = self.E[real_idc]
-            #self.U = self.U[:,real_idc]
-            # sort
-            #idc = np.argsort(np.abs(self.E))[:self.output_dim]
-            #self.E = self.E[idc]
-            #self.U = self.U[:,idc]
-            # normalize eigenvectors 
-            for i in range(self.U.shape[1]):
-                self.U[:,i] /= np.linalg.norm(self.U[:,i])
-        else:
-            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
+        #self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+        N, _ = self.X.shape
+        self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(N-self.output_dim-1, N-1))
+        # normalize eigenvectors 
+        for i in range(self.U.shape[1]):
+            self.U[:,i] /= np.linalg.norm(self.U[:,i])
     
         # normalize directions
         mask = self.U[0,:] > 0
         self.U = self.U * mask - self.U * ~mask
-        
-        import matplotlib.pyplot as plt
-        plt.plot(self.U[:,1])
-        plt.show()
         return
 
 
     def _execute(self, x):
-        KX = np.dot(self.X, x.T)**self.kernel_poly_degree
-        return self.U.T.dot(KX)
-
-
-
+        #y = polynomial_kernel(self.X, x, degree=self.degree)
+        y = rbf_kernel(self.X, x, gamma=.1)
+        return self.U.T.dot(y).T
