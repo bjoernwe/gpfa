@@ -10,11 +10,11 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2500, keep_variance=.84, k=2, iterations=1, output_dim=1):
+def experiment(N=2500, keep_variance=.84, k=2, iterations=150, output_dim=6):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['pfa', 'gcfa-1-kernel', 'gcfa-2-kernel'], 
+            algorithm=['pfa', 'gcfa-2'], 
             N=N, 
             keep_variance=keep_variance,
             k=k,
@@ -31,7 +31,7 @@ def experiment(N=2500, keep_variance=.84, k=2, iterations=1, output_dim=1):
             measure='trace_of_avg_cov', 
             reverse_error=False,
             repetitions=1, 
-            processes=1,#None,
+            processes=None,
             argument_order=['N', 'iterations'], 
             cachedir=None,#'/scratch/weghebvc',
             plot_elapsed_time=False, 
@@ -166,13 +166,13 @@ def main():
     #plt.figure()
     plt.subplot(1, 2, 1)
     #experiment()
-    experiment(keep_variance=list(np.arange(.80, 1.01, .04)))
+    experiment(keep_variance=list(np.arange(.80, 1.01, .02)))
     #plt.subplot(2, 2, 2)
     #experiment(N=[1500, 1750, 2000, 2250, 2500])
     #plt.subplot(2, 2, 3)
     #experiment(iterations=[20, 40, 60, 80, 100, 150])
-    plt.subplot(1, 2, 2)
-    experiment(k=range(2,5) + range(5,21,5))
+    #plt.subplot(1, 2, 2)
+    #experiment(k=range(2,5) + range(5,21,5))
     #experiment(output_dim=range(1,11))
 
     plt.show()
@@ -197,6 +197,6 @@ def main_plot():
 
 
 if __name__ == '__main__':
-    #main()
-    main_plot()
+    main()
+    #main_plot()
     #calc_dimensions(keep_variance=list(np.arange(.8, 1.01, .01)))

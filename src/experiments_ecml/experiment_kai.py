@@ -10,7 +10,7 @@ import experiments.experiment_base as eb
 
 
 #cachedir = '/scratch/weghebvc'
-cachedir = '/scratch/weghebvc/timing'
+cachedir = None#'/scratch/weghebvc/timing2'
 
 
 def experiment(N=2500, k=30, iterations=50, noisy_dims=300, data='kai'):
@@ -45,7 +45,7 @@ def experiment(N=2500, k=30, iterations=50, noisy_dims=300, data='kai'):
     #plt.show()
     
     
-def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20, include_random=False, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=2, include_random=False, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     plot_elapsed_time = True
     
@@ -113,7 +113,7 @@ def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20
         plt.plot(1, linewidth=1.2, color='red', marker=None, linestyle='-')
      
     result = ep.evaluate(eb.prediction_error,
-                         algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
+                         algorithm=['pfa', 'gcfa-1-sr', 'gcfa-2-sr'], 
                          N=N, 
                          k=k,
                          p=1, 
@@ -128,7 +128,7 @@ def plot_experiment(N=2500, k=40, noisy_dims=300, iterations=100, repetitions=20
                          data='kai',
                          measure='trace_of_avg_cov', 
                          repetitions=repetitions, 
-                         processes=None,
+                         processes=1,#None,
                          argument_order=['algorithm'], 
                          cachedir=cachedir)
     linestyles = ['--', '-', '-']
@@ -178,36 +178,14 @@ def main():
 
 
 def main_plot():
-    plt.figure()
-    plot_experiment(noisy_dims=[0, 50, 100, 200, 300, 400], x_offset=0., include_foreca=True)
-    plt.figure()
-    plot_experiment(N=[500, 1000, 1500, 2000, 2500], x_offset=0., include_foreca=False)
-    plt.figure()
-    plot_experiment(iterations=[1, 10, 30, 50, 100], x_offset=0., include_foreca=False)
-    plt.figure()
-    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0., include_foreca=False, legend=False)
-
-    #plt.subplot(4, 1, 1)
-    #plt.title('(a)')
     #plt.figure()
-    #plot_experiment(noisy_dims=[0, 50, 100, 200, 300, 400], x_offset=0.)
-    #plt.savefig('/home/weghebvc/Documents/2015-11 - ACML/paper/figures/results_kai_noisy_dims.eps')
-    #plt.subplot(4, 1, 2)
-    #plt.title('(b)')
+    plot_experiment(noisy_dims=[1, 50, 100, 200], x_offset=0., include_foreca=False)
     #plt.figure()
-    #plot_experiment(N=[500, 1000, 1500, 2000, 2500], x_offset=0.)
-    #plt.savefig('/home/weghebvc/Documents/2015-11 - ACML/paper/figures/results_kai_N.eps')
-    #plt.subplot(4, 1, 3)
-    #plt.title('(c)')
+    #plot_experiment(N=[500, 1000, 1500, 2000, 2500], x_offset=0., include_foreca=False)
     #plt.figure()
-    #plot_experiment(iterations=[1, 10, 30, 50, 100], x_offset=0.)
-    #plt.savefig('/home/weghebvc/Documents/2015-11 - ACML/paper/figures/results_kai_iterations.eps')
-    #plt.subplot(4, 1, 4)
-    #plt.title('(d)')
+    #plot_experiment(iterations=[1, 10, 30, 50, 100], x_offset=0., include_foreca=False)
     #plt.figure()
-    #plot_experiment(k=[5, 10, 15, 20, 30, 40, 50], x_offset=0., legend=True)
-    #plt.savefig('/home/weghebvc/Documents/2015-11 - ACML/paper/figures/results_kai_k.eps')
-    
+    #plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0., include_foreca=False, legend=False)
     plt.show()
 
 

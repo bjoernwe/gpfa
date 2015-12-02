@@ -33,7 +33,7 @@ import NonlinearNoiseNode
 
 # prepare joblib.Memory
 cachedir = '/scratch/weghebvc'
-cachedir = None
+#cachedir = None
 mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 
