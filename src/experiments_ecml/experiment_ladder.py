@@ -42,7 +42,7 @@ def experiment(N=2500, k=50, iterations=50, noisy_dims=40, data='ladder'):
     #plt.show()
     
 
-def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=50, repetitions=20, include_foreca=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=50, repetitions=50, include_foreca=True, x_offset=0, y_label=True, legend=False):
     
     #plt.figure()
     result = ep.evaluate(eb.prediction_error,
@@ -56,7 +56,7 @@ def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=50, repetitions=20, 
                          noisy_dims=noisy_dims, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
-                         iteration_dim=1, 
+                         #iteration_dim=1, 
                          output_dim=1, 
                          data='ladder', 
                          measure='trace_of_avg_cov', 
@@ -88,7 +88,7 @@ def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=50, repetitions=20, 
                              noisy_dims=noisy_dims_foreca, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
-                             iteration_dim=1, 
+                             #iteration_dim=1, 
                              output_dim=1, 
                              data='ladder',
                              measure='trace_of_avg_cov', 
@@ -111,7 +111,7 @@ def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=50, repetitions=20, 
                          noisy_dims=noisy_dims, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
-                         iteration_dim=1, 
+                         #iteration_dim=1, 
                          output_dim=1, 
                          data='ladder',
                          measure='trace_of_avg_cov', 
@@ -167,7 +167,7 @@ def main_plot():
     #plt.subplot(1, 2, 2)
     #plt.title('(b)')
     plt.figure()
-    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0.5, y_label=False, legend=True)
+    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0.5, legend=True)
     plt.show()
 
 
