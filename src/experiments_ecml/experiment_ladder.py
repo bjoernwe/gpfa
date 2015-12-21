@@ -23,6 +23,7 @@ def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, data='ladder'):
             N=N, 
             k=k, 
             p=p, 
+            P=2,
             K=2, 
             seed=0,
             iterations=iterations, 
@@ -49,6 +50,7 @@ def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output
                          N=N, 
                          k=k, 
                          p=p, 
+                         P=2,
                          K=K, 
                          noisy_dims=noisy_dims,
                          keep_variance=1., 
@@ -92,7 +94,7 @@ def main_plot():
     plot_experiment(iterations=[1, 10, 30, 50, 100])
     #plt.subplot(2, 2, 4)
     plt.figure()
-    plot_experiment(k=[2, 5, 10, 15, 20, 30, 40, 50], y_label=False)
+    plot_experiment(k=[2, 5, 10, 15, 20, 30, 40, 50], y_label=False, legend=True)
     plt.show()
 
 

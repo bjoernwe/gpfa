@@ -9,7 +9,7 @@ import explot as ep
 import experiments.experiment_base as eb
 
 
-def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, seed=0):
+def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, seed=0):
     
     legends = []
     
@@ -18,6 +18,7 @@ def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, out
                          N=N, 
                          k=k, 
                          p=p, 
+                         P=P, 
                          K=K, 
                          seed=seed,
                          iterations=iterations,
@@ -54,6 +55,7 @@ def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, out
                              N=N, 
                              k=k,
                              p=p, 
+                             P=P, 
                              K=K, 
                              seed=seed,
                              iterations=iterations,
@@ -78,6 +80,7 @@ def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, out
                          N=N, 
                          k=k,
                          p=p, 
+                         P=P, 
                          K=K,
                          seed=seed, 
                          iterations=iterations,
@@ -108,6 +111,7 @@ def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, out
 #                         N=N, 
 #                         k=k,
 #                         p=p, 
+#                         P=P, 
 #                         K=K,
 #                         seed=seed, 
 #                         iterations=iterations,
@@ -139,6 +143,7 @@ def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, out
                              N=N, 
                              k=k,
                              p=p, 
+                             P=P, 
                              K=0,
                              seed=seed, 
                              iterations=iterations,
