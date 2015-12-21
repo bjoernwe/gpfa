@@ -43,7 +43,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle=':')
         legends.append('Random')
     
-    if include_foreca and noisy_dims <= 100:
+    if include_foreca:
         noisy_dims_foreca = noisy_dims
         if type(noisy_dims) is list:
             noisy_dims_foreca = [d for d in noisy_dims if d <= 100]
@@ -167,7 +167,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
             s = np.std(result.values[i], axis=-1)
             x = np.array(result.iter_args[iter_arg]) + i * x_offset
             plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-        legends += ['GPFA* (1)', 'GPFA* (2)']
+        legends += ['GPFA (1)', 'GPFA (2)']
 
     if legend:
         plt.legend(legends, loc='best', prop={'size':12})
