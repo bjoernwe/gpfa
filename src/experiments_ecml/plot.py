@@ -15,7 +15,7 @@ def _get_values(result, plot_time=False):
     return result.values
 
 
-def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, plot_time=False, seed=0):
+def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, plot_time=False, cachedir='/scratch/weghebvc', seed=0):
     
     legends = []
     
@@ -37,7 +37,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                          measure='trace_of_avg_cov', 
                          repetitions=repetitions, 
                          processes=None, 
-                         cachedir='/scratch/weghebvc')
+                         cachedir=cachedir)
  
     # determine iter_arg
     iter_arg = result.iter_args.keys()[0]
@@ -75,7 +75,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                              measure='trace_of_avg_cov', 
                              repetitions=repetitions, 
                              processes=16, 
-                             cachedir='/scratch/weghebvc')
+                             cachedir=cachedir)
         values = _get_values(result, plot_time=plot_time)
         m = np.mean(values, axis=-1)
         s = np.std(values, axis=-1)
@@ -105,7 +105,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                          repetitions=repetitions, 
                          processes=None,
                          argument_order=['algorithm'], 
-                         cachedir='/scratch/weghebvc')
+                         cachedir=cachedir)
     linestyles = ['--']
     colors = ['red']
     markers = [None]
@@ -138,7 +138,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                              repetitions=repetitions, 
                              processes=None,
                              argument_order=['algorithm'], 
-                             cachedir='/scratch/weghebvc')
+                             cachedir=cachedir)
         linestyles = ['-', '-']
         colors = ['blue', 'blue']
         markers = ['^', '^']

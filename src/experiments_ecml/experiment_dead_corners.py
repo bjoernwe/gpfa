@@ -10,9 +10,6 @@ import experiments.experiment_base as eb
 import plot
 
 
-cachedir = '/scratch/weghebvc'
-#cachedir = '/home/weghebvc/Desktop/tmp'
-
 
 def experiment(N=2500, k=20, p=1, iterations=100, noisy_dims=300):
     
@@ -46,7 +43,11 @@ def experiment(N=2500, k=20, p=1, iterations=100, noisy_dims=300):
     
 
 
-def plot_experiment(N=2500, k=20, p=1, K=0, noisy_dims=300, iterations=100, output_dim=2, repetitions=10, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=20, p=1, K=0, noisy_dims=300, iterations=100, output_dim=2, repetitions=10, include_random=False, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False, plot_time=False):
+    if plot_time:
+        cachedir = '/home/weghebvc/Desktop/tmp'
+    else:
+        cachedir = '/scratch/weghebvc'
     plot.plot_experiment(data='dead_corners', 
                          N=N, 
                          k=k, 
@@ -64,6 +65,8 @@ def plot_experiment(N=2500, k=20, p=1, K=0, noisy_dims=300, iterations=100, outp
                          x_offset=x_offset, 
                          y_label=y_label, 
                          legend=legend,
+                         plot_time=plot_time,
+                         cachedir=cachedir,
                          seed=0)
 
 
