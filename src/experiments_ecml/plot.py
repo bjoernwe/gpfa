@@ -9,7 +9,7 @@ import explot as ep
 import experiments.experiment_base as eb
 
 
-def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True):
+def plot_experiment(data, N, k, p, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, seed=0):
     
     legends = []
     
@@ -19,16 +19,16 @@ def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, inc
                          k=k, 
                          p=p, 
                          K=K, 
-                         seed=0,
+                         seed=seed,
                          iterations=iterations,
-                         noisy_dims=0,
+                         noisy_dims=noisy_dims,
                          keep_variance=keep_variance, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
                          output_dim=output_dim, 
                          data=data, 
                          measure='trace_of_avg_cov', 
-                         repetitions=1, 
+                         repetitions=repetitions, 
                          processes=None, 
                          cachedir='/scratch/weghebvc')
  
@@ -42,7 +42,10 @@ def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, inc
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle=':')
         legends.append('Random')
     
-    if include_foreca:
+    if include_foreca and noisy_dims <= 100:
+        noisy_dims_foreca = noisy_dims
+        if type(noisy_dims) is list:
+            noisy_dims_foreca = [d for d in noisy_dims if d <= 100]
         keep_variance_foreca = keep_variance
         if type(keep_variance) is list:
             keep_variance_foreca = [v for v in keep_variance if v <= .92]
@@ -52,17 +55,17 @@ def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, inc
                              k=k,
                              p=p, 
                              K=K, 
-                             seed=0,
+                             seed=seed,
                              iterations=iterations,
-                             noisy_dims=0,
+                             noisy_dims=noisy_dims_foreca,
                              keep_variance=keep_variance_foreca, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
                              output_dim=output_dim, 
                              data=data,
                              measure='trace_of_avg_cov', 
-                             repetitions=1, 
-                             processes=None, 
+                             repetitions=repetitions, 
+                             processes=16, 
                              cachedir='/scratch/weghebvc')
         m = np.mean(result.values, axis=-1)
         s = np.std(result.values, axis=-1)
@@ -71,34 +74,64 @@ def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, inc
         legends.append('ForeCA')
 
     result = ep.evaluate(eb.prediction_error,
-                         algorithm=['pfa', 'gpfa-1', 'gpfa-2'], 
+                         algorithm=['pfa'], 
                          N=N, 
                          k=k,
                          p=p, 
                          K=K,
-                         seed=0, 
+                         seed=seed, 
                          iterations=iterations,
-                         noisy_dims=0,
+                         noisy_dims=noisy_dims,
                          keep_variance=keep_variance, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
                          output_dim=output_dim, 
                          data=data,
                          measure='trace_of_avg_cov', 
-                         repetitions=1, 
+                         repetitions=repetitions, 
                          processes=None,
                          argument_order=['algorithm'], 
                          cachedir='/scratch/weghebvc')
-    linestyles = ['--', '-', '-']
-    colors = ['red', 'blue', 'blue']
-    markers = [None, 'o', 'o']
-    facecolors = [None, 'blue', 'white']
+    linestyles = ['--']
+    colors = ['red']
+    markers = [None]
+    facecolors = [None]
     for i, _ in enumerate(result.iter_args['algorithm']):
         m = np.mean(result.values[i], axis=-1)
         s = np.std(result.values[i], axis=-1)
         x = np.array(result.iter_args[iter_arg]) + i * x_offset
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-    legends += ['PFA', 'GPFA (1)', 'GPFA (2)']
+    legends += ['PFA']
+
+#    result = ep.evaluate(eb.prediction_error,
+#                         algorithm=['gpfa-1', 'gpfa-2'], 
+#                         N=N, 
+#                         k=k,
+#                         p=p, 
+#                         K=K,
+#                         seed=seed, 
+#                         iterations=iterations,
+#                         noisy_dims=noisy_dims,
+#                         keep_variance=keep_variance, 
+#                         neighborhood_graph=False,
+#                         weighted_edges=True, 
+#                         output_dim=output_dim, 
+#                         data=data,
+#                         measure='trace_of_avg_cov', 
+#                         repetitions=repetitions, 
+#                         processes=None,
+#                         argument_order=['algorithm'], 
+#                         cachedir='/scratch/weghebvc')
+#    linestyles = ['-', '-']
+#    colors = ['blue', 'blue']
+#    markers = ['o', 'o']
+#    facecolors = ['blue', 'white']
+#    for i, _ in enumerate(result.iter_args['algorithm']):
+#        m = np.mean(result.values[i], axis=-1)
+#        s = np.std(result.values[i], axis=-1)
+#        x = np.array(result.iter_args[iter_arg]) + i * x_offset
+#        plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
+#    legends += ['GPFA (1)', 'GPFA (2)']
 
     if include_gcfa:
         result = ep.evaluate(eb.prediction_error,
@@ -107,16 +140,16 @@ def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, inc
                              k=k,
                              p=p, 
                              K=0,
-                             seed=0, 
+                             seed=seed, 
                              iterations=iterations,
-                             noisy_dims=0,
+                             noisy_dims=noisy_dims,
                              keep_variance=keep_variance, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
                              output_dim=output_dim, 
                              data=data,
                              measure='trace_of_avg_cov', 
-                             repetitions=1, 
+                             repetitions=repetitions, 
                              processes=None,
                              argument_order=['algorithm'], 
                              cachedir='/scratch/weghebvc')
@@ -133,8 +166,13 @@ def plot_experiment(data, N, k, p, K, keep_variance, iterations, output_dim, inc
 
     if legend:
         plt.legend(legends, loc='best', prop={'size':12})
+
+    x_label = iter_arg
+    x_label = x_label if x_label != 'keep_variance' else 'variance preserved'   
+    x_label = x_label if x_label != 'iterations' else 'R'   
+    x_label = x_label if x_label != 'N' else 'S'   
+    plt.xlabel(x_label)
     
-    plt.xlabel(iter_arg if iter_arg != 'keep_variance' else 'variance preserved')
     if False:
         plt.gca().set_yscale('log')
         if y_label:

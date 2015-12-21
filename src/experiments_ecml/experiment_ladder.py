@@ -8,11 +8,13 @@ import explot as ep
 
 import experiments.experiment_base as eb
 
+import plot
 
 
-def experiment(N=2500, k=50, iterations=50, noisy_dims=40, data='ladder'):
+
+def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, data='ladder'):
     
-    repeptitions = 20
+    repeptitions = 5
     
     #plt.figure()
     ep.plot(eb.prediction_error,
@@ -20,14 +22,13 @@ def experiment(N=2500, k=50, iterations=50, noisy_dims=40, data='ladder'):
             algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             k=k, 
-            p=2, 
+            p=p, 
             K=2, 
             seed=0,
             iterations=iterations, 
             noisy_dims=noisy_dims, 
             neighborhood_graph=False,
             weighted_edges=True, 
-            iteration_dim=1, 
             output_dim=1, 
             data=data, 
             measure='trace_of_avg_cov', 
@@ -40,134 +41,58 @@ def experiment(N=2500, k=50, iterations=50, noisy_dims=40, data='ladder'):
             save_plot_path='./plots')
     #plt.gca().set_yscale('log')
     #plt.show()
+
     
 
-def plot_experiment(N=2500, k=50, noisy_dims=40, iterations=250, repetitions=5, include_foreca=False, x_offset=0, y_label=True, legend=False):
-    
-    #plt.figure()
-    result = ep.evaluate(eb.prediction_error,
-                         algorithm='random', 
+def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output_dim=1, repetitions=25, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+    plot.plot_experiment(data='ladder', 
                          N=N, 
                          k=k, 
-                         p=2, 
-                         K=2, 
-                         seed=0,
-                         iterations=iterations,
-                         noisy_dims=noisy_dims, 
-                         neighborhood_graph=False,
-                         weighted_edges=True, 
-                         #iteration_dim=1, 
-                         output_dim=1, 
-                         data='ladder', 
-                         measure='trace_of_avg_cov', 
+                         p=p, 
+                         K=K, 
+                         noisy_dims=noisy_dims,
+                         keep_variance=1., 
+                         iterations=iterations, 
+                         output_dim=output_dim,
                          repetitions=repetitions, 
-                         processes=None, 
-                         cachedir='/scratch/weghebvc')
+                         include_random=include_random, 
+                         include_foreca=include_foreca, 
+                         include_gcfa=include_gcfa, 
+                         x_offset=x_offset, 
+                         y_label=y_label, 
+                         legend=legend,
+                         seed=0)
 
-    # determine iter_arg
-    iter_arg = result.iter_args.keys()[0]
-    
-    # plot error bars
-    m = np.mean(result.values, axis=-1)
-    s = np.std(result.values, axis=-1)
-    x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
-    plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle=':')
-    
-    if include_foreca:
-        noisy_dims_foreca = noisy_dims
-        if type(noisy_dims) is list:
-            noisy_dims_foreca = [d for d in noisy_dims if d <= 50]
-        result = ep.evaluate(eb.prediction_error,
-                             algorithm='foreca', 
-                             N=N, 
-                             k=k,
-                             p=2, 
-                             K=2, 
-                             seed=0,
-                             iterations=iterations,
-                             noisy_dims=noisy_dims_foreca, 
-                             neighborhood_graph=False,
-                             weighted_edges=True, 
-                             #iteration_dim=1, 
-                             output_dim=1, 
-                             data='ladder',
-                             measure='trace_of_avg_cov', 
-                             repetitions=repetitions, 
-                             processes=None, 
-                             cachedir='/scratch/weghebvc')
-        m = np.mean(result.values, axis=-1)
-        s = np.std(result.values, axis=-1)
-        x = np.array(result.iter_args[iter_arg]) - x_offset
-        plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='red', marker=None, linestyle='-')
-     
-    result = ep.evaluate(eb.prediction_error,
-                         algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
-                         N=N, 
-                         k=k,
-                         p=2, 
-                         K=2,
-                         seed=0, 
-                         iterations=iterations,
-                         noisy_dims=noisy_dims, 
-                         neighborhood_graph=False,
-                         weighted_edges=True, 
-                         #iteration_dim=1, 
-                         output_dim=1, 
-                         data='ladder',
-                         measure='trace_of_avg_cov', 
-                         repetitions=repetitions, 
-                         processes=None,
-                         argument_order=['algorithm'], 
-                         cachedir='/scratch/weghebvc')
-    linestyles = ['--', '-', '-']
-    colors = ['red', 'blue', 'blue']
-    markers = [None, 'o', 'o']
-    facecolors = [None, 'blue', 'white']
-    for i, _ in enumerate(result.iter_args['algorithm']):
-        m = np.mean(result.values[i], axis=-1)
-        s = np.std(result.values[i], axis=-1)
-        x = np.array(result.iter_args[iter_arg]) + i * x_offset
-        plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color=colors[i], markerfacecolor=facecolors[i], marker=markers[i], linestyle=linestyles[i], markersize=10)
-    if legend:
-        plt.legend(['random', 'ForeCA', 'PFA', 'GPFA (1)', 'GPFA (2)'], loc='best', prop={'size':12}) 
-    
-    plt.xlabel(iter_arg if iter_arg != 'N' else 'S')
-    plt.xlabel(iter_arg if iter_arg != 'noisy_dims' else '# noisy dimensions')
-    if False:
-        if y_label:
-            plt.ylabel('prediction error (log-scale)')
-        plt.gca().set_yscale('log')
-    else:
-        if y_label:
-            plt.ylabel('prediction error')
-    #plt.show()
-    
+
 
 def main():
-    
     # ladder
     plt.figure()
     plt.subplot(2, 2, 1)
-    experiment(noisy_dims=[0, 10, 20, 30, 40, 50])
-    #plt.subplot(2, 2, 2)
-    #experiment(N=[1500, 2000, 2500])
-    #plt.subplot(2, 2, 3)
-    #experiment(iterations=[1, 10, 30, 50, 100])
+    experiment(noisy_dims=[1, 10, 20, 30, 40, 50])
+    plt.subplot(2, 2, 2)
+    experiment(N=[1500, 2000, 2500])
+    plt.subplot(2, 2, 3)
+    experiment(iterations=[1, 10, 30, 50, 100, 150])
     plt.subplot(2, 2, 4)
-    experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50])
-
+    experiment(k=[2, 5, 10, 15, 20])#, 30, 40, 50])
     plt.show()
 
 
 def main_plot():
-    #plt.subplot(1, 2, 1)
-    #plt.title('(a)')
+    # ladder
     plt.figure()
-    plot_experiment(noisy_dims=[1, 10, 20, 30, 40, 50], x_offset=0.5)
-    #plt.subplot(1, 2, 2)
-    #plt.title('(b)')
+    #plt.subplot(2, 2, 1)
+    plot_experiment(noisy_dims=[1, 10, 20, 30, 40, 50])
+    #plt.subplot(2, 2, 2)
     plt.figure()
-    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], x_offset=0.5, legend=True)
+    plot_experiment(N=[1500, 2000, 2500], y_label=False)
+    #plt.subplot(2, 2, 3)
+    plt.figure()
+    plot_experiment(iterations=[1, 10, 30, 50, 100])
+    #plt.subplot(2, 2, 4)
+    plt.figure()
+    plot_experiment(k=[2, 5, 10, 15, 20, 30, 40, 50], y_label=False)
     plt.show()
 
 
