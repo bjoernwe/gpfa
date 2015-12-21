@@ -10,6 +10,10 @@ import experiments.experiment_base as eb
 import plot
 
 
+cachedir = '/scratch/weghebvc'
+#cachedir = '/home/weghebvc/Desktop/tmp'
+
+
 def experiment(N=2500, k=20, p=1, iterations=100, noisy_dims=300):
     
     repeptitions = 25
