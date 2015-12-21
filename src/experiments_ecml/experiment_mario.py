@@ -12,20 +12,21 @@ import plot
 
 
 
-def experiment(N=2500, keep_variance=.84, k=2, p=2, iterations=50, output_dim=5):
+def experiment(N=2500, keep_variance=.86, k=2, p=2, iterations=50, output_dim=6):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['pfa', 'gpfa-1', 'gpfa-2'],#, 'gcfa-1', 'gcfa-2'], 
+            algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             keep_variance=keep_variance,
             k=k,
             p=p, 
-            K=1, 
+            P=p,
+            K=0, 
             seed=0,
             iterations=iterations,
             noisy_dims=0, 
-            neighborhood_graph=True,
+            neighborhood_graph=False,
             weighted_edges=True, 
             output_dim=output_dim, 
             data='mario_window',
@@ -42,21 +43,26 @@ def experiment(N=2500, keep_variance=.84, k=2, p=2, iterations=50, output_dim=5)
     #plt.show()
     
     
-def plot_experiment(N=2500, k=2, p=2, K=0, keep_variance=.86, iterations=50, output_dim=5, include_random=False, include_foreca=False, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=40, p=1, K=0, keep_variance=.86, iterations=50, output_dim=2, include_random=False, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
     plot.plot_experiment(data='mario_window', 
                          N=N, 
                          k=k, 
                          p=p, 
+                         P=p,
                          K=K, 
+                         noisy_dims=0,
                          keep_variance=keep_variance, 
                          iterations=iterations, 
-                         output_dim=output_dim, 
+                         output_dim=output_dim,
+                         repetitions=1, 
                          include_random=include_random, 
                          include_foreca=include_foreca, 
                          include_gcfa=include_gcfa, 
                          x_offset=x_offset, 
                          y_label=y_label, 
-                         legend=legend)
+                         legend=legend,
+                         seed=0)
+    
     
     
 def calc_dimensions(keep_variance, N=2500):
@@ -72,34 +78,34 @@ def calc_dimensions(keep_variance, N=2500):
 def main():
     
     # mario
-    plt.figure()
-    #plt.subplot(2, 2, 1)
-    experiment(keep_variance=list(np.arange(.70, 1.01, .02)))
+    #plt.figure()
+    plt.subplot(2, 2, 1)
+    experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=3)
+    plt.subplot(2, 2, 2)
+    experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=6)
+    plt.subplot(2, 2, 3)
+    experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=9)
+    plt.subplot(2, 2, 4)
+    experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=12)
     #plt.subplot(2, 2, 2)
     #experiment(N=[1500, 1750, 2000, 2250, 2500])
     #plt.subplot(2, 2, 3)
     #experiment(iterations=[20, 40, 60, 80, 100, 150])
-    #plt.subplot(2, 2, 4)
+    #plt.subplot(1, 2, 2)
     #experiment(k=range(2,5) + range(5,21,5))
     #experiment(output_dim=range(1,11))
     plt.show()
 
 
 def main_plot():
-    #plt.subplot(1, 2, 1)
-    #plt.title('(a)')
     plt.figure()
-    plot_experiment(keep_variance=list(np.arange(.80, 1.01, .02)), x_offset=0.)
-    #plt.subplot(2, 2, 2)
-    #plt.title('(b)')
-    #plot_experiment(N=[1500, 1750, 2000, 2250, 2500], x_offset=0., y_label=False)
-    #plt.subplot(2, 2, 3)
-    #plt.title('(c)')
-    #plot_experiment(iterations=[20, 40, 60, 80, 100, 150], x_offset=0.)
-    #plt.subplot(1, 2, 2)
-    #plt.title('(b)')
+    plot_experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=3)
     plt.figure()
-    plot_experiment(k=range(2,5) + range(5,21,5), x_offset=0., legend=True)
+    plot_experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=6)
+    plt.figure()
+    plot_experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=9)
+    plt.figure()
+    plot_experiment(keep_variance=list(np.arange(.80, 1.01, .02)), output_dim=12, legend=True)
     plt.show()
     
     

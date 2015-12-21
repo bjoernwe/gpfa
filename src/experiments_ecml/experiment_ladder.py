@@ -88,13 +88,13 @@ def main_plot():
     plot_experiment(noisy_dims=[1, 10, 20, 30, 40, 50])
     #plt.subplot(2, 2, 2)
     plt.figure()
-    plot_experiment(N=[1500, 2000, 2500], y_label=False)
+    plot_experiment(N=[1500, 2000, 2500], include_foreca=False)
     #plt.subplot(2, 2, 3)
     plt.figure()
-    plot_experiment(iterations=[1, 10, 30, 50, 100])
+    plot_experiment(iterations=[1, 10, 30, 50, 100], include_foreca=False)
     #plt.subplot(2, 2, 4)
     plt.figure()
-    plot_experiment(k=[2, 5, 10, 15, 20, 30, 40, 50], y_label=False, legend=True)
+    plot_experiment(k=[2, 5, 10, 15, 20, 30, 40, 50], include_foreca=False, legend=True)
     plt.show()
 
 
