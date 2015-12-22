@@ -80,102 +80,112 @@ import mdp
 
 
 
-def calc_predictability_det_of_avg_cov(data, k):
+# def calc_predictability_det_of_avg_cov(data, k):
+#     """
+#     Calculates the predictability as written in the paper. There it is assumed
+#     that the noise covariance is the same everywhere. Therefore the empirical
+#     covariances of all time steps are averaged and the determinant calculated in
+#     the end.
+#     """
+#     
+#     def _cov(t):
+#         successors = neighbors[t] + 1
+#         successors = successors[successors<N]
+#         suc_dat = data[successors]
+#         return np.array(np.cov(suc_dat.T), ndmin=2)
+# 
+#     if data.ndim == 1:
+#         data = np.array(data, ndmin=2).T
+# 
+#     # pairwise distances of data points
+#     N, _ = data.shape
+#     distances = scipy.spatial.distance.pdist(data)
+#     distances = scipy.spatial.distance.squareform(distances)
+#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+#     
+#     covariances = map(_cov, range(N-1))
+#     covariance = reduce(lambda x,y: x+y, covariances) / (N-1)
+#     return np.linalg.det(covariance)
+
+
+
+def calc_predictability_trace_of_avg_cov(x, k, p):
     """
-    Calculates the predictability as written in the paper. There it is assumed
-    that the noise covariance is the same everywhere. Therefore the empirical
-    covariances of all time steps are averaged and the determinant calculated in
-    the end.
     """
     
     def _cov(t):
         successors = neighbors[t] + 1
         successors = successors[successors<N]
-        suc_dat = data[successors]
+        suc_dat = x[successors]
         return np.array(np.cov(suc_dat.T), ndmin=2)
 
-    if data.ndim == 1:
-        data = np.array(data, ndmin=2).T
-
     # pairwise distances of data points
-    N, _ = data.shape
-    distances = scipy.spatial.distance.pdist(data)
-    distances = scipy.spatial.distance.squareform(distances)
-    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+    N, _ = x.shape
+    y = concatenate_past(x, p=p)
+    tree = scipy.spatial.cKDTree(y)
+    neighbors = [tree.query(y[i], k=k+1)[1] for i in xrange(y.shape[0])]
+    assert len(neighbors) == N
     
-    covariances = map(_cov, range(N-1))
-    covariance = reduce(lambda x,y: x+y, covariances) / (N-1)
-    return np.linalg.det(covariance)
-
-
-
-def calc_predictability_trace_of_avg_cov(data, k):
-    """
-    """
-    
-    def _cov(t):
-        successors = neighbors[t] + 1
-        successors = successors[successors<N]
-        suc_dat = data[successors]
-        return np.array(np.cov(suc_dat.T), ndmin=2)
-
-    if data.ndim == 1:
-        data = np.array(data, ndmin=2).T
-
-    # pairwise distances of data points
-    N, _ = data.shape
-    distances = scipy.spatial.distance.pdist(data)
-    distances = scipy.spatial.distance.squareform(distances)
-    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-    
-    covariances = map(_cov, range(N-1))
-    covariance = reduce(lambda x,y: x+y, covariances) / (N-1)
+    covariances = map(_cov, range(p-1, N-1))
+    covariance = reduce(lambda a,b: a+b, covariances) / (N-p)
     return np.trace(covariance)
 
 
 
-def calc_predictability_sum_eig(data, k):
-    
-    def _cov(t):
-        successors = neighbors[t] + 1
-        successors = successors[successors<N]
-        suc_dat = data[successors]
-        return np.array(np.cov(suc_dat.T), ndmin=2)
-    
-    def _eig(C):
-        E, _ = np.linalg.eigh(C)
-        return np.sum(E)
+# def calc_predictability_sum_eig(data, k):
+#     
+#     def _cov(t):
+#         successors = neighbors[t] + 1
+#         successors = successors[successors<N]
+#         suc_dat = data[successors]
+#         return np.array(np.cov(suc_dat.T), ndmin=2)
+#     
+#     def _eig(C):
+#         E, _ = np.linalg.eigh(C)
+#         return np.sum(E)
+# 
+#     if data.ndim == 1:
+#         data = np.array(data, ndmin=2).T
+# 
+#     # pairwise distances of data points
+#     N, _ = data.shape
+#     distances = scipy.spatial.distance.pdist(data)
+#     distances = scipy.spatial.distance.squareform(distances)
+#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
+#     
+#     covariances = map(_cov, range(N-1))
+#     eigenvalues = map(_eig, covariances)
+#     return np.mean(eigenvalues)
 
-    if data.ndim == 1:
-        data = np.array(data, ndmin=2).T
-
-    # pairwise distances of data points
-    N, _ = data.shape
-    distances = scipy.spatial.distance.pdist(data)
-    distances = scipy.spatial.distance.squareform(distances)
-    neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-    
-    covariances = map(_cov, range(N-1))
-    eigenvalues = map(_eig, covariances)
-    return np.mean(eigenvalues)
 
 
+# def calc_predictability_avg_variance(data, k):
+#     """
+#     Calculates the average future variance for each component.
+#     """
+#     
+#     if data.ndim == 1:
+#         data = np.array(data, ndmin=2).T
+#         
+#     dims = data.shape[1]
+#     result = np.zeros(dims)
+#         
+#     for i in range(dims):
+#         result[i] = calc_predictability_det_of_avg_cov(data[:,i], k=k)
+#         
+#     return result
 
-def calc_predictability_avg_variance(data, k):
-    """
-    Calculates the average future variance for each component.
-    """
-    
-    if data.ndim == 1:
-        data = np.array(data, ndmin=2).T
-        
-    dims = data.shape[1]
-    result = np.zeros(dims)
-        
-    for i in range(dims):
-        result[i] = calc_predictability_det_of_avg_cov(data[:,i], k=k)
-        
-    return result
+
+
+def concatenate_past(x, p=1):
+    if x.ndim == 1:
+        x = np.array(x, ndmin=2).T
+    N, D = x.shape
+    y = np.hstack([x[i:N-p+i+1] for i in range(p)])
+    y = np.vstack([np.zeros(D*p) for _ in xrange(p-1)] + [y])
+    #assert y.shape == (N-p+1, D*p)
+    assert y.shape == (N, D*p)
+    return y
 
 
 
@@ -292,12 +302,13 @@ class LPP(mdp.Node):
 
 class gPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=10, iterations=10, #iteration_dim=None,
+    def __init__(self, output_dim, k=10, p=1, iterations=10, #iteration_dim=None,
                  variance_graph=True, neighborhood_graph=False, weighted_edges=True, 
                  causal_features=True, input_dim=None, 
                  dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
+        self.p = p
         self.iterations = iterations
         self.variance_graph = variance_graph
         self.neighborhood_graph = neighborhood_graph
@@ -305,54 +316,57 @@ class gPFA(mdp.Node):
         #self.iteration_dim = iteration_dim
         self.causal_features = causal_features
         #self.constraint_optimization = constraint_optimization
-        #self.L = None
-        self.W = None
+        self.L = None
+        #self.W = None
         self.D = None
         return
-
-
+    
+    
     def _train(self, x):
 
         # number of samples
-        N, _ = x.shape
+        N, dim = x.shape
+        p = self.p
 
         # from y we calculate the euclidean distances
         # after the first iteration it contains the projected data
-        y = x
+        y = concatenate_past(x, p=p)
+        assert y.shape == (N, p*dim)
 
         # run algorithm several times e
         for l in range(self.iterations):
 
             # index lists for neighbors
             tree = scipy.spatial.cKDTree(y)
-            neighbors = [tree.query(y[i], k=self.k+1)[1] for i in xrange(N)]
+            neighbors = [tree.query(y[i], k=self.k+1)[1] for i in xrange(y.shape[0])]
+            assert len(neighbors) == N
 
             # future-preserving graph
             index_list = []
             if self.variance_graph:
-                for t in range(N-1):
+                for t in range(p-1, N-1):
                     index_list += itertools.permutations(neighbors[t]+1, 2)
             else:
-                for s in range(N-1):
+                for s in range(p-1, N-1):
                     index_list += [(s+1,t) for t in neighbors[s]+1]
                     index_list += [(t,s+1) for t in neighbors[s]+1]
 
             if self.causal_features:
                 if self.variance_graph:
-                    for t in range(1, N):
-                        index_list += itertools.permutations(neighbors[t]-1, 2)
+                    for t in range(p, N):
+                        index_list += itertools.permutations(neighbors[t]-p, 2)
                 else:
-                    for s in range(1, N):
-                        index_list += [(s-1,t) for t in neighbors[s]-1]
-                        index_list += [(t,s-1) for t in neighbors[s]-1]
+                    for s in range(p, N):
+                        index_list += [(s-p,t) for t in neighbors[s]-p]
+                        index_list += [(t,s-p) for t in neighbors[s]-p]
 
             # neighborhood graph
             if self.neighborhood_graph:
                 if self.variance_graph:
-                    for t in range(N):
+                    for t in range(p-1, N):
                         index_list += itertools.permutations(neighbors[t], 2)
                 else:
-                    for s in range(N):
+                    for s in range(p-1, N):
                         index_list += [(s,t) for t in neighbors[s]]
                         index_list += [(t,s) for t in neighbors[s]]
 
@@ -372,38 +386,38 @@ class gPFA(mdp.Node):
             d = W.sum(axis=1).T
             #d[d==0] = float('inf') 
             D = scipy.sparse.dia_matrix((d, 0), shape=(N, N))
-            #L = D - W
-            #L = L.tocsr()
+            L = D - W
+            L = L.tocsr()
     
             # projected graph laplacian
             D2 = x.T.dot(D.dot(x))
-            #L2 = x.T.dot(L.dot(x))
-            W2 = x.T.dot(W.dot(x))
+            L2 = x.T.dot(L.dot(x))
+            #W2 = x.T.dot(W.dot(x))
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
                 #iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
-                #_, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
-                _, U = scipy.linalg.eigh(W2, b=D2, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+                _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
+                #_, U = scipy.linalg.eigh(W2, b=D2, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
                 # normalize eigenvectors 
                 for i in range(U.shape[1]):
                     U[:,i] /= np.linalg.norm(U[:,i])
-                y = x.dot(U)
+                y = concatenate_past(x.dot(U), p=self.p)
 
         # add chunk result to global result
-        if self.W is None:
-            self.W = W2
+        if self.L is None:
+            self.L = L2
             self.D = D2
         else:
-            self.W += W2
+            self.L += L2
             self.D += D2
 
         return
 
 
     def _stop_training(self):
-        #self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
-        self.E, self.U = scipy.linalg.eigh(self.W, b=self.D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+        self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+        #self.E, self.U = scipy.linalg.eigh(self.W, b=self.D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
         # normalize eigenvectors 
         for i in range(self.U.shape[1]):
             self.U[:,i] /= np.linalg.norm(self.U[:,i])

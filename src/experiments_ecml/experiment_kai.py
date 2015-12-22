@@ -46,7 +46,7 @@ def experiment(N=2500, k=40, p=1, iterations=50, noisy_dims=300, data='kai'):
     #plt.show()
     
 
-def plot_experiment(N=2500, k=40, p=1, K=0, noisy_dims=300, iterations=50, output_dim=2, repetitions=20, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=40, p=1, K=0, noisy_dims=300, iterations=50, output_dim=2, repetitions=10, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
     plot.plot_experiment(data='kai', 
                          N=N, 
                          k=k, 
