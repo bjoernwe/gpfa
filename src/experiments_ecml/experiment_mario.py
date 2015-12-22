@@ -43,7 +43,7 @@ def experiment(N=2500, keep_variance=.86, k=2, p=2, iterations=50, output_dim=6)
     #plt.show()
     
     
-def plot_experiment(N=2500, k=40, p=1, K=0, keep_variance=.86, iterations=50, output_dim=2, include_random=False, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=2, p=2, K=0, keep_variance=.86, iterations=50, output_dim=2, include_random=False, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
     plot.plot_experiment(data='mario_window', 
                          N=N, 
                          k=k, 

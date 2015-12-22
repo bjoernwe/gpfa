@@ -13,15 +13,16 @@ import plot
 
 def experiment(N=2500, k=20, p=1, iterations=100, noisy_dims=300):
     
-    repeptitions = 25
+    repeptitions = 5
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
+            algorithm='pfa',#['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             k=k, 
-            p=p, 
-            K=1, 
+            p=p,
+            P=p, 
+            K=0,#[0,1,2,3,4], 
             seed=0,
             iterations=iterations, 
             noisy_dims=noisy_dims, 

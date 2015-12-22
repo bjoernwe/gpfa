@@ -21,11 +21,12 @@ def experiment(N=2500, k=40, p=1, iterations=50, noisy_dims=300, data='kai'):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
+            algorithm='pfa',#['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             k=k, 
+            P=p,
             p=p, 
-            K=0, 
+            K=0,#[0,1,2,3], 
             seed=0,
             iterations=iterations, 
             noisy_dims=noisy_dims, 
@@ -45,7 +46,7 @@ def experiment(N=2500, k=40, p=1, iterations=50, noisy_dims=300, data='kai'):
     #plt.show()
     
 
-def plot_experiment(N=2500, k=40, p=1, K=0, noisy_dims=300, iterations=50, output_dim=2, repetitions=10, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=40, p=1, K=0, noisy_dims=300, iterations=50, output_dim=2, repetitions=20, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
     plot.plot_experiment(data='kai', 
                          N=N, 
                          k=k, 
@@ -85,11 +86,11 @@ def main_plot():
     plt.figure()
     plot_experiment(noisy_dims=[0, 50, 100, 200, 300, 400])
     plt.figure()
-    plot_experiment(N=[500, 1000, 1500, 2000, 2500], include_forece=False)
+    plot_experiment(N=[500, 1000, 1500, 2000, 2500], include_foreca=False)
     plt.figure()
-    plot_experiment(iterations=[1, 10, 30, 50, 100], include_forece=False)
+    plot_experiment(iterations=[1, 10, 30, 50, 100], include_foreca=False)
     plt.figure()
-    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], include_forece=False, legend=True)
+    plot_experiment(k=[1, 2, 5, 10, 15, 20, 30, 40, 50], include_foreca=False, legend=True)
     plt.show()
 
 

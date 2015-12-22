@@ -10,7 +10,7 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, keep_variance=.98, k=5, iterations=50, output_dim=5):
+def experiment(N=2000, keep_variance=.95, k=2, p=2, iterations=50, output_dim=2):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
@@ -18,14 +18,13 @@ def experiment(N=2000, keep_variance=.98, k=5, iterations=50, output_dim=5):
             N=N, 
             keep_variance=keep_variance,
             k=k,
-            p=1, 
+            p=p, 
             K=1, 
             seed=0,
             iterations=iterations,
             noisy_dims=0, 
             neighborhood_graph=False,
             weighted_edges=True, 
-            iteration_dim=output_dim, 
             output_dim=output_dim, 
             data='face',
             measure='trace_of_avg_cov', 
@@ -46,15 +45,14 @@ def main():
     
     # mario
     plt.figure()
-    plt.subplot(2, 2, 1)
-    experiment(keep_variance=list(np.arange(.85, 1., .01)))
-    plt.subplot(2, 2, 2)
-    experiment(N=[1500, 1750, 2000, 2250, 2500])
-    plt.subplot(2, 2, 3)
-    experiment(iterations=[20, 40, 60, 80, 100, 150])
-    plt.subplot(2, 2, 4)
-    experiment(k=range(5,51,5))
-
+    #plt.subplot(1, 2, 1)
+    experiment(keep_variance=list(np.arange(.7, 1., .01)))
+    #plt.subplot(2, 2, 2)
+    #experiment(N=[1500, 1750, 2000, 2250, 2500])
+    #plt.subplot(2, 2, 3)
+    #experiment(iterations=[20, 40, 60, 80, 100, 150])
+    #plt.subplot(1, 2, 2)
+    #experiment(k=[2]+range(5,11,5))
     plt.show()
 
 

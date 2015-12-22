@@ -45,7 +45,7 @@ def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, data='ladder'):
 
     
 
-def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output_dim=1, repetitions=25, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
+def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output_dim=1, repetitions=30, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
     plot.plot_experiment(data='ladder', 
                          N=N, 
                          k=k, 

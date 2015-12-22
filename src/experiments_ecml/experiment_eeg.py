@@ -10,22 +10,21 @@ import experiments.experiment_base as eb
 
 
 
-def experiment(N=2000, keep_variance=1., k=20, iterations=50, output_dim=1):
+def experiment(N=2500, keep_variance=1., k=2, p=2, iterations=60, output_dim=2):
     
     #plt.figure()
     ep.plot(eb.prediction_error,
-            algorithm=['pfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2'], 
+            algorithm=['pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             keep_variance=keep_variance,
             k=k,
-            p=1, 
+            p=p, 
             K=0, 
             seed=0,
             iterations=iterations,
             noisy_dims=0, 
             neighborhood_graph=False,
             weighted_edges=True, 
-            iteration_dim=output_dim, 
             output_dim=output_dim, 
             data='eeg',
             measure='trace_of_avg_cov', 
@@ -45,15 +44,18 @@ def experiment(N=2000, keep_variance=1., k=20, iterations=50, output_dim=1):
 def main():
     
     # mario
-    plt.figure()
-    plt.subplot(2, 2, 1)
+    #plt.subplot(2,2,1)
+    #experiment(p=[1,2,3,4])
+    #plt.subplot(1,2,2)
+    #experiment(output_dim=[1,2,3,4])
+    #plt.subplot(2, 2, 1)
     experiment(keep_variance=list(np.arange(.85, 1., .01)))
-    plt.subplot(2, 2, 2)
-    experiment(N=[1500, 2000, 2500])
-    plt.subplot(2, 2, 3)
-    experiment(iterations=[20, 40, 60, 80, 100])
-    plt.subplot(2, 2, 4)
-    experiment(k=range(5,51,5))
+    #plt.subplot(2, 2, 2)
+    #experiment(N=[1500, 2000, 2500])
+    #plt.subplot(2, 2, 3)
+    #experiment(iterations=[20, 40, 60, 80, 100])
+    #plt.subplot(2, 2, 4)
+    #experiment(k=[2]+range(5,51,10))
 
     plt.show()
 
