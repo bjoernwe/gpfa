@@ -200,6 +200,7 @@ def generate_training_data_kai(N, noisy_dims, seed=None):
 
 @mem.cache
 def generate_training_data_dead_corners(N, noisy_dims, corner_size=.1, seed=None):
+    # rev: 4
     env = EnvDeadCorners(corner_size=corner_size, seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
@@ -299,10 +300,11 @@ def calc_projection_pfa(data_train, data_test, p, K, causal_features=False, outp
 
 
 @mem.cache
-def calc_projection_gpfa(data_train, data_test, k, iterations, variance_graph, neighborhood_graph, weighted_edges, causal_features, output_dim=1):
-    # rev 6
+def calc_projection_gpfa(data_train, data_test, k, iterations, variance_graph, neighborhood_graph, weighted_edges, causal_features, p=1, output_dim=1):
+    # rev 14
     
     model = gpfa.gPFA(k=k, 
+                      p=p,
                       output_dim=output_dim, 
                       iterations=iterations, 
                       #iteration_dim=iteration_dim, 
@@ -358,27 +360,26 @@ def calc_projection_lpp(data_train, data_test, k, weighted_edges, output_dim=1):
 
 
 @mem.cache
-def calc_error(data, k=10, measure='trace_of_avg_cov', reverse_error=False):
+def calc_error(data, k=10, p=1, measure='trace_of_avg_cov', reverse_error=False):
+    # rev: 2
     
     if reverse_error:
         data = data[::-1,:]
     
     if measure == 'trace_of_avg_cov':
-        return gpfa.calc_predictability_trace_of_avg_cov(data, k)
-    elif measure == 'det_of_avg_cov':
-        return gpfa.calc_predictability_det_of_avg_cov(data, k)
+        return gpfa.calc_predictability_trace_of_avg_cov(data, k=k, p=p)
     else:
         assert False
 
 
 
-def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood_graph, 
+def prediction_error(algorithm, N, k, p, P, K, iterations, noisy_dims, neighborhood_graph, 
                      kernel_poly_degree=3, expansion=1, weighted_edges=True, 
                      keep_variance=1., #iteration_dim=2, 
                      event_prob=.1, num_states=10, 
-                     max_steps=4, corner_size=.2, data='swiss_roll', measure='det_var', 
+                     max_steps=4, corner_size=.2, data='swiss_roll', measure='trace_of_avg_cov', 
                      output_dim=1, reverse_error=False, seed=None):
-    # rv: 8
+    # rv: 19
     assert algorithm in ['random', 'foreca', 'sfa', 'pfa', 'cfa', 'gpfa-1', 'gpfa-2', 'gcfa-1', 'gcfa-2', 'gcfa-1-kernel', 'gcfa-2-kernel', 'gcfa-1-sr', 'gcfa-2-sr', 'lpp']
     
     # generate training data
@@ -412,7 +413,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
         data_test_projected = calc_projection_pfa(data_train=data_train, 
                                                   data_test=data_test,
                                                   output_dim=output_dim, 
-                                                  p=p, 
+                                                  p=P, 
                                                   K=K,
                                                   causal_features=False)
     elif algorithm == 'cfa':
@@ -426,6 +427,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
         data_test_projected = calc_projection_gpfa(data_train=data_train, 
                                                    data_test=data_test, 
                                                    k=k, 
+                                                   p=p,
                                                    iterations=iterations, 
                                                    #iteration_dim=iteration_dim, 
                                                    variance_graph=True, 
@@ -437,6 +439,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
         data_test_projected = calc_projection_gpfa(data_train=data_train, 
                                                    data_test=data_test, 
                                                    k=k, 
+                                                   p=p,
                                                    iterations=iterations, 
                                                    #iteration_dim=iteration_dim, 
                                                    variance_graph=False, 
@@ -448,6 +451,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
         data_test_projected = calc_projection_gpfa(data_train=data_train, 
                                                    data_test=data_test, 
                                                    k=k, 
+                                                   p=p,
                                                    iterations=iterations, 
                                                    #iteration_dim=iteration_dim, 
                                                    variance_graph=True, 
@@ -459,6 +463,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
         data_test_projected = calc_projection_gpfa(data_train=data_train, 
                                                    data_test=data_test, 
                                                    k=k, 
+                                                   p=p,
                                                    iterations=iterations, 
                                                    #iteration_dim=iteration_dim, 
                                                    variance_graph=False, 
@@ -504,7 +509,7 @@ def prediction_error(algorithm, N, k, p, K, iterations, noisy_dims, neighborhood
                                                   output_dim=output_dim)
         
     # return prediction error
-    return calc_error(data=data_test_projected, k=k, measure=measure, reverse_error=reverse_error)
+    return calc_error(data=data_test_projected, k=k, p=p, measure=measure, reverse_error=reverse_error)
 
 
 
