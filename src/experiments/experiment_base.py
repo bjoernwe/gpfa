@@ -23,6 +23,7 @@ from envs.env_mario_canned import EnvMarioCanned
 from envs.env_meg import EnvMEG
 from envs.env_oscillator import EnvOscillator
 from envs.env_random import EnvRandom
+from envs.env_ratlab import EnvRatlab
 from envs.env_ribbon import EnvRibbon
 from envs.env_swiss_roll import EnvSwissRoll
 
@@ -40,7 +41,7 @@ mem = joblib.Memory(cachedir=cachedir, verbose=1)
 
 def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event_prob=.1, num_states=10, max_steps=4, corner_size=.2, data='swiss_roll', seed=None):
     
-    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ribbon', 'swiss_roll_squared_noise', 'kai', 'dead_corners', 'mario_window', 'eeg', 'meg']
+    assert data in ['random', 'oscillation', 'swiss_roll', 'face', 'event', 'ladder', 'ratlab', 'ribbon', 'swiss_roll_squared_noise', 'kai', 'dead_corners', 'mario_window', 'eeg', 'meg']
     
     # generate data
     if data == 'random':
@@ -72,6 +73,10 @@ def generate_training_data(N, noisy_dims=0, expansion=1, keep_variance=1., event
                                                               noisy_dims=noisy_dims,
                                                               num_states=num_states,
                                                               max_steps=max_steps,
+                                                              seed=seed)
+    elif data == 'ratlab':
+        data_train, data_test = generate_training_data_ratlab(N=N,
+                                                              noisy_dims=noisy_dims,
                                                               seed=seed)
     elif data == 'swiss_roll_squared_noise':
         data_train, data_test = generate_training_data_swiss_roll(N=N, 
@@ -212,6 +217,16 @@ def generate_training_data_dead_corners(N, noisy_dims, corner_size=.1, seed=None
 @mem.cache
 def generate_training_data_ladder(N, noisy_dims, num_states=10, max_steps=4, seed=None):
     env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=seed)
+    data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
+    data_train = data_train[0]
+    data_test = data_test[0]
+    return data_train, data_test
+    
+
+
+@mem.cache
+def generate_training_data_ratlab(N, noisy_dims, seed=None):
+    env = EnvRatlab(seed=seed)
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
