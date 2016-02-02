@@ -12,103 +12,6 @@ import mdp
 
 
 
-# def calc_predictability_graph_star(data, k):
-#     """
-#     Averages the squared distances in a star-like graph.
-#     """
-# 
-#     # pairwise distances of data points
-#     N, _ = data.shape
-#     distances = scipy.spatial.distance.pdist(data)
-#     distances = scipy.spatial.distance.squareform(distances)
-#     neighbors = [set(np.argsort(distances[i])[:k+1]).difference([i]) for i in xrange(N)]
-# 
-#     v = 0
-#     for t in range(N-1):
-#         x = data[t+1]
-#         v += np.mean([np.linalg.norm(x - data[s+1])**2 for s in neighbors[t] if s+1 < N])
-#     v /= N-1
-#     return v
-
-
-
-# def calc_predictability_graph_full(data, k):
-#     """
-#     Averages the squared distances in a fully connected graph.
-#     """
-# 
-#     if data.ndim == 1:
-#         data = np.array(data, ndmin=2).T
-# 
-#     # pairwise distances of data points
-#     N, _ = data.shape
-#     distances = scipy.spatial.distance.pdist(data)
-#     distances = scipy.spatial.distance.squareform(distances)
-#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-# 
-#     v = 0
-#     for t in range(N-1):
-#         v += np.mean([np.linalg.norm(data[i+1] - data[j+1])**2 for i, j in itertools.combinations(neighbors[t], 2) if i+1 < N and j+1 < N])
-#     v /= N-1
-#     return v
-
-
-
-# def calc_predictability_avg_det_of_cov(data, k):
-#     """
-#     The assumption in the paper that the noise covariance is the same everywhere
-#     probably doesn't hold on real-world data sets. Therefore this measure of
-#     predictability calculated the determinant of the covariance for each time
-#     step and returns the average.  
-#     """
-#     
-#     def _det(t):
-#         neighbors = np.array(kdtree.query(data[t], k=k)[1])
-#         successors = neighbors + 1
-#         successors = successors[successors<N]
-#         suc_dat = data[successors]
-#         return np.linalg.det(np.array(np.cov(suc_dat.T), ndmin=2))
-# 
-#     if data.ndim == 1:
-#         data = np.array(data, ndmin=2).T
-# 
-#     # calculate average of determinants
-#     N, _ = data.shape
-#     kdtree = scipy.spatial.KDTree(data)
-#     determinants = map(_det, range(N-1))
-#     return np.mean(determinants)
-
-
-
-# def calc_predictability_det_of_avg_cov(data, k):
-#     """
-#     Calculates the predictability as written in the paper. There it is assumed
-#     that the noise covariance is the same everywhere. Therefore the empirical
-#     covariances of all time steps are averaged and the determinant calculated in
-#     the end.
-#     """
-#     
-#     def _cov(t):
-#         successors = neighbors[t] + 1
-#         successors = successors[successors<N]
-#         suc_dat = data[successors]
-#         return np.array(np.cov(suc_dat.T), ndmin=2)
-# 
-#     if data.ndim == 1:
-#         data = np.array(data, ndmin=2).T
-# 
-#     # pairwise distances of data points
-#     N, _ = data.shape
-#     distances = scipy.spatial.distance.pdist(data)
-#     distances = scipy.spatial.distance.squareform(distances)
-#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-#     
-#     covariances = map(_cov, range(N-1))
-#     covariance = reduce(lambda x,y: x+y, covariances) / (N-1)
-#     return np.linalg.det(covariance)
-
-
-
 def calc_predictability_trace_of_avg_cov(x, k, p):
     """
     """
@@ -120,6 +23,8 @@ def calc_predictability_trace_of_avg_cov(x, k, p):
         return np.array(np.cov(suc_dat.T), ndmin=2)
 
     # pairwise distances of data points
+    if x.ndim == 1:
+        x = np.array(x, ndmin=2).T 
     N, _ = x.shape
     y = concatenate_past(x, p=p)
     tree = scipy.spatial.cKDTree(y)
@@ -132,48 +37,29 @@ def calc_predictability_trace_of_avg_cov(x, k, p):
 
 
 
-# def calc_predictability_sum_eig(data, k):
-#     
-#     def _cov(t):
-#         successors = neighbors[t] + 1
-#         successors = successors[successors<N]
-#         suc_dat = data[successors]
-#         return np.array(np.cov(suc_dat.T), ndmin=2)
-#     
-#     def _eig(C):
-#         E, _ = np.linalg.eigh(C)
-#         return np.sum(E)
-# 
-#     if data.ndim == 1:
-#         data = np.array(data, ndmin=2).T
-# 
-#     # pairwise distances of data points
-#     N, _ = data.shape
-#     distances = scipy.spatial.distance.pdist(data)
-#     distances = scipy.spatial.distance.squareform(distances)
-#     neighbors = [np.argsort(distances[i])[:k+1] for i in xrange(N)]
-#     
-#     covariances = map(_cov, range(N-1))
-#     eigenvalues = map(_eig, covariances)
-#     return np.mean(eigenvalues)
+def calc_predictability_trace_of_avg_cov_per_dim(x, k, p):
+    """
+    """
+    
+    def _cov(t):
+        successors = neighbors[t] + 1
+        successors = successors[successors<N]
+        suc_dat = x[successors]
+        return np.array(np.cov(suc_dat.T), ndmin=2)
 
-
-
-# def calc_predictability_avg_variance(data, k):
-#     """
-#     Calculates the average future variance for each component.
-#     """
-#     
-#     if data.ndim == 1:
-#         data = np.array(data, ndmin=2).T
-#         
-#     dims = data.shape[1]
-#     result = np.zeros(dims)
-#         
-#     for i in range(dims):
-#         result[i] = calc_predictability_det_of_avg_cov(data[:,i], k=k)
-#         
-#     return result
+    # pairwise distances of data points
+    if x.ndim == 1:
+        x = np.array(x, ndmin=2).T 
+    N, _ = x.shape
+    y = concatenate_past(x, p=p)
+    tree = scipy.spatial.cKDTree(y)
+    neighbors = [tree.query(y[i], k=k+1)[1] for i in xrange(y.shape[0])]
+    assert len(neighbors) == N
+    
+    covariances = map(_cov, range(p-1, N-1))
+    covariance = reduce(lambda a,b: a+b, covariances) / (N-p)
+    E, _ = np.linalg.eigh(covariance)
+    return E
 
 
 
