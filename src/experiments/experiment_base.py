@@ -5,8 +5,14 @@ import sys
 
 from enum import Enum
 
+import foreca.foreca_node as foreca_node
+import gpfa
+
 sys.path.append('/home/weghebvc/workspace/git/explot/src/')
 import explot as ep
+
+sys.path.append('/home/weghebvc/workspace/git/GNUPFA/src/')
+import PFANodeMDP
 
 sys.path.append('/home/weghebvc/workspace/git/environments/src/')
 from envs.env_dead_corners import EnvDeadCorners
@@ -147,7 +153,7 @@ def generate_training_data(N, repetition_index, noisy_dims=0, expansion=1, keep_
 
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_random(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvRandom(ndim=2, seed=seed)
@@ -158,7 +164,7 @@ def generate_training_data_random(N, noisy_dims, seed, repetition_index):
 
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_swiss_roll(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvSwissRoll(seed=seed)
@@ -169,7 +175,7 @@ def generate_training_data_swiss_roll(N, noisy_dims, seed, repetition_index):
 
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_ribbon(N, noisy_dims, seed, repetition_index, sigma_noise=.05):
     seed = ep.calc_argument_seed()
     env = EnvRibbon(seed=seed, step_size=.1, sigma_noise=sigma_noise)
@@ -180,7 +186,7 @@ def generate_training_data_ribbon(N, noisy_dims, seed, repetition_index, sigma_n
 
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_oscillation(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvOscillator(transition_prob=.9, seed=seed)
@@ -191,7 +197,7 @@ def generate_training_data_oscillation(N, noisy_dims, seed, repetition_index):
 
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_face(N, noisy_dims):
     env = EnvFace()
     data_train, data_test = env.generate_training_data(num_steps=[1500, 465], noisy_dims=noisy_dims, whitening=False, chunks=2)
@@ -201,7 +207,7 @@ def generate_training_data_face(N, noisy_dims):
 
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_event(N, noisy_dims, seed, repetition_index, prob=.1):
     seed = ep.calc_argument_seed()
     env = EnvEvent(prob=prob, seed=seed)
@@ -212,7 +218,7 @@ def generate_training_data_event(N, noisy_dims, seed, repetition_index, prob=.1)
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_kai(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvKai(seed=seed)
@@ -223,7 +229,7 @@ def generate_training_data_kai(N, noisy_dims, seed, repetition_index):
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_dead_corners(N, noisy_dims, seed, repetition_index, corner_size=.1):
     seed = ep.calc_argument_seed()
     env = EnvDeadCorners(corner_size=corner_size, seed=seed)
@@ -234,7 +240,7 @@ def generate_training_data_dead_corners(N, noisy_dims, seed, repetition_index, c
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_ladder(N, noisy_dims, seed, repetition_index, num_states=10, max_steps=4):
     seed = ep.calc_argument_seed()
     env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=seed)
@@ -245,7 +251,7 @@ def generate_training_data_ladder(N, noisy_dims, seed, repetition_index, num_sta
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_ratlab(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvRatlab(seed=seed)
@@ -256,7 +262,7 @@ def generate_training_data_ratlab(N, noisy_dims, seed, repetition_index):
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_mario(N, window_only, seed, repetition_index, noisy_dims):
     seed = ep.calc_argument_seed()
     env = EnvMarioCanned(window_only=window_only, seed=seed)
@@ -267,7 +273,7 @@ def generate_training_data_mario(N, window_only, seed, repetition_index, noisy_d
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_eeg(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvEEG(seed=seed)
@@ -278,7 +284,7 @@ def generate_training_data_eeg(N, noisy_dims, seed, repetition_index):
     
 
 
-#@mem.cache
+@mem.cache
 def generate_training_data_meg(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvMEG(seed=seed)
@@ -287,3 +293,61 @@ def generate_training_data_meg(N, noisy_dims, seed, repetition_index):
     data_test = data_test[0]
     return data_train, data_test
 
+
+
+@mem.cache
+def calc_projection_random(data_train, data_test, output_dim, seed, repetition_index):
+    seed = ep.calc_argument_seed()
+    model = gpfa.RandomProjection(output_dim=output_dim, seed=seed)
+    model.train(data_train)
+    result_train = model.execute(data_train)
+    result_test = model.execute(data_test)
+    return result_train, result_test
+
+
+
+@mem.cache
+def calc_projection_sfa(data_train, data_test, output_dim):
+    model = mdp.nodes.SFANode(output_dim=output_dim)
+    model.train(data_train)
+    result_train = model.execute(data_train)
+    result_test = model.execute(data_test)
+    return result_train, result_test
+ 
+ 
+ 
+@mem.cache
+def calc_projection_foreca(data_train, data_test, output_dim, seed, repetition_index):
+    seed = ep.calc_argument_seed()
+    model = foreca_node.ForeCA(output_dim=output_dim, seed=seed)
+    model.train(data_train)
+    result_train = model.execute(data_train)
+    result_test = model.execute(data_test)
+    return result_train, result_test
+ 
+ 
+ 
+@mem.cache
+def calc_projection_pfa(data_train, data_test, p, K, output_dim):
+    model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=output_dim)
+    model.train(data_train)
+    result_train = model.execute(data_train)
+    result_test = model.execute(data_test)
+    return result_train, result_test
+ 
+ 
+ 
+@mem.cache
+def calc_projection_gpfa(data_train, data_test, k, iterations, variance_graph, neighborhood_graph, weighted_edges, causal_features, p=1, output_dim=1):
+    model = gpfa.gPFA(k=k, 
+                      p=p,
+                      output_dim=output_dim, 
+                      iterations=iterations, 
+                      variance_graph=variance_graph,
+                      neighborhood_graph=neighborhood_graph,
+                      weighted_edges=weighted_edges,
+                      causal_features=causal_features)
+    model.train(data_train)
+    result_train = model.execute(data_train)
+    result_test = model.execute(data_test)
+    return result_train, result_test
