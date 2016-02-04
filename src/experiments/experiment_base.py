@@ -51,7 +51,7 @@ def set_cachedir(cachedir=None):
 
 
 
-def generate_training_data(data, N, repetition_index, noisy_dims=0, expansion=1, keep_variance=1., num_states=10, max_steps=4, corner_size=.2, seed=None):
+def generate_training_data(data, N, noisy_dims, repetition_index, seed=None, **kwargs):
     
     # generate data
     if data == Envs.random:
@@ -87,8 +87,8 @@ def generate_training_data(data, N, repetition_index, noisy_dims=0, expansion=1,
         data_train, data_test = generate_training_data_ladder(
                                     N=N,
                                     noisy_dims=noisy_dims,
-                                    num_states=num_states,
-                                    max_steps=max_steps,
+                                    num_states=kwargs['num_states'],
+                                    max_steps=kwargs['max_steps'],
                                     seed=seed,
                                     repetition_index=repetition_index)
     elif data == Envs.ratlab:
@@ -106,7 +106,7 @@ def generate_training_data(data, N, repetition_index, noisy_dims=0, expansion=1,
     elif data == Envs.dead_corners:
         data_train, data_test = generate_training_data_dead_corners(
                                     N=N,
-                                    corner_size=corner_size, 
+                                    corner_size=kwargs['corner_size'], 
                                     noisy_dims=noisy_dims, 
                                     seed=seed,
                                     repetition_index=repetition_index)
@@ -133,13 +133,15 @@ def generate_training_data(data, N, repetition_index, noisy_dims=0, expansion=1,
         assert False
 
     # PCA
+    keep_variance = kwargs.get('keep_variance', 1.)
     if keep_variance < 1.:
         pca = mdp.nodes.PCANode(output_dim=keep_variance)
         pca.train(data_train)
         data_train = pca.execute(data_train)
         data_test = pca.execute(data_test)
 
-    # expansion        
+    # expansion
+    expansion = kwargs.get('expansion', 1)        
     if expansion > 1:
         ex = mdp.nodes.PolynomialExpansionNode(degree=expansion)
         data_train = ex.execute(data_train)
@@ -297,9 +299,13 @@ def generate_training_data_meg(N, noisy_dims, seed, repetition_index):
 
 
 
-def train_model(algorithm, data_train, output_dim, p, k, K, iterations, 
-                neighborhood_graph, weighted_edges, causal_features, seed, 
-                repetition_index):
+def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwargs):
+    
+    #p = kwargs.get('p')
+    #k = kwargs.get('k')
+    #K = kwargs.get('K')
+    #iterations = kwargs.get('iterations')
+    #neighborhood_graph = kwargs.get('neighborhood_graph')
     
     if algorithm == Algorithms.Random:
         return train_random(data_train=data_train, 
@@ -315,28 +321,28 @@ def train_model(algorithm, data_train, output_dim, p, k, K, iterations,
                     repetition_index=repetition_index)
     elif algorithm == Algorithms.PFA:
         return train_pfa(data_train=data_train, 
-                    p=p, 
-                    K=K, 
+                    p=kwargs['p'], 
+                    K=kwargs['K'], 
                     output_dim=output_dim)
     elif algorithm == Algorithms.GPFA1:
         return train_gpfa(data_train=data_train, 
-                    k=k, 
-                    iterations=iterations, 
+                    k=kwargs['k'], 
+                    iterations=kwargs['iterations'], 
                     variance_graph=True, 
-                    neighborhood_graph=neighborhood_graph, 
-                    weighted_edges=weighted_edges, 
-                    causal_features=causal_features, 
-                    p=p, 
+                    neighborhood_graph=kwargs['neighborhood_graph'], 
+                    weighted_edges=kwargs['weighted_edges'], 
+                    causal_features=kwargs['causal_features'], 
+                    p=kwargs['p'], 
                     output_dim=output_dim)
     elif algorithm == Algorithms.GPFA2:
         return train_gpfa(data_train=data_train, 
-                    k=k, 
-                    iterations=iterations, 
+                    k=kwargs['k'], 
+                    iterations=kwargs['iterations'], 
                     variance_graph=False, 
-                    neighborhood_graph=neighborhood_graph, 
-                    weighted_edges=weighted_edges, 
-                    causal_features=causal_features, 
-                    p=p, 
+                    neighborhood_graph=kwargs['neighborhood_graph'], 
+                    weighted_edges=kwargs['weighted_edges'], 
+                    causal_features=kwargs['causal_features'], 
+                    p=kwargs['p'], 
                     output_dim=output_dim)
     else:
         assert False
@@ -399,31 +405,29 @@ def calc_projection(model, data):
 
 
 #@mem.cache
-def calc_projected_data(data, algorithm, output_dim, p, k, K, iterations, neighborhood_graph, 
-                        weighted_edges, causal_features, N, repetition_index, noisy_dims=0, 
-                        expansion=1, keep_variance=1., num_states=10, max_steps=4, 
-                        corner_size=.2, use_test_set=True, seed=None):
+def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_dims, 
+                        use_test_set=True, seed=None, **kwargs):
     
     data_train, data_test = generate_training_data(data=data, 
                                                    N=N, 
                                                    repetition_index=repetition_index, 
                                                    noisy_dims=noisy_dims, 
-                                                   expansion=expansion, 
-                                                   keep_variance=keep_variance, 
-                                                   num_states=num_states, 
-                                                   max_steps=max_steps, 
-                                                   corner_size=corner_size, 
+                                                   expansion=kwargs['expansion'], 
+                                                   keep_variance=kwargs['keep_variance'], 
+                                                   num_states=kwargs['num_states'], 
+                                                   max_steps=kwargs['max_steps'], 
+                                                   corner_size=kwargs['corner_size'], 
                                                    seed=seed)
     model = train_model(algorithm=algorithm, 
                         data_train=data_train, 
                         output_dim=output_dim, 
-                        p=p, 
-                        k=k, 
-                        K=K, 
-                        iterations=iterations, 
-                        neighborhood_graph=neighborhood_graph, 
-                        weighted_edges=weighted_edges, 
-                        causal_features=causal_features, 
+                        p=kwargs['p'], 
+                        k=kwargs['k'], 
+                        K=kwargs['K'], 
+                        iterations=kwargs['iterations'], 
+                        neighborhood_graph=kwargs['neighborhood_graph'], 
+                        weighted_edges=kwargs['weighted_edges'], 
+                        causal_features=kwargs['causal_features'], 
                         seed=seed,
                         repetition_index=repetition_index)
     if use_test_set:
