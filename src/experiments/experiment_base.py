@@ -304,29 +304,17 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                     repetition_index=repetition_index)
     elif algorithm == Algorithms.PFA:
         return train_pfa(data_train=data_train, 
-                    p=kwargs['p'], 
-                    K=kwargs['K'], 
                     output_dim=output_dim)
     elif algorithm == Algorithms.GPFA1:
         return train_gpfa(data_train=data_train, 
-                    k=kwargs['k'], 
-                    iterations=kwargs['iterations'], 
                     variance_graph=True, 
-                    neighborhood_graph=kwargs['neighborhood_graph'], 
-                    weighted_edges=kwargs['weighted_edges'], 
-                    causal_features=kwargs['causal_features'], 
-                    p=kwargs['p'], 
-                    output_dim=output_dim)
+                    output_dim=output_dim,
+                    **kwargs)
     elif algorithm == Algorithms.GPFA2:
         return train_gpfa(data_train=data_train, 
-                    k=kwargs['k'], 
-                    iterations=kwargs['iterations'], 
                     variance_graph=False, 
-                    neighborhood_graph=kwargs['neighborhood_graph'], 
-                    weighted_edges=kwargs['weighted_edges'], 
-                    causal_features=kwargs['causal_features'], 
-                    p=kwargs['p'], 
-                    output_dim=output_dim)
+                    output_dim=output_dim,
+                    **kwargs)
     else:
         assert False
 
@@ -367,7 +355,7 @@ def train_pfa(data_train, p, K, output_dim):
  
  
 @mem.cache
-def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph, weighted_edges, causal_features, p=1, output_dim=1):
+def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=False, weighted_edges=True, causal_features=True, p=1, output_dim=1):
     model = gpfa.gPFA(k=k, 
                       p=p,
                       output_dim=output_dim, 
@@ -386,31 +374,21 @@ def calc_projection(model, data):
 
 
 
-def calc_projected_data(data, algorithm, output_dim, N, noisy_dims, repetition_index, 
+def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_dims=0, 
                         use_test_set=True, seed=None, **kwargs):
     
     data_train, data_test = generate_training_data(data=data, 
                                                    N=N, 
-                                                   repetition_index=repetition_index, 
                                                    noisy_dims=noisy_dims, 
-                                                   expansion=kwargs['expansion'], 
-                                                   keep_variance=kwargs['keep_variance'], 
-                                                   num_states=kwargs['num_states'], 
-                                                   max_steps=kwargs['max_steps'], 
-                                                   corner_size=kwargs['corner_size'], 
-                                                   seed=seed)
+                                                   repetition_index=repetition_index, 
+                                                   seed=seed,
+                                                   **kwargs)
     model = train_model(algorithm=algorithm, 
                         data_train=data_train, 
                         output_dim=output_dim, 
-                        p=kwargs['p'], 
-                        k=kwargs['k'], 
-                        K=kwargs['K'], 
-                        iterations=kwargs['iterations'], 
-                        neighborhood_graph=kwargs['neighborhood_graph'], 
-                        weighted_edges=kwargs['weighted_edges'], 
-                        causal_features=kwargs['causal_features'], 
                         seed=seed,
-                        repetition_index=repetition_index)
+                        repetition_index=repetition_index,
+                        **kwargs)
     if use_test_set:
         projected_data = calc_projection(model=model, data=data_test)
     else:
@@ -420,14 +398,13 @@ def calc_projected_data(data, algorithm, output_dim, N, noisy_dims, repetition_i
 
 
 
-def prediction_error(measure, data, algorithm, output_dim, N, noisy_dims, 
-                     use_test_set=True, repetition_index=None, seed=None, **kwargs):
+def prediction_error(measure, data, algorithm, output_dim, N, use_test_set=True, 
+                     repetition_index=None, seed=None, **kwargs):
     
     projected_data = calc_projected_data(data=data, 
                                          algorithm=algorithm, 
                                          output_dim=output_dim, 
                                          N=N, 
-                                         noisy_dims=noisy_dims, 
                                          repetition_index=repetition_index, 
                                          use_test_set=use_test_set, 
                                          seed=seed, **kwargs)
@@ -436,12 +413,12 @@ def prediction_error(measure, data, algorithm, output_dim, N, noisy_dims,
         return calc_delta(data=projected_data, ndim=False)
     elif measure == Measures.delta_ndim:
         return calc_delta(data=projected_data, ndim=True)
-    elif measure == Measures.pfa:
+    elif measure == Measures.gpfa:
         return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
                                                          k=kwargs['k'], 
                                                          p=kwargs['p'],
                                                          ndim=False)
-    elif measure == Measures.pfa_ndim:
+    elif measure == Measures.gpfa_ndim:
         return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
                                                          k=kwargs['k'], 
                                                          p=kwargs['p'],
@@ -454,6 +431,7 @@ def prediction_error(measure, data, algorithm, output_dim, N, noisy_dims,
 def calc_delta(data, ndim=False):
     sfa = mdp.nodes.SFANode()
     sfa.train(data)
+    sfa.stop_training()
     if ndim:
         return sfa.d
     return np.sum(sfa.d)
@@ -461,13 +439,16 @@ def calc_delta(data, ndim=False):
 
 
 if __name__ == '__main__':
-    print prediction_error(measure=Measures.delta, 
-                           data=Envs.mario, 
-                           algorithm=Algorithms.GPFA2, 
-                           output_dim=2, 
-                           N=2000, 
-                           noisy_dims=0, 
-                           use_test_set=True, 
-                           seed=0)
+    #set_cachedir(cachedir=None)
+    for measure in [Measures.delta, Measures.delta_ndim, Measures.gpfa, Measures.gpfa_ndim]:
+        print prediction_error(measure=measure, 
+                               data=Envs.mario, 
+                               algorithm=Algorithms.GPFA2, 
+                               output_dim=2, 
+                               N=2000, 
+                               k=10, 
+                               p=1,
+                               iterations=50,
+                               seed=0)
 
 
