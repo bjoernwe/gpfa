@@ -32,12 +32,14 @@ from envs.env_swiss_roll import EnvSwissRoll
 
 
 # prepare joblib.Memory
-cache = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
+mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 
 Envs = Enum('Envs', 'random oscillation swiss_roll face ladder ratlab ribbon kai dead_corners mario eeg meg')
 
 Algorithms = Enum('Algorithms', 'Random SFA ForeCA PFA GPFA1 GPFA2')
+
+Measures = Enum('measures', 'delta delta_ndim gpfa gpfa_ndim')
 
 
 
@@ -45,8 +47,8 @@ def set_cachedir(cachedir=None):
     """
     Call this method to change the joblib caching of this module.
     """
-    global cache
-    cache = joblib.Memory(cachedir=cachedir, verbose=1)
+    global mem
+    mem = joblib.Memory(cachedir=cachedir, verbose=1)
     return
 
 
@@ -157,7 +159,6 @@ def generate_training_data(data, N, noisy_dims, repetition_index, seed=None, **k
 
 
 
-#@mem.cache
 def generate_training_data_random(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvRandom(ndim=2, seed=seed)
@@ -168,7 +169,6 @@ def generate_training_data_random(N, noisy_dims, seed, repetition_index):
 
 
 
-#@mem.cache
 def generate_training_data_swiss_roll(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvSwissRoll(seed=seed)
@@ -179,7 +179,6 @@ def generate_training_data_swiss_roll(N, noisy_dims, seed, repetition_index):
 
 
 
-#@mem.cache
 def generate_training_data_ribbon(N, noisy_dims, seed, repetition_index, sigma_noise=.05):
     seed = ep.calc_argument_seed()
     env = EnvRibbon(seed=seed, step_size=.1, sigma_noise=sigma_noise)
@@ -190,7 +189,6 @@ def generate_training_data_ribbon(N, noisy_dims, seed, repetition_index, sigma_n
 
 
 
-#@mem.cache
 def generate_training_data_oscillation(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvOscillator(transition_prob=.9, seed=seed)
@@ -201,7 +199,6 @@ def generate_training_data_oscillation(N, noisy_dims, seed, repetition_index):
 
 
 
-#@mem.cache
 def generate_training_data_face(N, noisy_dims):
     env = EnvFace()
     data_train, data_test = env.generate_training_data(num_steps=[1500, 465], noisy_dims=noisy_dims, whitening=False, chunks=2)
@@ -211,7 +208,6 @@ def generate_training_data_face(N, noisy_dims):
 
 
 
-#@mem.cache
 def generate_training_data_event(N, noisy_dims, seed, repetition_index, prob=.1):
     seed = ep.calc_argument_seed()
     env = EnvEvent(prob=prob, seed=seed)
@@ -222,7 +218,6 @@ def generate_training_data_event(N, noisy_dims, seed, repetition_index, prob=.1)
     
 
 
-#@mem.cache
 def generate_training_data_kai(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvKai(seed=seed)
@@ -233,7 +228,6 @@ def generate_training_data_kai(N, noisy_dims, seed, repetition_index):
     
 
 
-#@mem.cache
 def generate_training_data_dead_corners(N, noisy_dims, seed, repetition_index, corner_size=.1):
     seed = ep.calc_argument_seed()
     env = EnvDeadCorners(corner_size=corner_size, seed=seed)
@@ -244,7 +238,6 @@ def generate_training_data_dead_corners(N, noisy_dims, seed, repetition_index, c
     
 
 
-#@mem.cache
 def generate_training_data_ladder(N, noisy_dims, seed, repetition_index, num_states=10, max_steps=4):
     seed = ep.calc_argument_seed()
     env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=seed)
@@ -255,7 +248,6 @@ def generate_training_data_ladder(N, noisy_dims, seed, repetition_index, num_sta
     
 
 
-#@mem.cache
 def generate_training_data_ratlab(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvRatlab(seed=seed)
@@ -266,7 +258,6 @@ def generate_training_data_ratlab(N, noisy_dims, seed, repetition_index):
     
 
 
-#@mem.cache
 def generate_training_data_mario(N, window_only, seed, repetition_index, noisy_dims):
     seed = ep.calc_argument_seed()
     env = EnvMarioCanned(window_only=window_only, seed=seed)
@@ -277,7 +268,6 @@ def generate_training_data_mario(N, window_only, seed, repetition_index, noisy_d
     
 
 
-#@mem.cache
 def generate_training_data_eeg(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvEEG(seed=seed)
@@ -288,7 +278,6 @@ def generate_training_data_eeg(N, noisy_dims, seed, repetition_index):
     
 
 
-#@mem.cache
 def generate_training_data_meg(N, noisy_dims, seed, repetition_index):
     seed = ep.calc_argument_seed()
     env = EnvMEG(seed=seed)
@@ -300,12 +289,6 @@ def generate_training_data_meg(N, noisy_dims, seed, repetition_index):
 
 
 def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwargs):
-    
-    #p = kwargs.get('p')
-    #k = kwargs.get('k')
-    #K = kwargs.get('K')
-    #iterations = kwargs.get('iterations')
-    #neighborhood_graph = kwargs.get('neighborhood_graph')
     
     if algorithm == Algorithms.Random:
         return train_random(data_train=data_train, 
@@ -398,14 +381,12 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph, we
 
 
 
-#@mem.cache
 def calc_projection(model, data):
     return model.execute(data)
 
 
 
-#@mem.cache
-def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_dims, 
+def calc_projected_data(data, algorithm, output_dim, N, noisy_dims, repetition_index, 
                         use_test_set=True, seed=None, **kwargs):
     
     data_train, data_test = generate_training_data(data=data, 
@@ -436,4 +417,57 @@ def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_
         projected_data = calc_projection(model=model, data=data_train)
         
     return projected_data
+
+
+
+def prediction_error(measure, data, algorithm, output_dim, N, noisy_dims, 
+                     use_test_set=True, repetition_index=None, seed=None, **kwargs):
+    
+    projected_data = calc_projected_data(data=data, 
+                                         algorithm=algorithm, 
+                                         output_dim=output_dim, 
+                                         N=N, 
+                                         noisy_dims=noisy_dims, 
+                                         repetition_index=repetition_index, 
+                                         use_test_set=use_test_set, 
+                                         seed=seed, **kwargs)
+
+    if measure == Measures.delta:
+        return calc_delta(data=projected_data, ndim=False)
+    elif measure == Measures.delta_ndim:
+        return calc_delta(data=projected_data, ndim=True)
+    elif measure == Measures.pfa:
+        return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
+                                                         k=kwargs['k'], 
+                                                         p=kwargs['p'],
+                                                         ndim=False)
+    elif measure == Measures.pfa_ndim:
+        return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
+                                                         k=kwargs['k'], 
+                                                         p=kwargs['p'],
+                                                         ndim=True)
+    else:
+        assert False
+    
+    
+    
+def calc_delta(data, ndim=False):
+    sfa = mdp.nodes.SFANode()
+    sfa.train(data)
+    if ndim:
+        return sfa.d
+    return np.sum(sfa.d)
+
+
+
+if __name__ == '__main__':
+    print prediction_error(measure=Measures.delta, 
+                           data=Envs.mario, 
+                           algorithm=Algorithms.GPFA2, 
+                           output_dim=2, 
+                           N=2000, 
+                           noisy_dims=0, 
+                           use_test_set=True, 
+                           seed=0)
+
 
