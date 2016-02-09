@@ -37,7 +37,7 @@ mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 Envs = Enum('Envs', 'random oscillation swiss_roll face ladder ratlab ribbon kai dead_corners mario eeg meg')
 
-Algorithms = Enum('Algorithms', 'Random SFA ForeCA PFA GPFA1 GPFA2')
+Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2')
 
 Measures = Enum('measures', 'delta delta_ndim gpfa gpfa_ndim')
 
@@ -288,7 +288,9 @@ def generate_training_data_meg(N, noisy_dims, seed, repetition_index):
 
 def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwargs):
     
-    if algorithm == Algorithms.Random:
+    if algorithm == Algorithms.None:
+        return None
+    elif algorithm == Algorithms.Random:
         return train_random(data_train=data_train, 
                     output_dim=output_dim, 
                     seed=seed, 
@@ -395,10 +397,16 @@ def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_
                         seed=seed,
                         repetition_index=repetition_index,
                         **kwargs)
-    if use_test_set:
-        projected_data = calc_projection(model=model, data=data_test)
+    if model is None:
+        if use_test_set:
+            projected_data = np.array(data_test, copy=True)
+        else:
+            projected_data = np.array(data_train, copy=True)
     else:
-        projected_data = calc_projection(model=model, data=data_train)
+        if use_test_set:
+            projected_data = calc_projection(model=model, data=data_test)
+        else:
+            projected_data = calc_projection(model=model, data=data_train)
         
     return projected_data
 
