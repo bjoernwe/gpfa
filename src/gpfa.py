@@ -1,18 +1,16 @@
 import itertools
 import numpy as np
 import scipy.linalg
-import scipy.spatial
 import scipy.spatial.distance
 
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import polynomial_kernel
 from sklearn.metrics.pairwise import rbf_kernel
 
 import mdp
 
 
 
-def calc_predictability_trace_of_avg_cov(x, k, p):
+def calc_predictability_trace_of_avg_cov(x, k, p, ndim=False):
     """
     """
     
@@ -33,33 +31,10 @@ def calc_predictability_trace_of_avg_cov(x, k, p):
     
     covariances = map(_cov, range(p-1, N-1))
     covariance = reduce(lambda a,b: a+b, covariances) / (N-p)
+    if ndim:
+        E, _ = np.linalg.eigh(covariance)
+        return E
     return np.trace(covariance)
-
-
-
-def calc_predictability_trace_of_avg_cov_per_dim(x, k, p):
-    """
-    """
-    
-    def _cov(t):
-        successors = neighbors[t] + 1
-        successors = successors[successors<N]
-        suc_dat = x[successors]
-        return np.array(np.cov(suc_dat.T), ndmin=2)
-
-    # pairwise distances of data points
-    if x.ndim == 1:
-        x = np.array(x, ndmin=2).T 
-    N, _ = x.shape
-    y = concatenate_past(x, p=p)
-    tree = scipy.spatial.cKDTree(y)
-    neighbors = [tree.query(y[i], k=k+1)[1] for i in xrange(y.shape[0])]
-    assert len(neighbors) == N
-    
-    covariances = map(_cov, range(p-1, N-1))
-    covariance = reduce(lambda a,b: a+b, covariances) / (N-p)
-    E, _ = np.linalg.eigh(covariance)
-    return E
 
 
 
@@ -188,10 +163,9 @@ class LPP(mdp.Node):
 
 class gPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=10, p=1, iterations=10, #iteration_dim=None,
-                 variance_graph=True, neighborhood_graph=False, weighted_edges=True, 
-                 causal_features=True, input_dim=None, 
-                 dtype=None):
+    def __init__(self, output_dim, k=10, p=1, iterations=10, variance_graph=False, 
+                 neighborhood_graph=False, weighted_edges=True, causal_features=True, 
+                 input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.p = p
@@ -199,11 +173,8 @@ class gPFA(mdp.Node):
         self.variance_graph = variance_graph
         self.neighborhood_graph = neighborhood_graph
         self.weighted_edges = weighted_edges
-        #self.iteration_dim = iteration_dim
         self.causal_features = causal_features
-        #self.constraint_optimization = constraint_optimization
         self.L = None
-        #self.W = None
         self.D = None
         return
     

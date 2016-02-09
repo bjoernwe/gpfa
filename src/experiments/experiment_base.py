@@ -77,8 +77,7 @@ def generate_training_data(data, N, noisy_dims, repetition_index, seed=None, **k
     elif data == Envs.face:
         data_train, data_test = generate_training_data_face(
                                     N=N, 
-                                    noisy_dims=noisy_dims,
-                                    repetition_index=repetition_index)
+                                    noisy_dims=noisy_dims)
     elif data == Envs.ribbon:
         data_train, data_test = generate_training_data_ribbon(
                                     N=N,
@@ -96,9 +95,7 @@ def generate_training_data(data, N, noisy_dims, repetition_index, seed=None, **k
     elif data == Envs.ratlab:
         data_train, data_test = generate_training_data_ratlab(
                                     N=N,
-                                    noisy_dims=noisy_dims,
-                                    seed=seed,
-                                    repetition_index=repetition_index)
+                                    noisy_dims=noisy_dims)
     elif data == Envs.kai:
         data_train, data_test = generate_training_data_kai(
                                     N=N, 
@@ -135,12 +132,14 @@ def generate_training_data(data, N, noisy_dims, repetition_index, seed=None, **k
         assert False
 
     # PCA
+    print "Dim. of %s before PCA: %d" % (data, data_train.shape[1])
     keep_variance = kwargs.get('keep_variance', 1.)
     if keep_variance < 1.:
         pca = mdp.nodes.PCANode(output_dim=keep_variance)
         pca.train(data_train)
         data_train = pca.execute(data_train)
         data_test = pca.execute(data_test)
+        print "Dim. of %s after PCA: %d" % (data, data_train.shape[1])
 
     # expansion
     expansion = kwargs.get('expansion', 1)        
@@ -248,9 +247,8 @@ def generate_training_data_ladder(N, noisy_dims, seed, repetition_index, num_sta
     
 
 
-def generate_training_data_ratlab(N, noisy_dims, seed, repetition_index):
-    seed = ep.calc_argument_seed()
-    env = EnvRatlab(seed=seed)
+def generate_training_data_ratlab(N, noisy_dims):
+    env = EnvRatlab()
     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=2)
     data_train = data_train[0]
     data_test = data_test[0]
@@ -306,15 +304,23 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
         return train_pfa(data_train=data_train, 
                     output_dim=output_dim)
     elif algorithm == Algorithms.GPFA1:
-        return train_gpfa(data_train=data_train, 
-                    variance_graph=True, 
-                    output_dim=output_dim,
-                    **kwargs)
+        return train_gpfa(data_train=data_train,
+                    k=kwargs['k'], 
+                    iterations=kwargs['iterations'], 
+                    variance_graph=True,
+                    neighborhood_graph=kwargs.get('neighborhood_graph', False), 
+                    weighted_edges=kwargs.get('weighted_edges', True),
+                    causal_features=kwargs.get('causal_features', True),
+                    output_dim=output_dim)
     elif algorithm == Algorithms.GPFA2:
         return train_gpfa(data_train=data_train, 
-                    variance_graph=False, 
-                    output_dim=output_dim,
-                    **kwargs)
+                    k=kwargs['k'], 
+                    iterations=kwargs['iterations'], 
+                    variance_graph=False,
+                    neighborhood_graph=kwargs.get('neighborhood_graph', False), 
+                    weighted_edges=kwargs.get('weighted_edges', True),
+                    causal_features=kwargs.get('causal_features', True),
+                    output_dim=output_dim)
     else:
         assert False
 
