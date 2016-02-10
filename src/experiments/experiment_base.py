@@ -1,5 +1,4 @@
 import joblib
-import matplotlib.pyplot as plt
 import mdp
 import numpy as np
 import sys
@@ -8,7 +7,6 @@ from enum import Enum
 
 import foreca.foreca_node as foreca_node
 import gpfa
-from envs.env_data import EnvData
 
 sys.path.append('/home/weghebvc/workspace/git/explot/src/')
 import explot as ep
@@ -21,17 +19,9 @@ from envs.environment import Noise
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
 from envs.env_dead_corners import EnvDeadCorners
-from envs.env_event import EnvEvent
-from envs.env_eeg import EnvEEG
-from envs.env_face import EnvFace
 from envs.env_kai import EnvKai
 from envs.env_ladder import EnvLadder
-from envs.env_mario_canned import EnvMarioCanned
-from envs.env_meg import EnvMEG
-from envs.env_oscillator import EnvOscillator
 from envs.env_random import EnvRandom
-from envs.env_ratlab import EnvRatlab
-from envs.env_ribbon import EnvRibbon
 from envs.env_swiss_roll import EnvSwissRoll
 
 
@@ -40,7 +30,7 @@ from envs.env_swiss_roll import EnvSwissRoll
 mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 
-Datasets = Enum('Datasets', 'random swiss_roll face ladder ratlab kai dead_corners Mario Mario_window EEG MEG')
+Datasets = Enum('Datasets', 'Random SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG, Tumor')
 
 Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2')
 
@@ -74,27 +64,29 @@ def update_seed_argument(**kwargs):
 def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=None, seed=None, **kwargs):
 
     # generate data
-    if data == Datasets.random:
+    if data == Datasets.Random:
         fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
         env = EnvRandom(**fargs)
-    elif data == Datasets.swiss_roll:
+    elif data == Datasets.SwissRoll:
         fargs = update_seed_argument(sigma=kwargs.get('sigma', .5), repetition_index=repetition_index, seed=seed)
         env = EnvSwissRoll(**fargs)
-    elif data == Datasets.face:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Face)
-    elif data == Datasets.ladder:
+    elif data == Datasets.Face:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Face, scaling=kwargs.get('scaling', 1.))
+    elif data == Datasets.MarkovChain:
         fargs = update_seed_argument(num_states=kwargs.get('ladder_num_states', 10), 
                                      max_steps=kwargs.get('ladder_max_steps', 4), 
                                      allow_stay=kwargs.get('ladder_allow_stay', False),
                                      repetition_index=repetition_index, 
                                      seed=seed)
         env = EnvLadder(**fargs)
-    elif data == Datasets.ratlab:
-        env = EnvData2D(dataset=EnvData2D.Datasets.RatLab)
-    elif data == Datasets.kai:
+    elif data == Datasets.RatLab:
+        env = EnvData2D(dataset=EnvData2D.Datasets.RatLab, scaling=kwargs.get('scaling', 1.))
+    elif data == Datasets.Tumor:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Tumor, scaling=kwargs.get('scaling', 1.))
+    elif data == Datasets.Kai:
         fargs = update_seed_argument(repetition_index=repetition_index, seed=seed)
         env = EnvKai(**fargs)
-    elif data == Datasets.dead_corners:
+    elif data == Datasets.Teleporter:
         fargs = update_seed_argument(sigma=kwargs.get('dead_corners_sigma', .2), 
                                      corner_size=kwargs.get('dead_corners_corner_size', .1), 
                                      ndim=2, 
@@ -102,9 +94,9 @@ def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=Non
                                      seed=seed)
         env = EnvDeadCorners(**fargs)
     elif data == Datasets.Mario:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Mario)
+        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, scaling=kwargs.get('scaling', 1.))
     elif data == Datasets.Mario_window:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, window=((70,70),(90,90)))
+        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, window=((70,70),(90,90)), scaling=kwargs.get('scaling', 1.))
     elif data == Datasets.EEG:
         env = EnvData(dataset=EnvData.Datasets.EEG)
     elif data == Datasets.MEG:
@@ -119,9 +111,19 @@ def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=Non
     print "Dim. of %s before PCA: %d" % (data, data_chunks[0].shape[1])
     keep_variance = kwargs.get('keep_variance', 1.)
     if keep_variance < 1.:
-        pca = mdp.nodes.PCANode(output_dim=keep_variance)
-        pca.train(data_chunks[0])
-        data_chunks = [pca.execute(chunk) for chunk in data_chunks]
+        pca = mdp.nodes.PCANode(output_dim=keep_variance, reduce=True)
+        if data_chunks[0].shape[1] <= data_chunks[0].shape[0]:
+            pca.train(data_chunks[0])
+            data_chunks = [pca.execute(chunk) for chunk in data_chunks]
+        else:
+            print 'Plan B'
+            pca.train(data_chunks[0].T)
+            pca.stop_training()
+            #print data_chunks[0].shape
+            #print pca.v.shape
+            U = data_chunks[0].T.dot(pca.v)
+            #print 'U', U.shape
+            data_chunks = [chunk.dot(U) for chunk in data_chunks]
         print "Dim. of %s after PCA: %d" % (data, data_chunks[0].shape[1])
         
     # expansion
@@ -136,140 +138,6 @@ def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=Non
     data_chunks = [whitening.execute(chunk) for chunk in data_chunks]
     
     return data_chunks
-
-
-
-# def generate_training_data_random(N, noisy_dims, seed, repetition_index, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvRandom(ndim=2, seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-# 
-# 
-# 
-# def generate_training_data_swiss_roll(N, noisy_dims, seed, repetition_index, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvSwissRoll(seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-# 
-# 
-# 
-# def generate_training_data_ribbon(N, noisy_dims, seed, repetition_index, sigma_noise=.05, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvRibbon(seed=seed, step_size=.1, sigma_noise=sigma_noise)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-# 
-# 
-# 
-# def generate_training_data_oscillation(N, noisy_dims, seed, repetition_index, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvOscillator(transition_prob=.9, seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-# 
-# 
-# 
-# def generate_training_data_face(N, noisy_dims, chunks=2):
-#     env = EnvFace()
-#     data_train, data_test = env.generate_training_data(num_steps=[1500, 465], noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-# 
-# 
-# 
-# def generate_training_data_event(N, noisy_dims, seed, repetition_index, prob=.1, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvEvent(prob=prob, seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_kai(N, noisy_dims, seed, repetition_index, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvKai(seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_dead_corners(N, noisy_dims, seed, repetition_index, corner_size=.1, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvDeadCorners(corner_size=corner_size, seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_ladder(N, noisy_dims, seed, repetition_index, num_states=10, max_steps=4, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvLadder(num_states=num_states, max_steps=max_steps, seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_ratlab(N, noisy_dims, chunks=2):
-#     env = EnvRatlab()
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_mario(N, window_only, seed, repetition_index, noisy_dims, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvMarioCanned(window_only=window_only, seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_data(dataset, N, noisy_dims, seed, repetition_index, chunks=2):
-#     env = EnvData(dataset=dataset)
-#     return [dat[0] for dat in env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)]
-#     
-# 
-# 
-# def generate_training_data_eeg(N, noisy_dims, seed, repetition_index, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvEEG(seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
-#     
-# 
-# 
-# def generate_training_data_meg(N, noisy_dims, seed, repetition_index, chunks=2):
-#     seed = ep.calc_argument_seed()
-#     env = EnvMEG(seed=seed)
-#     data_train, data_test = env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)
-#     data_train = data_train[0]
-#     data_test = data_test[0]
-#     return data_train, data_test
 
 
 
@@ -374,7 +242,8 @@ def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_
     
     data_train, data_test = generate_training_data(data=data, 
                                                    N=N, 
-                                                   noisy_dims=noisy_dims, 
+                                                   noisy_dims=noisy_dims,
+                                                   chunks=2, 
                                                    repetition_index=repetition_index, 
                                                    seed=seed,
                                                    **kwargs)
@@ -443,7 +312,7 @@ if __name__ == '__main__':
     #set_cachedir(cachedir=None)
     for measure in [Measures.delta, Measures.delta_ndim, Measures.gpfa, Measures.gpfa_ndim]:
         print prediction_error(measure=measure, 
-                               data=Datasets.Mario, 
+                               data=Datasets.Mario_window, 
                                algorithm=Algorithms.GPFA2, 
                                output_dim=2, 
                                N=2000, 
