@@ -104,26 +104,14 @@ def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=Non
     else:
         assert False
 
-    # generate data        
+    # generate data
     data_chunks = [chunk[0] for chunk in env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)]
 
     # PCA
-    print "Dim. of %s before PCA: %d" % (data, data_chunks[0].shape[1])
     keep_variance = kwargs.get('keep_variance', 1.)
     if keep_variance < 1.:
-        pca = mdp.nodes.PCANode(output_dim=keep_variance, reduce=True)
-        if data_chunks[0].shape[1] <= data_chunks[0].shape[0]:
-            pca.train(data_chunks[0])
-            data_chunks = [pca.execute(chunk) for chunk in data_chunks]
-        else:
-            print 'Plan B'
-            pca.train(data_chunks[0].T)
-            pca.stop_training()
-            #print data_chunks[0].shape
-            #print pca.v.shape
-            U = data_chunks[0].T.dot(pca.v)
-            #print 'U', U.shape
-            data_chunks = [chunk.dot(U) for chunk in data_chunks]
+        print "Dim. of %s before PCA: %d" % (data, data_chunks[0].shape[1])
+        data_chunks = pca(data_chunks=data_chunks, keep_variance=keep_variance)
         print "Dim. of %s after PCA: %d" % (data, data_chunks[0].shape[1])
         
     # expansion
@@ -137,6 +125,21 @@ def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=Non
     whitening.train(data_chunks[0])
     data_chunks = [whitening.execute(chunk) for chunk in data_chunks]
     
+    return data_chunks
+
+
+
+@mem.cache
+def pca(data_chunks, keep_variance):
+    pca = mdp.nodes.PCANode(output_dim=keep_variance, reduce=True)
+    if data_chunks[0].shape[1] <= data_chunks[0].shape[0]:
+        pca.train(data_chunks[0])
+        data_chunks = [pca.execute(chunk) for chunk in data_chunks]
+    else:
+        pca.train(data_chunks[0].T)
+        pca.stop_training()
+        U = data_chunks[0].T.dot(pca.v)
+        data_chunks = [chunk.dot(U) for chunk in data_chunks]
     return data_chunks
 
 
@@ -185,8 +188,8 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
 
 @mem.cache
 def train_random(data_train, output_dim, seed, repetition_index):
-    seed = ep.calc_argument_seed()
-    model = gpfa.RandomProjection(output_dim=output_dim, seed=seed)
+    fargs = update_seed_argument(output_dim=output_dim, repetition_index, seed=seed)
+    model = gpfa.RandomProjection(**fargs)
     model.train(data_train)
     return model
 
@@ -202,8 +205,8 @@ def train_sfa(data_train, output_dim):
  
 @mem.cache
 def train_foreca(data_train, output_dim, seed, repetition_index):
-    seed = ep.calc_argument_seed()
-    model = foreca_node.ForeCA(output_dim=output_dim, seed=seed)
+    fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
+    model = foreca_node.ForeCA(**fargs)
     model.train(data_train)
     return model
  
@@ -232,37 +235,35 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 
 
 
-def calc_projection(model, data):
-    return model.execute(data)
-
-
-
 def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_dims=0, 
                         use_test_set=True, seed=None, **kwargs):
+
+    chunks = 2 if use_test_set else 1
+    data_chunks = generate_training_data(data=data, 
+                                         N=N, 
+                                         noisy_dims=noisy_dims,
+                                         chunks=chunks,
+                                         repetition_index=repetition_index, 
+                                         seed=seed,
+                                         **kwargs)
     
-    data_train, data_test = generate_training_data(data=data, 
-                                                   N=N, 
-                                                   noisy_dims=noisy_dims,
-                                                   chunks=2, 
-                                                   repetition_index=repetition_index, 
-                                                   seed=seed,
-                                                   **kwargs)
     model = train_model(algorithm=algorithm, 
-                        data_train=data_train, 
+                        data_train=data_chunks[0], 
                         output_dim=output_dim, 
                         seed=seed,
                         repetition_index=repetition_index,
                         **kwargs)
+    
     if model is None:
         if use_test_set:
-            projected_data = np.array(data_test, copy=True)
+            projected_data = np.array(data_chunks[1], copy=True)
         else:
-            projected_data = np.array(data_train, copy=True)
+            projected_data = np.array(data_chunks[0], copy=True)
     else:
         if use_test_set:
-            projected_data = calc_projection(model=model, data=data_test)
+            projected_data = model.execute(data=data_chunks[1])
         else:
-            projected_data = calc_projection(model=model, data=data_train)
+            projected_data = model.execute(data=data_chunks[0])
         
     return projected_data
 
