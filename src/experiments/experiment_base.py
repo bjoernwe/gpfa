@@ -166,6 +166,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
     elif algorithm == Algorithms.GPFA1:
         return train_gpfa(data_train=data_train,
                     k=kwargs['k'], 
+                    p=kwargs.get('p', 1),
                     iterations=kwargs['iterations'], 
                     variance_graph=True,
                     neighborhood_graph=kwargs.get('neighborhood_graph', False), 
@@ -175,6 +176,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
     elif algorithm == Algorithms.GPFA2:
         return train_gpfa(data_train=data_train, 
                     k=kwargs['k'], 
+                    p=kwargs.get('p', 1),
                     iterations=kwargs['iterations'], 
                     variance_graph=False,
                     neighborhood_graph=kwargs.get('neighborhood_graph', False), 
@@ -188,7 +190,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
 
 @mem.cache
 def train_random(data_train, output_dim, seed, repetition_index):
-    fargs = update_seed_argument(output_dim=output_dim, repetition_index, seed=seed)
+    fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
     model = gpfa.RandomProjection(**fargs)
     model.train(data_train)
     return model
@@ -235,7 +237,7 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 
 
 
-def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_dims=0, 
+def calc_projected_data(data, algorithm, output_dim, N, repetition_index=None, noisy_dims=0, 
                         use_test_set=True, seed=None, **kwargs):
 
     chunks = 2 if use_test_set else 1
@@ -261,9 +263,9 @@ def calc_projected_data(data, algorithm, output_dim, N, repetition_index, noisy_
             projected_data = np.array(data_chunks[0], copy=True)
     else:
         if use_test_set:
-            projected_data = model.execute(data=data_chunks[1])
+            projected_data = model.execute(data_chunks[1])
         else:
-            projected_data = model.execute(data=data_chunks[0])
+            projected_data = model.execute(data_chunks[0])
         
     return projected_data
 
