@@ -21,9 +21,12 @@ def main():
                 ]
     
     k = 5
+    K = 1
     iterations = 50
     for a, (algorithm, kwargs) in enumerate([(eb.Algorithms.Random, {}),
                                              (eb.Algorithms.SFA, {}), 
+                                             (eb.Algorithms.PFA, {'p': 1, 'K': K}),
+                                             (eb.Algorithms.PFA, {'p': 2, 'K': K}),
                                              (eb.Algorithms.GPFA2, {'p': 1, 'k': k, 'iterations': iterations}),
                                              (eb.Algorithms.GPFA2, {'p': 2, 'k': k, 'iterations': iterations}),
                                              ]):
