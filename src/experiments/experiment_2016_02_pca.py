@@ -18,7 +18,7 @@ def main():
     
     datasets = [(eb.Datasets.EEG, 2000, 1.),
                 (eb.Datasets.Face, 1965, 1.),
-                (eb.Datasets.Mario, 2000, 1.),
+                #(eb.Datasets.Mario, 2000, 1.),
                 (eb.Datasets.Mario_window, 2000, 1.),
                 (eb.Datasets.MEG, 375, 1.),
                 (eb.Datasets.RatLab, 2000, .5),
@@ -28,8 +28,9 @@ def main():
         plt.subplot(3, 3, i+1)
         ep.plot(n_dimensions, data=dataset, 
                               N=N,
+                              noisy_dims=0,
                               scaling=scaling, 
-                              chunks=1,
+                              n_chunks=1,
                               keep_variance=np.arange(.7, .99, .01),
                               show_plot=False,
                               seed=0)

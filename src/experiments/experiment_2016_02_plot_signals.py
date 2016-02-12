@@ -20,15 +20,19 @@ def main():
                 (eb.Datasets.Tumor,         500/2,  .25,    .99),
                 ]
     
-    for algorithm, kwargs in [(eb.Algorithms.SFA, {}), 
-                              (eb.Algorithms.GPFA2, {'p': 1}),
-                              (eb.Algorithms.GPFA2, {'p': 2})]:
+    k = 5
+    iterations = 50
+    for a, (algorithm, kwargs) in enumerate([(eb.Algorithms.Random, {}),
+                                             (eb.Algorithms.SFA, {}), 
+                                             (eb.Algorithms.GPFA2, {'p': 1, 'k': k, 'iterations': iterations}),
+                                             (eb.Algorithms.GPFA2, {'p': 2, 'k': k, 'iterations': iterations}),
+                                             ]):
         
-        plt.figure()
+        plt.figure(figsize=(22., 12.))
         plt.suptitle('%s %s' % (algorithm, kwargs))
         
-        for i, (dataset, N, scaling, keep_variance) in enumerate(datasets):
-            plt.subplot(3, 2, i+1)
+        for d, (dataset, N, scaling, keep_variance) in enumerate(datasets):
+            plt.subplot(3, 2, d+1)
             plt.title(dataset)
             chunks = []
             for use_test_set in [False, True]: 
@@ -40,15 +44,14 @@ def main():
                                                      scaling=scaling,
                                                      keep_variance=keep_variance, 
                                                      use_test_set=use_test_set,
-                                                     # algorithm
-                                                     k=5,
-                                                     iterations=50,
                                                      # misc 
                                                      seed=0,
-                                                     **kwargs))
+                                                     **kwargs)[0])
             for i, color in enumerate(['b', 'r']):
                 for j, linestyle in enumerate(['-', ':']):
                     plt.plot(range(i*N, (i+1)*N), chunks[i][:,j], color=color, linestyle=linestyle)
+                    
+        plt.savefig('experiment_2016_02_plot_signals_%d.pdf' % a)
         
     plt.show()
 
