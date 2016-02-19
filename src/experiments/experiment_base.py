@@ -8,8 +8,8 @@ from enum import Enum
 import foreca.foreca_node as foreca_node
 import gpfa
 
-sys.path.append('/home/weghebvc/workspace/git/explot/src/')
-import explot as ep
+#sys.path.append('/home/weghebvc/workspace/git/explot/src/')
+#import explot as ep
 
 sys.path.append('/home/weghebvc/workspace/git/GNUPFA/src/')
 import PFANodeMDP
@@ -24,6 +24,9 @@ from envs.env_ladder import EnvLadder
 from envs.env_random import EnvRandom
 from envs.env_swiss_roll import EnvSwissRoll
 
+sys.path.append('/home/weghebvc/workspace/git/GNUPFA')
+import PFACoreUtil
+
 
 
 # prepare joblib.Memory
@@ -34,7 +37,7 @@ Datasets = Enum('Datasets', 'Random SwissRoll Face MarkovChain RatLab Kai Telepo
 
 Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2')
 
-Measures = Enum('measures', 'delta delta_ndim gpfa gpfa_ndim')
+Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa_ndim gpfa gpfa_ndim')
 
 
 
@@ -61,86 +64,91 @@ def update_seed_argument(**kwargs):
 
 
 
-def generate_training_data(data, N, noisy_dims=0, chunks=2, repetition_index=None, seed=None, **kwargs):
+def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=None, seed=None, **kwargs):
 
-    # generate data
-    if data == Datasets.Random:
+    # generate dataset
+    if dataset == Datasets.Random:
         fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
         env = EnvRandom(**fargs)
-    elif data == Datasets.SwissRoll:
+    elif dataset == Datasets.SwissRoll:
         fargs = update_seed_argument(sigma=kwargs.get('sigma', .5), repetition_index=repetition_index, seed=seed)
         env = EnvSwissRoll(**fargs)
-    elif data == Datasets.Face:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Face, scaling=kwargs.get('scaling', 1.))
-    elif data == Datasets.MarkovChain:
+    elif dataset == Datasets.Face:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Face, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.MarkovChain:
         fargs = update_seed_argument(num_states=kwargs.get('ladder_num_states', 10), 
                                      max_steps=kwargs.get('ladder_max_steps', 4), 
                                      allow_stay=kwargs.get('ladder_allow_stay', False),
                                      repetition_index=repetition_index, 
                                      seed=seed)
         env = EnvLadder(**fargs)
-    elif data == Datasets.RatLab:
-        env = EnvData2D(dataset=EnvData2D.Datasets.RatLab, scaling=kwargs.get('scaling', 1.))
-    elif data == Datasets.Tumor:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Tumor, scaling=kwargs.get('scaling', 1.))
-    elif data == Datasets.Kai:
+    elif dataset == Datasets.RatLab:
+        env = EnvData2D(dataset=EnvData2D.Datasets.RatLab, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.Tumor:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Tumor, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.Kai:
         fargs = update_seed_argument(repetition_index=repetition_index, seed=seed)
         env = EnvKai(**fargs)
-    elif data == Datasets.Teleporter:
+    elif dataset == Datasets.Teleporter:
         fargs = update_seed_argument(sigma=kwargs.get('dead_corners_sigma', .2), 
                                      corner_size=kwargs.get('dead_corners_corner_size', .1), 
                                      ndim=2, 
                                      repetition_index=repetition_index,
                                      seed=seed)
         env = EnvDeadCorners(**fargs)
-    elif data == Datasets.Mario:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, scaling=kwargs.get('scaling', 1.))
-    elif data == Datasets.Mario_window:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, window=((70,70),(90,90)), scaling=kwargs.get('scaling', 1.))
-    elif data == Datasets.EEG:
+    elif dataset == Datasets.Mario:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.Mario_window:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, window=((70,70),(90,90)), scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.EEG:
         env = EnvData(dataset=EnvData.Datasets.EEG)
-    elif data == Datasets.MEG:
+    elif dataset == Datasets.MEG:
         env = EnvData(dataset=EnvData.Datasets.MEG)
     else:
         assert False
 
-    # generate data
-    data_chunks = [chunk[0] for chunk in env.generate_training_data(num_steps=N, noisy_dims=noisy_dims, whitening=False, chunks=chunks)]
+    # generate dataset
+    chunks = env.generate_training_data(num_steps=N, 
+                                        noisy_dims=noisy_dims, 
+                                        keep_variance=kwargs.get('keep_variance', 1.), 
+                                        whitening=True, 
+                                        n_chunks=n_chunks)
+    data_chunks = [chunk[0] for chunk in chunks]
 
-    # PCA
-    keep_variance = kwargs.get('keep_variance', 1.)
-    if keep_variance < 1.:
-        print "Dim. of %s before PCA: %d" % (data, data_chunks[0].shape[1])
-        data_chunks = pca(data_chunks=data_chunks, keep_variance=keep_variance)
-        print "Dim. of %s after PCA: %d" % (data, data_chunks[0].shape[1])
-        
-    # expansion
-    expansion = kwargs.get('expansion', 1)        
-    if expansion > 1:
-        ex = mdp.nodes.PolynomialExpansionNode(degree=expansion)
-        data_chunks = [ex.execute(chunk) for chunk in data_chunks]
-        
-    # whitening
-    whitening = mdp.nodes.WhiteningNode(reduce=True)
-    whitening.train(data_chunks[0])
-    data_chunks = [whitening.execute(chunk) for chunk in data_chunks]
+#     # PCA
+#     keep_variance = kwargs.get('keep_variance', 1.)
+#     if keep_variance < 1.:
+#         print "Dim. of %s before PCA: %d" % (dataset, data_chunks[0].shape[1])
+#         data_chunks = pca(data_chunks=data_chunks, keep_variance=keep_variance)
+#         print "Dim. of %s after PCA: %d" % (dataset, data_chunks[0].shape[1])
+#         
+#     # expansion
+#     expansion = kwargs.get('expansion', 1)        
+#     if expansion > 1:
+#         ex = mdp.nodes.PolynomialExpansionNode(degree=expansion)
+#         data_chunks = [ex.execute(chunk) for chunk in data_chunks]
+#         
+#     # whitening
+#     whitening = mdp.nodes.WhiteningNode(reduce=True)
+#     whitening.train(data_chunks[0])
+#     data_chunks = [whitening.execute(chunk) for chunk in data_chunks]
     
     return data_chunks
 
 
 
-@mem.cache
-def pca(data_chunks, keep_variance):
-    pca = mdp.nodes.PCANode(output_dim=keep_variance, reduce=True)
-    if data_chunks[0].shape[1] <= data_chunks[0].shape[0]:
-        pca.train(data_chunks[0])
-        data_chunks = [pca.execute(chunk) for chunk in data_chunks]
-    else:
-        pca.train(data_chunks[0].T)
-        pca.stop_training()
-        U = data_chunks[0].T.dot(pca.v)
-        data_chunks = [chunk.dot(U) for chunk in data_chunks]
-    return data_chunks
+# @mem.cache
+# def pca(data_chunks, keep_variance):
+#     pca = mdp.nodes.PCANode(output_dim=keep_variance, reduce=True)
+#     if data_chunks[0].shape[1] <= data_chunks[0].shape[0]:
+#         pca.train(data_chunks[0])
+#         data_chunks = [pca.execute(chunk) for chunk in data_chunks]
+#     else:
+#         pca.train(data_chunks[0].T)
+#         pca.stop_training()
+#         U = data_chunks[0].T.dot(pca.v)
+#         data_chunks = [chunk.dot(U) for chunk in data_chunks]
+#     return data_chunks
 
 
 
@@ -157,12 +165,14 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
         return train_sfa(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.ForeCA:
         return train_foreca(data_train=data_train, 
-                    output_dim=output_dim, 
-                    seed=seed, 
+                    output_dim=output_dim,
+                    seed=seed,
                     repetition_index=repetition_index)
     elif algorithm == Algorithms.PFA:
         return train_pfa(data_train=data_train, 
-                    output_dim=output_dim)
+                    output_dim=output_dim,
+                    p=kwargs['p'],
+                    K=kwargs['K'])
     elif algorithm == Algorithms.GPFA1:
         return train_gpfa(data_train=data_train,
                     k=kwargs['k'], 
@@ -199,6 +209,8 @@ def train_random(data_train, output_dim, seed, repetition_index):
 
 @mem.cache
 def train_sfa(data_train, output_dim):
+    # 
+    print data_train.shape
     model = mdp.nodes.SFANode(output_dim=output_dim)
     model.train(data_train)
     return model
@@ -207,7 +219,7 @@ def train_sfa(data_train, output_dim):
  
 @mem.cache
 def train_foreca(data_train, output_dim, seed, repetition_index):
-    fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
+    fargs = update_seed_argument(output_dim=output_dim, seed=seed, repetition_index=repetition_index)
     model = foreca_node.ForeCA(**fargs)
     model.train(data_train)
     return model
@@ -218,6 +230,7 @@ def train_foreca(data_train, output_dim, seed, repetition_index):
 def train_pfa(data_train, p, K, output_dim):
     model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=output_dim)
     model.train(data_train)
+    model.stop_training()
     return model
  
  
@@ -237,14 +250,14 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 
 
 
-def calc_projected_data(data, algorithm, output_dim, N, repetition_index=None, noisy_dims=0, 
+def calc_projected_data(dataset, algorithm, output_dim, N, repetition_index=None, noisy_dims=0, 
                         use_test_set=True, seed=None, **kwargs):
 
-    chunks = 2 if use_test_set else 1
-    data_chunks = generate_training_data(data=data, 
+    n_chunks = 2 if use_test_set else 1
+    data_chunks = generate_training_data(dataset=dataset, 
                                          N=N, 
                                          noisy_dims=noisy_dims,
-                                         chunks=chunks,
+                                         n_chunks=n_chunks,
                                          repetition_index=repetition_index, 
                                          seed=seed,
                                          **kwargs)
@@ -267,25 +280,35 @@ def calc_projected_data(data, algorithm, output_dim, N, repetition_index=None, n
         else:
             projected_data = model.execute(data_chunks[0])
         
-    return projected_data
+    return projected_data, model, data_chunks
 
 
 
-def prediction_error(measure, data, algorithm, output_dim, N, use_test_set=True, 
+def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set, 
                      repetition_index=None, seed=None, **kwargs):
     
-    projected_data = calc_projected_data(data=data, 
-                                         algorithm=algorithm, 
-                                         output_dim=output_dim, 
-                                         N=N, 
-                                         repetition_index=repetition_index, 
-                                         use_test_set=use_test_set, 
-                                         seed=seed, **kwargs)
+    projected_data, model, data_chunks = calc_projected_data(dataset=dataset, 
+                                            algorithm=algorithm, 
+                                            output_dim=output_dim, 
+                                            N=N, 
+                                            repetition_index=repetition_index, 
+                                            use_test_set=use_test_set, 
+                                            seed=seed, **kwargs)
 
     if measure == Measures.delta:
         return calc_delta(data=projected_data, ndim=False)
     elif measure == Measures.delta_ndim:
         return calc_delta(data=projected_data, ndim=True)
+    elif measure == Measures.omega:
+        return calc_omega(data=projected_data)
+    elif measure == Measures.omega_ndim:
+        return calc_omega_ndim(data=projected_data)
+    elif measure == Measures.pfa_ndim:
+        return calc_autoregressive_error(data=projected_data, 
+                                         p=kwargs['p'], 
+                                         K=kwargs['K'],
+                                         model=model,
+                                         data_chunks=data_chunks)
     elif measure == Measures.gpfa:
         return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
                                                          k=kwargs['k'], 
@@ -311,11 +334,29 @@ def calc_delta(data, ndim=False):
 
 
 
+def calc_autoregressive_error(data, p, K, model=None, data_chunks=None):
+    #W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
+    return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data_chunks[0], W=model.W0, k=K)[:model.output_dim]
+
+
+
+def calc_omega(data):
+    from foreca.foreca_omega import omega
+    return omega(data)
+
+
+
+def calc_omega_ndim(data):
+    from foreca.foreca_omega import omega
+    return [omega(dat) for dat in data.T]
+
+
+
 if __name__ == '__main__':
     #set_cachedir(cachedir=None)
     for measure in [Measures.delta, Measures.delta_ndim, Measures.gpfa, Measures.gpfa_ndim]:
         print prediction_error(measure=measure, 
-                               data=Datasets.Mario_window, 
+                               dataset=Datasets.Mario_window, 
                                algorithm=Algorithms.GPFA2, 
                                output_dim=2, 
                                N=2000, 
@@ -323,5 +364,4 @@ if __name__ == '__main__':
                                p=1,
                                iterations=50,
                                seed=0)
-
 

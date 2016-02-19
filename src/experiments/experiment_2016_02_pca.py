@@ -17,16 +17,18 @@ def n_dimensions(**kwargs):
 def main():
     
     datasets = [(eb.Datasets.EEG, 2000, 1.),
-                (eb.Datasets.Face, 1965, 1.),
+                (eb.Datasets.Face, 1965/2, 1.),
                 #(eb.Datasets.Mario, 2000, 1.),
                 (eb.Datasets.Mario_window, 2000, 1.),
-                (eb.Datasets.MEG, 375, 1.),
+                (eb.Datasets.MEG, 375/2, 1.),
                 (eb.Datasets.RatLab, 2000, .5),
-                (eb.Datasets.Tumor, 500, .25)]
+                (eb.Datasets.Tumor, 500/2, .25)]
+    
+    plt.figure(figsize=(22., 12.))
     
     for i, (dataset, N, scaling) in enumerate(datasets):
-        plt.subplot(3, 3, i+1)
-        ep.plot(n_dimensions, data=dataset, 
+        plt.subplot(2, 3, i+1)
+        ep.plot(n_dimensions, dataset=dataset, 
                               N=N,
                               noisy_dims=0,
                               scaling=scaling, 
@@ -35,6 +37,7 @@ def main():
                               show_plot=False,
                               seed=0)
     plt.show()
+    plt.savefig('experiment_2016_02_pca.pdf')
 
 
 
