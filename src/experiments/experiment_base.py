@@ -291,8 +291,8 @@ def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set,
                                             algorithm=algorithm, 
                                             output_dim=output_dim, 
                                             N=N, 
-                                            repetition_index=repetition_index, 
                                             use_test_set=use_test_set, 
+                                            repetition_index=repetition_index, 
                                             seed=seed, **kwargs)
 
     if measure == Measures.delta:
@@ -324,6 +324,72 @@ def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set,
     
     
     
+def _principal_angle(A, B):
+    "A and B must be column-orthogonal."
+    assert A.ndim == B.ndim == 2
+    for i, col in enumerate(A.T):
+        A[:,i] /= np.linalg.norm(col)
+    for i, col in enumerate(B.T):
+        B[:,i] /= np.linalg.norm(col)
+    _, S, _ = np.linalg.svd(np.dot(A.T, B))
+    return np.arccos(min(S.min(), 1.0))
+
+
+
+def principle_angle(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
+     
+    _, model1, _ = calc_projected_data(dataset=dataset, 
+                                       algorithm=algorithm1, 
+                                       output_dim=dim1, 
+                                       N=N, 
+                                       use_test_set=use_test_set, 
+                                       repetition_index=repetition_index, 
+                                       seed=seed, **kwargs)
+ 
+    _, model2, _ = calc_projected_data(dataset=dataset, 
+                                       algorithm=algorithm2, 
+                                       output_dim=dim2, 
+                                       N=N, 
+                                       use_test_set=use_test_set, 
+                                       repetition_index=repetition_index, 
+                                       seed=seed, **kwargs)
+ 
+    A = None
+    if algorithm1 == Algorithms.Random:
+        A = model1.U
+    elif algorithm1 == Algorithms.SFA:
+        A = model1.sf
+    elif algorithm1 == algorithm1.ForeCA:
+        A = model1.U
+    elif algorithm1 == algorithm1.PFA:
+        A = model1.Ar
+    elif algorithm1 == algorithm1.GPFA1:
+        A = model1.U
+    elif algorithm1 == algorithm1.GPFA2:
+        A = model1.U
+    else:
+        assert False 
+          
+    B = None
+    if algorithm2 == Algorithms.Random:
+        B = model2.U
+    elif algorithm2 == Algorithms.SFA:
+        B = model2.sf
+    elif algorithm2 == Algorithms.ForeCA:
+        B = model2.U
+    elif algorithm2 == Algorithms.PFA:
+        B = model2.Ar
+    elif algorithm2 == Algorithms.GPFA1:
+        B = model2.U
+    elif algorithm2 == Algorithms.GPFA2:
+        B = model2.U
+    else:
+        assert False 
+         
+    return _principal_angle(A=A, B=B)
+    
+    
+    
 def calc_delta(data, ndim=False):
     sfa = mdp.nodes.SFANode()
     sfa.train(data)
@@ -336,7 +402,14 @@ def calc_delta(data, ndim=False):
 
 def calc_autoregressive_error(data, p, K, model=None, data_chunks=None):
     #W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
-    return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data_chunks[0], W=model.W0, k=K)[:model.output_dim]
+    print 'extracted_data:', data.shape
+    print 'training_data:', data_chunks[0].shape
+    print 'pfa.W', model.W.shape
+    print 'pfa.W0', model.W0.shape
+    print 'pfa.S', model.S.shape
+    print 'pfa.Ar', model.Ar.shape
+    #print 'pfa.Ar0', model.Ar.shape
+    return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data, W=model.W0.T.dot(model.Ar).T, k=K, srcData=data_chunks[0], W0=model.W0)
 
 
 
