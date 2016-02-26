@@ -33,7 +33,7 @@ import PFACoreUtil
 mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 
-Datasets = Enum('Datasets', 'Random SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG, Tumor')
+Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG Traffic Tumor')
 
 Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2')
 
@@ -56,7 +56,7 @@ def update_seed_argument(**kwargs):
     Helper function that replaces the the seed argument by a new seed that
     depends on all arguments. If repetition_index is given it will be removed.
     """
-    new_seed = hash(frozenset(kwargs)) % np.iinfo(np.uint32).max
+    new_seed = hash(frozenset(kwargs.items())) % np.iinfo(np.uint32).max
     if 'repetition_index' in kwargs:
         kwargs.pop('repetition_index')
     kwargs['seed'] = new_seed
@@ -70,6 +70,12 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
     if dataset == Datasets.Random:
         fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
         env = EnvRandom(**fargs)
+    elif dataset == Datasets.Crowd1:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Crowd1, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.Crowd2:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Crowd2, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+    elif dataset == Datasets.Mouth:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Mouth, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
     elif dataset == Datasets.SwissRoll:
         fargs = update_seed_argument(sigma=kwargs.get('sigma', .5), repetition_index=repetition_index, seed=seed)
         env = EnvSwissRoll(**fargs)
@@ -104,6 +110,8 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
         env = EnvData(dataset=EnvData.Datasets.EEG)
     elif dataset == Datasets.MEG:
         env = EnvData(dataset=EnvData.Datasets.MEG)
+    elif dataset == Datasets.Traffic:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Traffic, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
     else:
         assert False
 
@@ -111,7 +119,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
     chunks = env.generate_training_data(num_steps=N, 
                                         noisy_dims=noisy_dims, 
                                         keep_variance=kwargs.get('keep_variance', 1.), 
-                                        whitening=True, 
+                                        whitening=kwargs.get('whitening', True), 
                                         n_chunks=n_chunks)
     data_chunks = [chunk[0] for chunk in chunks]
 
@@ -200,6 +208,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
 
 @mem.cache
 def train_random(data_train, output_dim, seed, repetition_index):
+    # rev: 2
     fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
     model = gpfa.RandomProjection(**fargs)
     model.train(data_train)
@@ -325,7 +334,9 @@ def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set,
     
     
 def _principal_angle(A, B):
-    "A and B must be column-orthogonal."
+    """A and B must be column-orthogonal.
+    Golub: Matrix Computations, 1996
+    """
     assert A.ndim == B.ndim == 2
     for i, col in enumerate(A.T):
         A[:,i] /= np.linalg.norm(col)
@@ -336,7 +347,10 @@ def _principal_angle(A, B):
 
 
 
-def principle_angle(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
+def principle_angle_models(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
+     
+    if dim1 is None:
+        dim1 = dim2
      
     _, model1, _ = calc_projected_data(dataset=dataset, 
                                        algorithm=algorithm1, 
@@ -387,6 +401,31 @@ def principle_angle(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set
         assert False 
          
     return _principal_angle(A=A, B=B)
+    
+    
+    
+def principle_angle_signals(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
+    
+    if dim1 is None:
+        dim1 = dim2
+     
+    signals1, _, _ = calc_projected_data(dataset=dataset, 
+                                       algorithm=algorithm1, 
+                                       output_dim=dim1, 
+                                       N=N, 
+                                       use_test_set=use_test_set, 
+                                       repetition_index=repetition_index, 
+                                       seed=seed, **kwargs)
+ 
+    signals2, _, _ = calc_projected_data(dataset=dataset, 
+                                       algorithm=algorithm2, 
+                                       output_dim=dim2, 
+                                       N=N, 
+                                       use_test_set=use_test_set, 
+                                       repetition_index=repetition_index, 
+                                       seed=seed, **kwargs)
+         
+    return _principal_angle(A=signals1, B=signals2)
     
     
     
