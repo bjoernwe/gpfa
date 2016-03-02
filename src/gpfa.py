@@ -55,15 +55,24 @@ class RandomProjection(mdp.Node):
     def __init__(self, output_dim, input_dim=None, dtype=None, seed=None):
         super(RandomProjection, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.rnd = np.random.RandomState(seed=seed)
+        self.whitening = False
         return
     
     
-    def _train(self, x):
+    def _train(self, x, is_whitened=False):
+        # whiten data
+        if not is_whitened:
+            self.whitening = mdp.nodes.WhiteningNode(reduce=True)
+            self.whitening.train(x)
+            self.whitening.stop_training()
         return
 
 
     def _stop_training(self):
-        D = self.input_dim
+        if self.whitening:
+            D = self.whitening.output_dim
+        else:
+            D = self.input_dim
         A = self.rnd.rand(D, D)
         A = A + A.T
         _, self.U = scipy.linalg.eigh(A, eigvals=(0, self.output_dim-1))
@@ -72,6 +81,8 @@ class RandomProjection(mdp.Node):
 
 
     def _execute(self, x):
+        if self.whitening:
+            x = self.whitening.execute(x)
         return x.dot(self.U)
 
 
@@ -176,10 +187,17 @@ class gPFA(mdp.Node):
         self.causal_features = causal_features
         self.L = None
         self.D = None
+        self.whitening = None
         return
     
     
-    def _train(self, x):
+    def _train(self, x, is_whitened=False):
+
+        # whiten data
+        if not is_whitened:
+            self.whitening = mdp.nodes.WhiteningNode(reduce=True)
+            self.whitening.train(x)
+            x = self.whitening.execute(x)
 
         # number of samples
         N, dim = x.shape
@@ -286,6 +304,8 @@ class gPFA(mdp.Node):
 
 
     def _execute(self, x):
+        if self.whitening:
+            x = self.whitening.execute(x)
         return x.dot(self.U)
 
 
