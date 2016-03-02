@@ -11,31 +11,26 @@ import experiment_base as eb
 
 def main():
     
-                # dataset                   N       scale   pca
-    datasets = [#(eb.Datasets.EEG,           2000,   1.,     1.),
-                #(eb.Datasets.Face,          1965/2, 1.,     .99),
-                #(eb.Datasets.Mario_window,  2000,   1.,     .99),
-                #(eb.Datasets.MEG,           375/2,  1.,     .99),
-                (eb.Datasets.Mouth,         2000,   1.,      1.),
-                #(eb.Datasets.RatLab,        2000,   .5,     .96),
-                #(eb.Datasets.Tumor,         500/2,  .25,    .99),
+                # dataset                   N       scale   layers
+    datasets = [#(eb.Datasets.Crowd1,        3067/2,   1.,     None),
+                (eb.Datasets.Crowd2,        2350/2,   1.,     None),
+                #(eb.Datasets.Face,          1965/2,  1.,    None),
+                #(eb.Datasets.Mario,          2000,   1.,    None),
+                #(eb.Datasets.Mario_window,  2000,   1.,     None),
+                #(eb.Datasets.Mouth,         2000,   1.,     None),
+                #(eb.Datasets.RatLab,        2000,   1.,     None),
+                (eb.Datasets.Traffic,       2000,   1.,     None),
                 ]
     
     k = 5
     K = 1
     iterations = 50
-    for d, (dataset, N, scaling, keep_variance) in enumerate(datasets):
+    for d, (dataset, N, scaling, layers) in enumerate(datasets):
             
         plt.figure(figsize=(22., 12.))
         plt.suptitle('%s' % (dataset))
         
-        for a, (algorithm, kwargs) in enumerate([(eb.Algorithms.Random, {}),
-                                                 #(eb.Algorithms.SFA, {}),
-                                                 (eb.Algorithms.HiSFA, {'n_layers': 1}) 
-                                                 #(eb.Algorithms.PFA, {'p': 1, 'K': K}),
-                                                 #(eb.Algorithms.PFA, {'p': 2, 'K': K}),
-                                                 #(eb.Algorithms.GPFA2, {'p': 1, 'k': k, 'iterations': iterations}),
-                                                 #(eb.Algorithms.GPFA2, {'p': 2, 'k': k, 'iterations': iterations}),
+        for a, (algorithm, kwargs) in enumerate([(eb.Algorithms.HiSFA, {'n_layers': layers}), 
                                                  ]):
             
             plt.subplot(2, 1, a+1)
@@ -48,7 +43,7 @@ def main():
                                                      output_dim=2,
                                                      N=N,
                                                      scaling=scaling,
-                                                     keep_variance=keep_variance, 
+                                                     keep_variance=1., 
                                                      use_test_set=use_test_set,
                                                      # misc 
                                                      seed=0,

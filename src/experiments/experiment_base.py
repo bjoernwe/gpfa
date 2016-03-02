@@ -35,7 +35,7 @@ mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG Traffic Tumor')
 
-Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2')
+Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA')
 
 Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa_ndim gpfa gpfa_ndim')
 
@@ -66,21 +66,27 @@ def update_seed_argument(**kwargs):
 
 def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=None, seed=None, **kwargs):
 
+    image_shape = None
+
     # generate dataset
     if dataset == Datasets.Random:
         fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
         env = EnvRandom(**fargs)
     elif dataset == Datasets.Crowd1:
         env = EnvData2D(dataset=EnvData2D.Datasets.Crowd1, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.Crowd2:
         env = EnvData2D(dataset=EnvData2D.Datasets.Crowd2, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.Mouth:
         env = EnvData2D(dataset=EnvData2D.Datasets.Mouth, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.SwissRoll:
         fargs = update_seed_argument(sigma=kwargs.get('sigma', .5), repetition_index=repetition_index, seed=seed)
         env = EnvSwissRoll(**fargs)
     elif dataset == Datasets.Face:
         env = EnvData2D(dataset=EnvData2D.Datasets.Face, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.MarkovChain:
         fargs = update_seed_argument(num_states=kwargs.get('ladder_num_states', 10), 
                                      max_steps=kwargs.get('ladder_max_steps', 4), 
@@ -90,8 +96,10 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
         env = EnvLadder(**fargs)
     elif dataset == Datasets.RatLab:
         env = EnvData2D(dataset=EnvData2D.Datasets.RatLab, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.Tumor:
         env = EnvData2D(dataset=EnvData2D.Datasets.Tumor, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.Kai:
         fargs = update_seed_argument(repetition_index=repetition_index, seed=seed)
         env = EnvKai(**fargs)
@@ -104,14 +112,17 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
         env = EnvDeadCorners(**fargs)
     elif dataset == Datasets.Mario:
         env = EnvData2D(dataset=EnvData2D.Datasets.Mario, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.Mario_window:
         env = EnvData2D(dataset=EnvData2D.Datasets.Mario, window=((70,70),(90,90)), scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     elif dataset == Datasets.EEG:
         env = EnvData(dataset=EnvData.Datasets.EEG)
     elif dataset == Datasets.MEG:
         env = EnvData(dataset=EnvData.Datasets.MEG)
     elif dataset == Datasets.Traffic:
         env = EnvData2D(dataset=EnvData2D.Datasets.Traffic, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
     else:
         assert False
 
@@ -119,7 +130,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
     chunks = env.generate_training_data(num_steps=N, 
                                         noisy_dims=noisy_dims, 
                                         keep_variance=kwargs.get('keep_variance', 1.), 
-                                        whitening=kwargs.get('whitening', True), 
+                                        whitening=kwargs.get('whitening', False), 
                                         n_chunks=n_chunks)
     data_chunks = [chunk[0] for chunk in chunks]
 
@@ -141,7 +152,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
 #     whitening.train(data_chunks[0])
 #     data_chunks = [whitening.execute(chunk) for chunk in data_chunks]
     
-    return data_chunks
+    return data_chunks, image_shape
 
 
 
@@ -160,7 +171,94 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
 
 
 
-def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwargs):
+class PowerExpansion(mdp.Node):
+    
+    def __init__(self, input_dim, expansion=.8, dtype=None):
+        super(PowerExpansion, self).__init__(input_dim=input_dim, output_dim=2*input_dim, dtype=dtype)
+        self.expansion = expansion
+        
+    @staticmethod
+    def is_trainable():
+        return False
+    
+    def _execute(self, x):
+        assert x.ndim == 2
+        return np.hstack([x, np.abs(x)**.8])
+    
+    
+
+def build_hierarchy_flow(n_layers, image_x, image_y, output_dim, node_class, node_output_dim, node_kwargs={}):
+
+    switchboards = []
+    layers = []
+
+    switchboard_i = mdp.hinet.Rectangular2dSwitchboard( in_channels_xy    = (image_x, image_y),
+                                                        field_channels_xy = (12, 12),
+                                                        field_spacing_xy  = (8, 8),
+                                                        in_channel_dim    = 1,
+                                                        ignore_cover      = True)
+
+    nodes_i = []
+    print 'creating layer with %d nodes' % switchboard_i.output_channels
+    for _ in range(switchboard_i.output_channels):
+        noise_i1 = mdp.nodes.NoiseNode(noise_args=(0, .01), input_dim=switchboard_i.out_channel_dim, output_dim=switchboard_i.out_channel_dim)
+        pca = mdp.nodes.PCANode(input_dim=noise_i1.output_dim, output_dim=120, reduce=True)
+        #expansion_i = PowerExpansion(input_dim=pca.output_dim)
+        noise_i2 = mdp.nodes.NoiseNode(noise_args=(0, .1), input_dim=pca.output_dim, output_dim=pca.output_dim)
+        sfa_i = node_class(input_dim=noise_i2.output_dim, output_dim=node_output_dim, **node_kwargs)
+        flow_i = mdp.hinet.FlowNode(mdp.Flow([noise_i1, pca, noise_i2, sfa_i]))
+        nodes_i.append(flow_i)
+    print 'sfa: %d -> %d' % (sfa_i.input_dim, sfa_i.output_dim)
+
+    switchboards.append(switchboard_i)
+    layer_i = mdp.hinet.Layer(nodes_i)
+    #layer_i = mdp.parallel.ParallelLayer(nodes_i)
+    layers.append(layer_i)
+
+    #for _ in range(n_layers):
+    while layers[-1].output_dim > 150:
+        switchboard_i = mdp.hinet.Rectangular2dSwitchboard( in_channels_xy    = switchboards[-1].out_channels_xy,
+                                                            field_channels_xy = (3, 3),
+                                                            field_spacing_xy  = (2, 2),
+                                                            in_channel_dim    = flow_i.output_dim,
+                                                            ignore_cover      = True)
+        nodes_i = []
+        print 'creating layer with %d nodes' % switchboard_i.output_channels
+        for _ in range(switchboard_i.output_channels):
+            #expansion_i = PowerExpansion(input_dim=switchboard_i.out_channel_dim)
+            noise_i = mdp.nodes.NoiseNode(noise_args=(0, .1), input_dim=switchboard_i.out_channel_dim, output_dim=switchboard_i.out_channel_dim)
+            sfa_i = node_class(input_dim=noise_i.output_dim, output_dim=node_output_dim, **node_kwargs)
+            flow_i = mdp.hinet.FlowNode(mdp.Flow([noise_i, sfa_i]))
+            nodes_i.append(flow_i)
+        print 'sfa: %d -> %d' % (sfa_i.input_dim, sfa_i.output_dim)
+
+        switchboards.append(switchboard_i)
+        layer_i = mdp.hinet.Layer(nodes_i)
+        #layer_i = mdp.parallel.ParallelLayer(nodes_i)
+        layers.append(layer_i)
+        
+    final_flow = []
+    for switch, layer in zip(switchboards, layers):
+        final_flow.append(switch)
+        final_flow.append(layer)
+        
+    # final sfa step
+    #expansion_X = PowerExpansion(input_dim=layers[-1].output_dim)
+    noise_X = mdp.nodes.NoiseNode(noise_args=(0, .1), input_dim=layers[-1].output_dim, output_dim=layers[-1].output_dim)
+    sfa_X = mdp.nodes.SFANode(input_dim=noise_X.output_dim, output_dim=output_dim)
+
+    #final_flow.append(expansion_X)
+    final_flow.append(noise_X)
+    final_flow.append(sfa_X)
+    
+    flow = mdp.Flow(final_flow)
+    for node in flow:
+        print node.__class__.__name__, node.input_dim, ' -> ', node.output_dim
+    return flow
+
+
+
+def train_model(algorithm, data_train, output_dim, seed, repetition_index, image_shape=None, **kwargs):
     
     if algorithm == Algorithms.None:
         return None
@@ -201,6 +299,11 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                     weighted_edges=kwargs.get('weighted_edges', True),
                     causal_features=kwargs.get('causal_features', True),
                     output_dim=output_dim)
+    elif algorithm == Algorithms.HiSFA:
+        return train_hi_sfa(data_train=data_train,
+                            n_layers=kwargs['n_layers'],
+                            image_shape=image_shape,
+                            output_dim=output_dim)
     else:
         assert False
 
@@ -218,11 +321,24 @@ def train_random(data_train, output_dim, seed, repetition_index):
 
 @mem.cache
 def train_sfa(data_train, output_dim):
-    # 
-    print data_train.shape
     model = mdp.nodes.SFANode(output_dim=output_dim)
     model.train(data_train)
     return model
+
+ 
+ 
+@mem.cache
+def train_hi_sfa(data_train, n_layers, image_shape, output_dim):
+    # rev: 10
+    flow = build_hierarchy_flow(n_layers=n_layers, 
+                                image_x=image_shape[1], 
+                                image_y=image_shape[0], 
+                                output_dim=output_dim, 
+                                node_class=mdp.nodes.SFANode, 
+                                node_output_dim=16, 
+                                node_kwargs={})
+    flow.train(data_train)
+    return flow
 
  
  
@@ -263,17 +379,18 @@ def calc_projected_data(dataset, algorithm, output_dim, N, repetition_index=None
                         use_test_set=True, seed=None, **kwargs):
 
     n_chunks = 2 if use_test_set else 1
-    data_chunks = generate_training_data(dataset=dataset, 
-                                         N=N, 
-                                         noisy_dims=noisy_dims,
-                                         n_chunks=n_chunks,
-                                         repetition_index=repetition_index, 
-                                         seed=seed,
-                                         **kwargs)
+    data_chunks, image_shape = generate_training_data(dataset=dataset, 
+                                                      N=N, 
+                                                      noisy_dims=noisy_dims,
+                                                      n_chunks=n_chunks,
+                                                      repetition_index=repetition_index, 
+                                                      seed=seed,
+                                                      **kwargs)
     
     model = train_model(algorithm=algorithm, 
                         data_train=data_chunks[0], 
                         output_dim=output_dim, 
+                        image_shape=image_shape,
                         seed=seed,
                         repetition_index=repetition_index,
                         **kwargs)
