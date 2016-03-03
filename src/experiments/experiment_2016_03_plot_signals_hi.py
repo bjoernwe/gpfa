@@ -11,30 +11,37 @@ import experiment_base as eb
 
 def main():
     
-                # dataset                   N       scale   layers
-    datasets = [#(eb.Datasets.Crowd1,        3067/2,   1.,     None),
-                (eb.Datasets.Crowd2,        2350/2,   1.,     None),
-                #(eb.Datasets.Face,          1965/2,  1.,    None),
-                #(eb.Datasets.Mario,          2000,   1.,    None),
+                # dataset                   N       scale   hi-net
+    datasets = [#(eb.Datasets.Crowd1,        3067/2,   .25,  {'channels_xy_1': (8,8), 'spacing_xy_1': (4,4), 'channels_xy_n': (2,2), 'spacing_xy_n': (2,2)}),
+                #(eb.Datasets.Crowd2,        2350/2,   .25,  {'channels_xy_1': (8,8), 'spacing_xy_1': (4,4), 'channels_xy_n': (2,2), 'spacing_xy_n': (2,2)}),
+                #(eb.Datasets.Face,          1965/2,  1.,    {'channels_xy_1': (8,8), 'spacing_xy_1': (4,4), 'channels_xy_n': (2,2), 'spacing_xy_n': (2,2)}),
                 #(eb.Datasets.Mario_window,  2000,   1.,     None),
-                #(eb.Datasets.Mouth,         2000,   1.,     None),
-                #(eb.Datasets.RatLab,        2000,   1.,     None),
-                (eb.Datasets.Traffic,       2000,   1.,     None),
+                #(eb.Datasets.RatLab,        2000,   1.,     {}),
+                (eb.Datasets.Traffic,       2000,   .25,     {}),#{'channels_xy_1': (8,8), 'spacing_xy_1': (4,4), 'channels_xy_n': (2,2), 'spacing_xy_n': (2,2)}),
+                
+                #(eb.Datasets.Mario,          2000,   1.,    {}),
+                #(eb.Datasets.Mouth,         2000,   1.,     {}),
                 ]
     
     k = 5
     K = 1
     iterations = 50
-    for d, (dataset, N, scaling, layers) in enumerate(datasets):
+    for d, (dataset, N, scaling, kwargs_dat) in enumerate(datasets):
             
         plt.figure(figsize=(22., 12.))
-        plt.suptitle('%s' % (dataset))
+        plt.suptitle('%s : %s' % (dataset, kwargs_dat))
         
-        for a, (algorithm, kwargs) in enumerate([(eb.Algorithms.HiSFA, {'n_layers': layers}), 
-                                                 ]):
+        for a, (algorithm, kwargs_alg) in enumerate([(eb.Algorithms.HiSFA, {'expansion': False}), 
+                                                     (eb.Algorithms.HiPFA, {'expansion': False}),
+                                                     #(eb.Algorithms.HiSFA, {'expansion': True}),
+                                                     ]):
             
             plt.subplot(2, 1, a+1)
             plt.title(algorithm)
+            
+            kwargs = dict(kwargs_dat)
+            kwargs.update(kwargs_alg)
+            
             chunks = []
             for use_test_set in [False, True]: 
                 chunks.append(eb.calc_projected_data(algorithm=algorithm, 
