@@ -204,7 +204,11 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
     switchboards = []
     layers = []
     
-    while len(layers) == 0 or layers[-1].output_dim > 150:
+    while len(layers) == 0 or layers[-1].output_dim > 100:
+
+        if channels_xy_n == (2,1) or channels_xy_n == (1,2):
+            channels_xy_n = (channels_xy_n[1], channels_xy_n[0])
+            spacing_xy_n = (spacing_xy_n[1], spacing_xy_n[0])
 
         if len(layers) == 0:
             # first layer
@@ -221,7 +225,7 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
                                                                    ignore_cover      = True))
     
         flow_nodes = []
-        print 'creating layer with %d nodes' % switchboards[-1].output_channels
+        print 'creating layer with %s = %d nodes' % (switchboards[-1].out_channels_xy, switchboards[-1].output_channels)
         for _ in range(switchboards[-1].output_channels):
             nodes = []
             nodes.append(mdp.nodes.IdentityNode(input_dim=switchboards[-1].out_channel_dim))
@@ -237,7 +241,7 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
             flow_nodes.append(flow_node)
         print '%s: %d -> %d' % (node_class.__name__, nodes[-1].input_dim, nodes[-1].output_dim)
         layers.append(mdp.hinet.Layer(flow_nodes))
-
+        
     hierarchy = []
     for switch, layer in zip(switchboards, layers):
         hierarchy.append(switch)
@@ -304,11 +308,11 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
                             image_shape=image_shape,
                             output_dim=output_dim,
                             expansion=kwargs['expansion'],
-                            channels_xy_1=kwargs.get('channels_xy_1', (12,12)),
-                            spacing_xy_1=kwargs.get('spacing_xy_1', (8,8)),
-                            channels_xy_n=kwargs.get('channels_xy_n', (3,3)),
-                            spacing_xy_n=kwargs.get('spacing_xy_n', (2,2)),
-                            node_output_dim=kwargs.get('node_output_dim', 16))
+                            channels_xy_1=kwargs.get('channels_xy_1', (5,3)),
+                            spacing_xy_1=kwargs.get('spacing_xy_1', (3,3)),
+                            channels_xy_n=kwargs.get('channels_xy_n', (2,1)),
+                            spacing_xy_n=kwargs.get('spacing_xy_n', (2,1)),
+                            node_output_dim=kwargs.get('node_output_dim', 10))
     elif algorithm == Algorithms.HiPFA:
         return train_hi_pfa(data_train=data_train,
                             p=kwargs['p'],
@@ -316,11 +320,11 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
                             image_shape=image_shape,
                             output_dim=output_dim,
                             expansion=kwargs['expansion'],
-                            channels_xy_1=kwargs.get('channels_xy_1', (12,12)),
-                            spacing_xy_1=kwargs.get('spacing_xy_1', (8,8)),
-                            channels_xy_n=kwargs.get('channels_xy_n', (3,3)),
-                            spacing_xy_n=kwargs.get('spacing_xy_n', (2,2)),
-                            node_output_dim=kwargs.get('node_output_dim', 16))
+                            channels_xy_1=kwargs.get('channels_xy_1', (5,3)),
+                            spacing_xy_1=kwargs.get('spacing_xy_1', (5,3)),
+                            channels_xy_n=kwargs.get('channels_xy_n', (2,1)),
+                            spacing_xy_n=kwargs.get('spacing_xy_n', (2,1)),
+                            node_output_dim=kwargs.get('node_output_dim', 10))
     elif algorithm == Algorithms.HiGPFA1:
         return train_hi_gpfa(data_train=data_train,
                              p=kwargs['p'],
@@ -330,11 +334,11 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
                              image_shape=image_shape,
                              output_dim=output_dim,
                              expansion=kwargs['expansion'],
-                             channels_xy_1=kwargs.get('channels_xy_1', (12,12)),
-                             spacing_xy_1=kwargs.get('spacing_xy_1', (8,8)),
-                             channels_xy_n=kwargs.get('channels_xy_n', (3,3)),
-                             spacing_xy_n=kwargs.get('spacing_xy_n', (2,2)),
-                             node_output_dim=kwargs.get('node_output_dim', 16))
+                             channels_xy_1=kwargs.get('channels_xy_1', (5,3)),
+                             spacing_xy_1=kwargs.get('spacing_xy_1', (5,3)),
+                             channels_xy_n=kwargs.get('channels_xy_n', (2,1)),
+                             spacing_xy_n=kwargs.get('spacing_xy_n', (2,1)),
+                             node_output_dim=kwargs.get('node_output_dim', 10))
     elif algorithm == Algorithms.HiGPFA2:
         return train_hi_gpfa(data_train=data_train,
                              p=kwargs['p'],
@@ -344,11 +348,11 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
                              image_shape=image_shape,
                              output_dim=output_dim,
                              expansion=kwargs['expansion'],
-                             channels_xy_1=kwargs.get('channels_xy_1', (12,12)),
-                             spacing_xy_1=kwargs.get('spacing_xy_1', (8,8)),
-                             channels_xy_n=kwargs.get('channels_xy_n', (3,3)),
-                             spacing_xy_n=kwargs.get('spacing_xy_n', (2,2)),
-                             node_output_dim=kwargs.get('node_output_dim', 16))
+                             channels_xy_1=kwargs.get('channels_xy_1', (5,3)),
+                             spacing_xy_1=kwargs.get('spacing_xy_1', (5,3)),
+                             channels_xy_n=kwargs.get('channels_xy_n', (2,1)),
+                             spacing_xy_n=kwargs.get('spacing_xy_n', (2,1)),
+                             node_output_dim=kwargs.get('node_output_dim', 10))
     else:
         assert False
 
@@ -375,7 +379,7 @@ def train_sfa(data_train, output_dim):
 @mem.cache
 def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 1
+    # rev: 2
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -412,13 +416,13 @@ def train_pfa(data_train, p, K, output_dim):
  
 @mem.cache
 def train_hi_pfa(data_train, p, K, image_shape, output_dim, expansion, channels_xy_1, 
-                 spacing_xy_1, channels_xy_n, spacing_xy_n):
+                 spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
     # rev: 1
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
                                 node_class=PFANodeMDP.PFANode, 
-                                node_output_dim=16,
+                                node_output_dim=node_output_dim,
                                 expansion=expansion,
                                 channels_xy_1=channels_xy_1,
                                 spacing_xy_1=spacing_xy_1,
