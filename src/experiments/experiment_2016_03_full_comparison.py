@@ -27,7 +27,7 @@ def main():
                 #(eb.Datasets.Mouth,         2000,   1.,     {'expansion': expansion, 'channels_xy_1': (5,3), 'spacing_xy_1': (5,3), 'channels_xy_n': (2,1), 'spacing_xy_n': (2,1), 'node_output_dim': 10}),
                 ]
     
-    k = 2
+    k = 5
     K = 1
     p = 1
     iterations = 50
@@ -42,13 +42,17 @@ def main():
     
     for _, (dataset, N, scaling, kwargs_dat) in enumerate(datasets):
             
+        #
+        # plot extracted signals
+        #
+        
         plt.figure(figsize=(22., 11.))
         plt.suptitle('%s : %s' % (dataset, kwargs_dat))
         
         chunks = {}
         for a, (algorithm, _, kwargs_alg) in enumerate(algorithms):
             
-            plt.subplot(4, 1, a+1)
+            plt.subplot(5,1,a+1)
             plt.title('%s : %s' % (algorithm, kwargs_alg))
             
             kwargs = dict(kwargs_dat)
@@ -69,18 +73,21 @@ def main():
                                                      **kwargs)[0])
             
             colors = ['b', 'r']
-            for d in range(output_dim-1, -1, -1):
+            offset = 0#output_dim-2
+            for d in range(output_dim-1, -1+offset, -1):
                 if isinstance(N, collections.Iterable):
-                    plt.plot(range(N[0]), chunks[algorithm][0][:,d], color=_color(c=colors[0], d=d))
-                    plt.plot(range(N[0], N[0]+N[1]), chunks[algorithm][1][:,d], color=_color(c=colors[1], d=d))
+                    plt.plot(range(N[0]), chunks[algorithm][0][:,d], color=_color(c=colors[0], d=d-offset))
+                    plt.plot(range(N[0], N[0]+N[1]), chunks[algorithm][1][:,d], color=_color(c=colors[1], d=d-offset))
                 else:
                     for i, color in enumerate(colors):
-                        plt.plot(range(i*N, (i+1)*N), chunks[algorithm][i][:,d], color=_color(c=color, d=d))
+                        plt.plot(range(i*N, (i+1)*N), chunks[algorithm][i][:,d], color=_color(c=color, d=d-offset))
                         
-    
+        #
+        # compare signals with different measures
+        #    
         for m, (measure, kwargs_mea) in enumerate(measures):
             
-            plt.subplot(4,2,7+m)
+            plt.subplot(5,2,7+m)
             plt.ylabel(measure)
                 
             for a, (algorithm, _, kwargs_alg) in enumerate(algorithms):
@@ -97,9 +104,19 @@ def main():
                                              **kwargs)
                 colors = ['b', 'r', 'g']
                 w = .8 / len(algorithms)
-                plt.bar(np.arange(output_dim)+1+a*w, height=errors, width=w, color=colors[a])
+                plt.bar(np.arange(output_dim)+.6+a*w, height=errors, width=w, color=colors[a])
     
-    
+        #
+        # principle angles between signals
+        #
+        colors = ['r', 'g']
+        for a, (algorithm, _, kwargs_alg) in enumerate(algorithms[1:]):
+            plt.subplot(5, 2, 9+a)
+            angles = [eb._principal_angle(chunks[eb.Algorithms.HiSFA][0], chunks[algorithm][0][:,:i+1]) for i in range(output_dim)]
+            plt.plot(range(1, len(angles)+1), angles, c=colors[a], linewidth=1.3)
+            plt.gca().set_ylim([0, np.pi/2])
+
+            
                     
     plt.show()
 
