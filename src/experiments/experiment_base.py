@@ -33,9 +33,9 @@ import PFACoreUtil
 mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 
-Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG Traffic Tumor')
+Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG Traffic Tumor')
 
-Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA HiPFA HiGPFA1 HiGPFA2')
+Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA HiForeCA HiPFA HiGPFA1 HiGPFA2')
 
 Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa_ndim gpfa gpfa_ndim')
 
@@ -77,6 +77,12 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
         image_shape = env.image_shape
     elif dataset == Datasets.Crowd2:
         env = EnvData2D(dataset=EnvData2D.Datasets.Crowd2, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
+    elif dataset == Datasets.Crowd3:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Crowd3, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
+        image_shape = env.image_shape
+    elif dataset == Datasets.Dancing:
+        env = EnvData2D(dataset=EnvData2D.Datasets.Dancing, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
         image_shape = env.image_shape
     elif dataset == Datasets.Mouth:
         env = EnvData2D(dataset=EnvData2D.Datasets.Mouth, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
@@ -204,7 +210,7 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
     switchboards = []
     layers = []
     
-    while len(layers) == 0 or layers[-1].output_dim > 100:
+    while len(layers) == 0 or layers[-1].output_dim > 20:
 
         if channels_xy_n == (2,1) or channels_xy_n == (1,2):
             channels_xy_n = (channels_xy_n[1], channels_xy_n[0])
@@ -313,6 +319,16 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
                             channels_xy_n=kwargs.get('channels_xy_n', (2,1)),
                             spacing_xy_n=kwargs.get('spacing_xy_n', (2,1)),
                             node_output_dim=kwargs.get('node_output_dim', 10))
+    elif algorithm == Algorithms.HiForeCA:
+        return train_hi_foreca(data_train=data_train,
+                               image_shape=image_shape,
+                               output_dim=output_dim,
+                               expansion=kwargs['expansion'],
+                               channels_xy_1=kwargs.get('channels_xy_1', (5,3)),
+                               spacing_xy_1=kwargs.get('spacing_xy_1', (3,3)),
+                               channels_xy_n=kwargs.get('channels_xy_n', (2,1)),
+                               spacing_xy_n=kwargs.get('spacing_xy_n', (2,1)),
+                               node_output_dim=kwargs.get('node_output_dim', 10))
     elif algorithm == Algorithms.HiPFA:
         return train_hi_pfa(data_train=data_train,
                             p=kwargs['p'],
@@ -379,7 +395,7 @@ def train_sfa(data_train, output_dim):
 @mem.cache
 def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 2
+    # rev: 4
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -406,6 +422,26 @@ def train_foreca(data_train, output_dim, seed, repetition_index):
  
  
 @mem.cache
+def train_hi_foreca(data_train, image_shape, output_dim, expansion, channels_xy_1, 
+                    spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
+    # rev: 0
+    flow = build_hierarchy_flow(image_x=image_shape[1], 
+                                image_y=image_shape[0], 
+                                output_dim=output_dim, 
+                                node_class=foreca_node.ForeCA, 
+                                node_output_dim=node_output_dim,
+                                expansion=expansion,
+                                channels_xy_1=channels_xy_1,
+                                spacing_xy_1=spacing_xy_1,
+                                channels_xy_n=channels_xy_n,
+                                spacing_xy_n=spacing_xy_n,
+                                node_kwargs={})
+    flow.train(data_train)
+    return flow
+
+ 
+ 
+@mem.cache
 def train_pfa(data_train, p, K, output_dim):
     model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=output_dim)
     model.train(data_train)
@@ -417,7 +453,7 @@ def train_pfa(data_train, p, K, output_dim):
 @mem.cache
 def train_hi_pfa(data_train, p, K, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 1
+    # rev: 2
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -454,7 +490,7 @@ def train_hi_gpfa(data_train, p, k, iterations, variance_graph, image_shape,
                   output_dim, expansion, channels_xy_1, spacing_xy_1, channels_xy_n, 
                   spacing_xy_n, node_output_dim, neighborhood_graph=False, 
                   weighted_edges=True, causal_features=True):
-    # rev: 1
+    # rev: 2
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -508,20 +544,20 @@ def calc_projected_data(dataset, algorithm, output_dim, N, repetition_index=None
         else:
             projected_data = model.execute(data_chunks[0])
         
-    return projected_data, model, data_chunks
+    return projected_data, model, data_chunks, image_shape
 
 
 
 def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set, 
                      repetition_index=None, seed=None, **kwargs):
     
-    projected_data, model, data_chunks = calc_projected_data(dataset=dataset, 
-                                            algorithm=algorithm, 
-                                            output_dim=output_dim, 
-                                            N=N, 
-                                            use_test_set=use_test_set, 
-                                            repetition_index=repetition_index, 
-                                            seed=seed, **kwargs)
+    projected_data, model, data_chunks, _ = calc_projected_data(dataset=dataset, 
+                                                                algorithm=algorithm, 
+                                                                output_dim=output_dim, 
+                                                                N=N, 
+                                                                use_test_set=use_test_set, 
+                                                                repetition_index=repetition_index, 
+                                                                seed=seed, **kwargs)
 
     if measure == Measures.delta:
         return calc_delta(data=projected_data, ndim=False)
@@ -571,7 +607,7 @@ def principle_angle_models(dataset, algorithm1, algorithm2, dim1, dim2, N, use_t
     if dim1 is None:
         dim1 = dim2
      
-    _, model1, _ = calc_projected_data(dataset=dataset, 
+    _, model1, _, _ = calc_projected_data(dataset=dataset, 
                                        algorithm=algorithm1, 
                                        output_dim=dim1, 
                                        N=N, 
@@ -579,7 +615,7 @@ def principle_angle_models(dataset, algorithm1, algorithm2, dim1, dim2, N, use_t
                                        repetition_index=repetition_index, 
                                        seed=seed, **kwargs)
  
-    _, model2, _ = calc_projected_data(dataset=dataset, 
+    _, model2, _, _ = calc_projected_data(dataset=dataset, 
                                        algorithm=algorithm2, 
                                        output_dim=dim2, 
                                        N=N, 
@@ -628,7 +664,7 @@ def principle_angle_signals(dataset, algorithm1, algorithm2, dim1, dim2, N, use_
     if dim1 is None:
         dim1 = dim2
      
-    signals1, _, _ = calc_projected_data(dataset=dataset, 
+    signals1, _, _, _ = calc_projected_data(dataset=dataset, 
                                        algorithm=algorithm1, 
                                        output_dim=dim1, 
                                        N=N, 
@@ -636,7 +672,7 @@ def principle_angle_signals(dataset, algorithm1, algorithm2, dim1, dim2, N, use_
                                        repetition_index=repetition_index, 
                                        seed=seed, **kwargs)
  
-    signals2, _, _ = calc_projected_data(dataset=dataset, 
+    signals2, _, _, _ = calc_projected_data(dataset=dataset, 
                                        algorithm=algorithm2, 
                                        output_dim=dim2, 
                                        N=N, 
