@@ -33,7 +33,7 @@ import PFACoreUtil
 mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 
-Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG Traffic Tumor')
+Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG MEG Traffic Tumor WAV')
 
 Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA HiForeCA HiPFA HiGPFA1 HiGPFA2')
 
@@ -129,6 +129,8 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index=No
     elif dataset == Datasets.Traffic:
         env = EnvData2D(dataset=EnvData2D.Datasets.Traffic, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
         image_shape = env.image_shape
+    elif dataset == Datasets.WAV:
+        env = EnvData(dataset=EnvData.Datasets.WAV)
     else:
         assert False
 
@@ -414,6 +416,7 @@ def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1,
  
 @mem.cache
 def train_foreca(data_train, output_dim, seed, repetition_index):
+    # rev: 2
     fargs = update_seed_argument(output_dim=output_dim, seed=seed, repetition_index=repetition_index)
     model = foreca_node.ForeCA(**fargs)
     model.train(data_train)
@@ -591,13 +594,25 @@ def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set,
 def _principal_angle(A, B):
     """A and B must be column-orthogonal.
     Golub: Matrix Computations, 1996
+    [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
     """
+    #A = np.array(A, copy=True)
+    #B = np.array(B, copy=True)
+    if A.ndim == 1:
+        A = np.array(A, ndmin=2).T
+    if B.ndim == 1:
+        B = np.array(B, ndmin=2).T
     assert A.ndim == B.ndim == 2
-    for i, col in enumerate(A.T):
-        A[:,i] /= np.linalg.norm(col)
-    for i, col in enumerate(B.T):
-        B[:,i] /= np.linalg.norm(col)
+    #for i in range(A.shape[1]):
+        #A[:,i] -= np.mean(A[:,i])
+    #    A[:,i] /= np.linalg.norm(A[:,i])
+    #for i in range(B.shape[1]):
+        #B[:,i] -= np.mean(B[:,i])
+    #    B[:,i] /= np.linalg.norm(B[:,i])
+    A = np.linalg.qr(A)[0]
+    B = np.linalg.qr(B)[0]
     _, S, _ = np.linalg.svd(np.dot(A.T, B))
+    print S
     return np.arccos(min(S.min(), 1.0))
 
 
