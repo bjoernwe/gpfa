@@ -561,28 +561,34 @@ def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set,
                                                                 use_test_set=use_test_set, 
                                                                 repetition_index=repetition_index, 
                                                                 seed=seed, **kwargs)
+    
+    return prediction_error_on_data(data=projected_data, measure=measure, model=model, data_chunks=data_chunks)
+    
+    
+
+def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwargs):
 
     if measure == Measures.delta:
-        return calc_delta(data=projected_data, ndim=False)
+        return calc_delta(data=data, ndim=False)
     elif measure == Measures.delta_ndim:
-        return calc_delta(data=projected_data, ndim=True)
+        return calc_delta(data=data, ndim=True)
     elif measure == Measures.omega:
-        return calc_omega(data=projected_data)
+        return calc_omega(data=data)
     elif measure == Measures.omega_ndim:
-        return calc_omega_ndim(data=projected_data)
+        return calc_omega_ndim(data=data)
     elif measure == Measures.pfa_ndim:
-        return calc_autoregressive_error(data=projected_data, 
+        return calc_autoregressive_error(data=data, 
                                          p=kwargs['p'], 
                                          K=kwargs['K'],
                                          model=model,
                                          data_chunks=data_chunks)
     elif measure == Measures.gpfa:
-        return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
+        return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
                                                          k=kwargs['k'], 
                                                          p=kwargs['p'],
                                                          ndim=False)
     elif measure == Measures.gpfa_ndim:
-        return gpfa.calc_predictability_trace_of_avg_cov(x=projected_data, 
+        return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
                                                          k=kwargs['k'], 
                                                          p=kwargs['p'],
                                                          ndim=True)
