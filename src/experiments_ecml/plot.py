@@ -15,12 +15,12 @@ def _get_values(result, plot_time=False):
     return result.values
 
 
-def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, plot_time=False, cachedir='/scratch/weghebvc', seed=0):
+def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_sfa, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, plot_time=False, cachedir='/scratch/weghebvc', seed=0):
     
     legends = []
     
     result = ep.evaluate(eb.prediction_error,
-                         algorithm='random', 
+                         algorithm=eb.Algorithms.Random, 
                          N=N, 
                          k=k, 
                          p=p, 
@@ -34,8 +34,8 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                          weighted_edges=True, 
                          output_dim=output_dim,
                          use_test_set=True, 
-                         data=data, 
-                         measure='trace_of_avg_cov', 
+                         dataset=dataset, 
+                         measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
                          processes=None, 
                          cachedir=cachedir)
@@ -50,6 +50,37 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
         x = np.array(result.iter_args[iter_arg]) - 2 * x_offset
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle=':')
         legends.append('Random')
+        
+    if include_sfa:
+        result = ep.evaluate(eb.prediction_error,
+                             algorithm=eb.Algorithms.SFA, 
+                             N=N, 
+                             k=k,
+                             p=p, 
+                             #P=P, 
+                             #K=K, 
+                             seed=seed,
+                             iterations=iterations,
+                             noisy_dims=noisy_dims,
+                             #keep_variance=keep_variance, 
+                             #neighborhood_graph=False,
+                             #weighted_edges=True, 
+                             output_dim=output_dim, 
+                             use_test_set=True, 
+                             dataset=dataset,
+                             measure=eb.Measures.gpfa, 
+                             repetitions=repetitions, 
+                             processes=None, 
+                             cachedir=cachedir)
+        values = _get_values(result, plot_time=plot_time)
+        m = np.mean(values, axis=-1)
+        s = np.std(values, axis=-1)
+        x = np.array(result.iter_args[iter_arg]) - x_offset
+        plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle='-')
+        legends.append('SFA')
+    else:
+        plt.errorbar(x=0, y=0, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle='-')
+        legends.append('SFA')
     
     if include_foreca:
         noisy_dims_foreca = noisy_dims
@@ -59,7 +90,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
         if type(keep_variance) is list:
             keep_variance_foreca = [v for v in keep_variance if v <= .92]
         result = ep.evaluate(eb.prediction_error,
-                             algorithm='foreca', 
+                             algorithm=eb.Algorithms.ForeCA, 
                              N=N, 
                              k=k,
                              p=p, 
@@ -72,8 +103,9 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
                              output_dim=output_dim, 
-                             data=data,
-                             measure='trace_of_avg_cov', 
+                             use_test_set=True, 
+                             dataset=dataset,
+                             measure=eb.Measures.gpfa, 
                              repetitions=repetitions, 
                              processes=16, 
                              cachedir=cachedir)
@@ -88,7 +120,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
         legends.append('ForeCA')
 
     result = ep.evaluate(eb.prediction_error,
-                         algorithm=['pfa'], 
+                         algorithm=[eb.Algorithms.PFA], 
                          N=N, 
                          k=k,
                          p=p, 
@@ -101,8 +133,9 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                          neighborhood_graph=False,
                          weighted_edges=True, 
                          output_dim=output_dim, 
-                         data=data,
-                         measure='trace_of_avg_cov', 
+                         dataset=dataset,
+                         use_test_set=True,
+                         measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
                          processes=None,
                          argument_order=['algorithm'], 
@@ -121,7 +154,7 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
 
     if include_gcfa:
         result = ep.evaluate(eb.prediction_error,
-                             algorithm=['gcfa-1', 'gcfa-2'], 
+                             algorithm=[eb.Algorithms.GPFA2],#[eb.Algorithms.GPFA1, eb.Algorithms.GPFA2], 
                              N=N, 
                              k=k,
                              p=p, 
@@ -134,8 +167,9 @@ def plot_experiment(data, N, k, p, P, K, noisy_dims, keep_variance, iterations, 
                              neighborhood_graph=False,
                              weighted_edges=True, 
                              output_dim=output_dim, 
-                             data=data,
-                             measure='trace_of_avg_cov', 
+                             dataset=dataset,
+                             measure=eb.Measures.gpfa, 
+                             use_test_set=True,
                              repetitions=repetitions, 
                              processes=None,
                              argument_order=['algorithm'], 

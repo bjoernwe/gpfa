@@ -12,7 +12,7 @@ import plot
 
 
 
-def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, data='ladder'):
+def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, dataset=eb.Datasets.MarkovChain):
     
     repeptitions = 5
     
@@ -31,8 +31,8 @@ def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, data='ladder'):
             neighborhood_graph=False,
             weighted_edges=True, 
             output_dim=1, 
-            data=data, 
-            measure='trace_of_avg_cov', 
+            dataset=dataset, 
+            measure=eb.Measures.gpfa, 
             repetitions=repeptitions, 
             processes=None, 
             argument_order=['N', 'iterations'], 
@@ -45,8 +45,10 @@ def experiment(N=2500, k=50, p=1, iterations=50, noisy_dims=40, data='ladder'):
 
     
 
-def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output_dim=1, repetitions=30, include_random=True, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False):
-    plot.plot_experiment(data='ladder', 
+def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output_dim=1, 
+                    repetitions=30, include_random=True, include_sfa=True, include_foreca=False, 
+                    include_gcfa=True, x_offset=0, y_label=True, legend=False):
+    plot.plot_experiment(dataset=eb.Datasets.MarkovChain, 
                          N=N, 
                          k=k, 
                          p=p, 
@@ -57,7 +59,8 @@ def plot_experiment(N=2500, k=50, p=1, K=0, noisy_dims=40, iterations=50, output
                          iterations=iterations, 
                          output_dim=output_dim,
                          repetitions=repetitions, 
-                         include_random=include_random, 
+                         include_random=include_random,
+                         include_sfa=include_sfa, 
                          include_foreca=include_foreca, 
                          include_gcfa=include_gcfa, 
                          x_offset=x_offset, 
