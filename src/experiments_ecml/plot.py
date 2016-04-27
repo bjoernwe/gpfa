@@ -15,7 +15,7 @@ def _get_values(result, plot_time=False):
     return result.values
 
 
-def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_sfa, include_foreca, include_gcfa, x_offset=0, y_label=True, legend=True, plot_time=False, cachedir='/scratch/weghebvc', seed=0):
+def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_sfa, include_foreca, include_gcfa, N2, x_offset=0, y_label=True, legend=True, plot_time=False, cachedir='/scratch/weghebvc', seed=0):
     
     legends = []
     
@@ -24,9 +24,9 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                          N=N, 
                          k=k, 
                          p=p, 
-                         P=P, 
                          K=K, 
                          seed=seed,
+                         num_steps_test=N2,
                          iterations=iterations,
                          noisy_dims=noisy_dims,
                          keep_variance=keep_variance, 
@@ -37,7 +37,8 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                          dataset=dataset, 
                          measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
-                         processes=None, 
+                         processes=None,
+                         manage_seed='external', 
                          cachedir=cachedir)
  
     # determine iter_arg
@@ -57,12 +58,12 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                              N=N, 
                              k=k,
                              p=p, 
-                             #P=P, 
-                             #K=K, 
+                             K=K, 
                              seed=seed,
+                             num_steps_test=N2,
                              iterations=iterations,
                              noisy_dims=noisy_dims,
-                             #keep_variance=keep_variance, 
+                             keep_variance=keep_variance, 
                              #neighborhood_graph=False,
                              #weighted_edges=True, 
                              output_dim=output_dim, 
@@ -71,6 +72,7 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                              measure=eb.Measures.gpfa, 
                              repetitions=repetitions, 
                              processes=None, 
+                             manage_seed='external',
                              cachedir=cachedir)
         values = _get_values(result, plot_time=plot_time)
         m = np.mean(values, axis=-1)
@@ -79,7 +81,7 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle='-')
         legends.append('SFA')
     else:
-        plt.errorbar(x=0, y=0, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle='-')
+        plt.errorbar(x=1, y=0, linewidth=1.2, elinewidth=.5, color='green', marker=None, linestyle='-')
         legends.append('SFA')
     
     if include_foreca:
@@ -94,9 +96,9 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                              N=N, 
                              k=k,
                              p=p, 
-                             P=P, 
                              K=K, 
                              seed=seed,
+                             num_steps_test=N2,
                              iterations=iterations,
                              noisy_dims=noisy_dims_foreca,
                              keep_variance=keep_variance_foreca, 
@@ -108,6 +110,7 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                              measure=eb.Measures.gpfa, 
                              repetitions=repetitions, 
                              processes=16, 
+                             manage_seed='external',
                              cachedir=cachedir)
         values = _get_values(result, plot_time=plot_time)
         m = np.mean(values, axis=-1)
@@ -116,7 +119,7 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
         plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='red', marker=None, linestyle='-')
         legends.append('ForeCA')
     else:
-        plt.errorbar(x=0, y=0, linewidth=1.2, elinewidth=.5, color='red', marker=None, linestyle='-')
+        plt.errorbar(x=1, y=0, linewidth=1.2, elinewidth=.5, color='red', marker=None, linestyle='-')
         legends.append('ForeCA')
 
     result = ep.evaluate(eb.prediction_error,
@@ -124,9 +127,9 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                          N=N, 
                          k=k,
                          p=p, 
-                         P=P, 
                          K=K,
                          seed=seed, 
+                         num_steps_test=N2,
                          iterations=iterations,
                          noisy_dims=noisy_dims,
                          keep_variance=keep_variance, 
@@ -138,6 +141,7 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                          measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
                          processes=None,
+                         manage_seed='external',
                          argument_order=['algorithm'], 
                          cachedir=cachedir)
     linestyles = ['--']
@@ -158,9 +162,9 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                              N=N, 
                              k=k,
                              p=p, 
-                             P=P, 
-                             K=0,
+                             K=K,
                              seed=seed, 
+                             num_steps_test=N2,
                              iterations=iterations,
                              noisy_dims=noisy_dims,
                              keep_variance=keep_variance, 
@@ -172,6 +176,7 @@ def plot_experiment(dataset, N, k, p, P, K, noisy_dims, keep_variance, iteration
                              use_test_set=True,
                              repetitions=repetitions, 
                              processes=None,
+                             manage_seed='external',
                              argument_order=['algorithm'], 
                              cachedir=cachedir)
         linestyles = ['-', '-']
