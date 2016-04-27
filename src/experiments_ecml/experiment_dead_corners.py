@@ -44,16 +44,17 @@ def experiment(N=2500, k=20, p=1, iterations=100, noisy_dims=300):
     
 
 
-def plot_experiment(N=2500, k=20, p=1, K=0, noisy_dims=300, iterations=100, output_dim=2, repetitions=10, include_random=False, include_foreca=True, include_gcfa=True, x_offset=0, y_label=True, legend=False, plot_time=False):
+def plot_experiment(N=2000, k=20, p=1, K=0, noisy_dims=300, iterations=100, output_dim=2, 
+                    repetitions=10, include_random=False, include_sfa=True, include_foreca=False, 
+                    include_gcfa=True, x_offset=0, y_label=True, legend=False, plot_time=False):
     if plot_time:
         cachedir = '/home/weghebvc/Desktop/tmp'
     else:
         cachedir = '/scratch/weghebvc'
-    plot.plot_experiment(data='dead_corners', 
+    plot.plot_experiment(dataset=eb.Datasets.Teleporter, 
                          N=N, 
                          k=k, 
                          p=p, 
-                         P=p, 
                          K=K, 
                          noisy_dims=noisy_dims,
                          keep_variance=1., 
@@ -61,6 +62,7 @@ def plot_experiment(N=2500, k=20, p=1, K=0, noisy_dims=300, iterations=100, outp
                          output_dim=output_dim,
                          repetitions=repetitions, 
                          include_random=include_random, 
+                         include_sfa=include_sfa, 
                          include_foreca=include_foreca, 
                          include_gcfa=include_gcfa, 
                          x_offset=x_offset, 
@@ -88,6 +90,8 @@ def main():
 
 def main_plot():
     # dead corners
+    plt.figure()
+    plot_experiment(p=[1,2])
     plt.figure()
     plot_experiment(noisy_dims=[0, 50, 100, 200, 300, 400])
     plt.figure()

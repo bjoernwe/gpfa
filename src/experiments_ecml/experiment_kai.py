@@ -24,7 +24,6 @@ def experiment(N=2500, k=40, p=1, iterations=50, noisy_dims=300, data='kai'):
             algorithm='pfa',#['random', 'pfa', 'gcfa-1', 'gcfa-2'], 
             N=N, 
             k=k, 
-            P=p,
             p=p, 
             K=0,#[0,1,2,3], 
             seed=0,
@@ -53,7 +52,6 @@ def plot_experiment(N=2500, k=40, p=1, K=0, noisy_dims=300, iterations=50, outpu
                          N=N, 
                          k=k, 
                          p=p, 
-                         P=p,
                          K=K, 
                          noisy_dims=noisy_dims,
                          keep_variance=1., 
@@ -86,6 +84,8 @@ def main():
 
 
 def main_plot():
+    plt.figure()
+    plot_experiment(p=[1,2])
     plt.figure()
     plot_experiment(noisy_dims=[0, 50, 100, 200, 300, 400])
     plt.figure()
