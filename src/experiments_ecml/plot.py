@@ -19,6 +19,8 @@ def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, 
     
     legends = []
     
+    processes = None
+    
     result = ep.evaluate(eb.prediction_error,
                          algorithm=eb.Algorithms.Random, 
                          N=N, 
@@ -37,7 +39,7 @@ def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, 
                          dataset=dataset, 
                          measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
-                         processes=None,
+                         processes=processes,
                          manage_seed='external', 
                          cachedir=cachedir)
  
@@ -71,7 +73,7 @@ def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, 
                              dataset=dataset,
                              measure=eb.Measures.gpfa, 
                              repetitions=repetitions, 
-                             processes=None, 
+                             processes=processes, 
                              manage_seed='external',
                              cachedir=cachedir)
         values = _get_values(result, plot_time=plot_time)
@@ -109,7 +111,7 @@ def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, 
                              dataset=dataset,
                              measure=eb.Measures.gpfa, 
                              repetitions=repetitions, 
-                             processes=16, 
+                             processes=processes if processes else 16, 
                              manage_seed='external',
                              cachedir=cachedir)
         values = _get_values(result, plot_time=plot_time)
@@ -140,7 +142,7 @@ def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, 
                          use_test_set=True,
                          measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
-                         processes=None,
+                         processes=processes,
                          manage_seed='external',
                          argument_order=['algorithm'], 
                          cachedir=cachedir)
@@ -175,7 +177,7 @@ def plot_experiment(dataset, N, k, p, K, noisy_dims, keep_variance, iterations, 
                              measure=eb.Measures.gpfa, 
                              use_test_set=True,
                              repetitions=repetitions, 
-                             processes=None,
+                             processes=processes,
                              manage_seed='external',
                              argument_order=['algorithm'], 
                              cachedir=cachedir)

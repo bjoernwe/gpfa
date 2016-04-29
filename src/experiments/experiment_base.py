@@ -38,7 +38,7 @@ Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll
 
 Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA HiForeCA HiPFA HiGPFA1 HiGPFA2')
 
-Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa_ndim gpfa gpfa_ndim')
+Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa pfa_ndim gpfa gpfa_ndim')
 
 
 
@@ -136,16 +136,16 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
         image_shape = env.image_shape
     elif dataset == Datasets.EEG:
         fargs = update_seed_argument(dataset=EnvData.Datasets.EEG, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
     elif dataset == Datasets.EEG2:
         fargs = update_seed_argument(dataset=EnvData.Datasets.EEG2, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
     elif dataset == Datasets.EEG2_stft_128:
         fargs = update_seed_argument(dataset=EnvData.Datasets.EEG2_stft_128, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
     elif dataset == Datasets.MEG:
         fargs = update_seed_argument(dataset=EnvData.Datasets.MEG, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
     elif dataset == Datasets.Traffic:
         env = EnvData2D(dataset=EnvData2D.Datasets.Traffic, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
         image_shape = env.image_shape
@@ -154,7 +154,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
         image_shape = env.image_shape
     elif dataset == Datasets.WAV_11k:
         fargs = update_seed_argument(dataset=EnvData.Datasets.WAV_11k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
         chunks = env.generate_training_data(num_steps=N, 
                                             num_steps_test=kwargs.get('num_steps_test'), 
                                             keep_variance=kwargs.get('keep_variance', 1.), 
@@ -162,7 +162,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
                                             n_chunks=n_chunks)
     elif dataset == Datasets.WAV_22k:
         fargs = update_seed_argument(dataset=EnvData.Datasets.WAV_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
         chunks = env.generate_training_data(num_steps=N, 
                                             num_steps_test=kwargs.get('num_steps_test'), 
                                             keep_variance=kwargs.get('keep_variance', 1.), 
@@ -170,7 +170,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
                                             n_chunks=n_chunks)
     elif dataset == Datasets.WAV2_22k:
         fargs = update_seed_argument(dataset=EnvData.Datasets.WAV2_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
         chunks = env.generate_training_data(num_steps=N, 
                                             num_steps_test=kwargs.get('num_steps_test'), 
                                             keep_variance=kwargs.get('keep_variance', 1.), 
@@ -178,7 +178,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
                                             n_chunks=n_chunks)
     elif dataset == Datasets.WAV3_22k:
         fargs = update_seed_argument(dataset=EnvData.Datasets.WAV3_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
         chunks = env.generate_training_data(num_steps=N, 
                                             num_steps_test=kwargs.get('num_steps_test'), 
                                             keep_variance=kwargs.get('keep_variance', 1.), 
@@ -186,7 +186,7 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
                                             n_chunks=n_chunks)
     elif dataset == Datasets.WAV4_22k:
         fargs = update_seed_argument(dataset=EnvData.Datasets.WAV4_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=kwargs.get('cachedir'), **fargs)
+        env = EnvData(cachedir=mem.cachedir, **fargs)
         chunks = env.generate_training_data(num_steps=N, 
                                             num_steps_test=kwargs.get('num_steps_test'), 
                                             keep_variance=kwargs.get('keep_variance', 1.), 
@@ -663,8 +663,10 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
         return calc_omega(data=data)
     elif measure == Measures.omega_ndim:
         return calc_omega_ndim(data=data)
+    elif measure == Measures.pfa:
+        return calc_autoregressive_error(data=data, W=model.W)
     elif measure == Measures.pfa_ndim:
-        return calc_autoregressive_error(data=data, 
+        return calc_autoregressive_error_ndim(data=data, 
                                          p=kwargs['p'], 
                                          K=kwargs['K'],
                                          model=model,
@@ -795,7 +797,7 @@ def calc_delta(data, ndim=False):
 
 
 
-def calc_autoregressive_error(data, p, K, model=None, data_chunks=None):
+def calc_autoregressive_error_ndim(data, p, K, model=None, data_chunks=None):
     #W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
     print 'extracted_data:', data.shape
     print 'training_data:', data_chunks[0].shape
@@ -805,6 +807,11 @@ def calc_autoregressive_error(data, p, K, model=None, data_chunks=None):
     print 'pfa.Ar', model.Ar.shape
     #print 'pfa.Ar0', model.Ar.shape
     return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data, W=model.W0.T.dot(model.Ar).T, k=K, srcData=data_chunks[0], W0=model.W0)
+
+
+
+def calc_autoregressive_error(data, W):
+    return PFACoreUtil.empiricalRawErrorRefImp(data=data, W=W)
 
 
 
