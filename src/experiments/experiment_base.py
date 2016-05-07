@@ -23,6 +23,7 @@ from envs.env_dead_corners import EnvDeadCorners
 from envs.env_kai import EnvKai
 from envs.env_ladder import EnvLadder
 from envs.env_random import EnvRandom
+from envs.env_sine import EnvSine
 from envs.env_swiss_roll import EnvSwissRoll
 
 sys.path.append('/home/weghebvc/workspace/git/GNUPFA')
@@ -31,10 +32,11 @@ import PFACoreUtil
 
 
 # prepare joblib.Memory
-mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
+default_cachedir = '/scratch/weghebvc'
+mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 
-Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG EEG2 EEG2_stft_128 MEG Traffic Traffic_window Tumor WAV_11k WAV_22k WAV2_22k WAV3_22k WAV4_22k')
+Datasets = Enum('Datasets', 'Random Sine Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG EEG2 EEG2_stft_128 MEG Traffic Traffic_window Tumor WAV_11k WAV_22k WAV2_22k WAV3_22k WAV4_22k')
 
 Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA HiForeCA HiPFA HiGPFA1 HiGPFA2')
 
@@ -68,22 +70,31 @@ def update_seed_argument(**kwargs):
 def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, seed=None, **kwargs):
 
     # print arguments
-    frame = inspect.currentframe()
-    args, _, _, values = inspect.getargvalues(frame)
-    print 'function name "%s"' % inspect.getframeinfo(frame)[2]
-    for i in args:
-        print "  %s: %s" % (i, values[i])
-    for i in kwargs:
-        print "  %s: %s" % (i, kwargs[i])
-    print ''
+#     frame = inspect.currentframe()
+#     args, _, _, values = inspect.getargvalues(frame)
+#     print 'function name "%s"' % inspect.getframeinfo(frame)[2]
+#     for i in args:
+#         print "  %s: %s" % (i, values[i])
+#     for i in kwargs:
+#         print "  %s: %s" % (i, kwargs[i])
+#     print ''
     
     image_shape = None
     chunks = None
 
     # generate dataset
     if dataset == Datasets.Random:
-        fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
-        env = EnvRandom(**fargs)
+        #fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
+        #env = EnvRandom(**fargs)
+        env = EnvRandom(ndim=noisy_dims, noise_dist=Noise.normal)
+        chunks = env.generate_training_data(num_steps=N, 
+                                            keep_variance=1.,
+                                            noisy_dims=0, 
+                                            whitening=kwargs.get('whitening'), 
+                                            n_chunks=n_chunks)
+    elif dataset == Datasets.Sine:
+        fargs = update_seed_argument(repetition_index=repetition_index, seed=seed)
+        env = EnvSine(**fargs)
     elif dataset == Datasets.Crowd1:
         env = EnvData2D(dataset=EnvData2D.Datasets.Crowd1, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
         image_shape = env.image_shape
@@ -335,14 +346,14 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
 def train_model(algorithm, data_train, output_dim, seed, repetition_index, image_shape=None, **kwargs):
     
     # print arguments
-    frame = inspect.currentframe()
-    args, _, _, values = inspect.getargvalues(frame)
-    print 'function name "%s"' % inspect.getframeinfo(frame)[2]
-    for i in args:
-        print "  %s: %s" % (i, values[i])
-    for i in kwargs:
-        print "  %s: %s" % (i, kwargs[i])
-    print ''
+#     frame = inspect.currentframe()
+#     args, _, _, values = inspect.getargvalues(frame)
+#     print 'function name "%s"' % inspect.getframeinfo(frame)[2]
+#     for i in args:
+#         print "  %s: %s" % (i, values[i])
+#     for i in kwargs:
+#         print "  %s: %s" % (i, kwargs[i])
+#     print ''
 
     if algorithm == Algorithms.None:
         return None
@@ -354,10 +365,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
     elif algorithm == Algorithms.SFA:
         return train_sfa(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.ForeCA:
-        return train_foreca(data_train=data_train, 
-                    output_dim=output_dim,
-                    seed=seed,
-                    repetition_index=repetition_index)
+        return train_foreca(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.PFA:
         return train_pfa(data_train=data_train, 
                     output_dim=output_dim,
@@ -487,10 +495,8 @@ def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1,
  
  
 @mem.cache
-def train_foreca(data_train, output_dim, seed, repetition_index):
-    # rev: 2
-    fargs = update_seed_argument(output_dim=output_dim, seed=seed, repetition_index=repetition_index)
-    model = foreca_node.ForeCA(**fargs)
+def train_foreca(data_train, output_dim):
+    model = foreca_node.ForeCA(output_dim=output_dim)
     model.train(data_train)
     return model
  
@@ -591,14 +597,16 @@ def train_hi_gpfa(data_train, p, k, iterations, variance_graph, image_shape,
 def calc_projected_data(dataset, algorithm, output_dim, N, repetition_index, noisy_dims=0, 
                         use_test_set=True, seed=None, **kwargs):
 
-    n_chunks = 2 if use_test_set else 1
+    #n_chunks = 2 if use_test_set else 1
     data_chunks, image_shape = generate_training_data(dataset=dataset, 
                                                       N=N, 
                                                       noisy_dims=noisy_dims,
-                                                      n_chunks=n_chunks,
+                                                      n_chunks=2,
                                                       repetition_index=repetition_index, 
                                                       seed=seed,
                                                       **kwargs)
+    
+    print '%s: %d dimensions\n' % (dataset, data_chunks[0].shape[1])
     
     model = train_model(algorithm=algorithm, 
                         data_train=data_chunks[0], 
@@ -623,6 +631,21 @@ def calc_projected_data(dataset, algorithm, output_dim, N, repetition_index, noi
 
 
 
+def dimensions_of_data(measure, dataset, algorithm, output_dim, N, use_test_set, 
+                       repetition_index, seed=None, **kwargs):
+    
+    _, _, data_chunks, _ = calc_projected_data(dataset=dataset, 
+                                                  algorithm=algorithm, 
+                                                  output_dim=output_dim, 
+                                                  N=N, 
+                                                  use_test_set=use_test_set, 
+                                                  repetition_index=repetition_index, 
+                                                  seed=seed, **kwargs)
+    
+    return data_chunks[0].shape[1]
+    
+    
+
 def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set, 
                      repetition_index, seed=None, **kwargs):
     
@@ -641,14 +664,14 @@ def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set,
 def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwargs):
 
     # print arguments
-    frame = inspect.currentframe()
-    args, _, _, values = inspect.getargvalues(frame)
-    print 'function name "%s"' % inspect.getframeinfo(frame)[2]
-    for i in args:
-        print "  %s: %s" % (i, values[i])
-    for i in kwargs:
-        print "  %s: %s" % (i, kwargs[i])
-    print ''
+#     frame = inspect.currentframe()
+#     args, _, _, values = inspect.getargvalues(frame)
+#     print 'function name "%s"' % inspect.getframeinfo(frame)[2]
+#     for i in args:
+#         print "  %s: %s" % (i, values[i])
+#     for i in kwargs:
+#         print "  %s: %s" % (i, kwargs[i])
+#     print ''
 
     if data.ndim == 1:
         n = data.shape[0]
@@ -673,12 +696,12 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
                                          data_chunks=data_chunks)
     elif measure == Measures.gpfa:
         return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
-                                                         k=kwargs['k'], 
+                                                         k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
                                                          p=kwargs['p'],
                                                          ndim=False)
     elif measure == Measures.gpfa_ndim:
         return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
-                                                         k=kwargs['k'], 
+                                                         k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
                                                          p=kwargs['p'],
                                                          ndim=True)
     else:

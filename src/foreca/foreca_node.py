@@ -1,4 +1,4 @@
-import joblib
+#import joblib
 import numpy as np
 import os
 
@@ -7,11 +7,11 @@ from subprocess import call
 import mdp
 
 
-mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
+#mem = joblib.Memory(cachedir='/scratch/weghebvc', verbose=1)
 
 
-@mem.cache
-def train(x, output_dim, whitening, seed):
+#@mem.cache
+def train(x, output_dim, whitening):
     
         # whitening
         m = None
@@ -26,7 +26,7 @@ def train(x, output_dim, whitening, seed):
         # save training data in CSV
         cwd = os.getcwd()
         fdir = os.path.dirname(os.path.abspath(__file__))
-        rnd = np.random.RandomState(seed)
+        rnd = np.random.RandomState()
         run_id = str(rnd.randint(100000, 1000000))
         np.savetxt("%s/foreca_node_train_%s.csv" % (cwd, run_id), x, delimiter=",")
 
@@ -49,20 +49,20 @@ class ForeCA(mdp.Node):
     A wrapper node for the ForeCA implementation in R.
     '''
 
-    def __init__(self, output_dim, input_dim=None, whitening=True, dtype=None, seed=None):
+    def __init__(self, output_dim, input_dim=None, whitening=True, dtype=None):
         super(ForeCA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.whitening = whitening
         self.m = None
         self.W = None
         self.U = None
-        self.seed = seed
+        #self.seed = seed
         #self.rnd = np.random.RandomState(seed)
         return
     
         
         
     def _train(self, x):
-        self.m, self.W, self.U = train(x=x, output_dim=self.output_dim, whitening=self.whitening, seed=self.seed)
+        self.m, self.W, self.U = train(x=x, output_dim=self.output_dim, whitening=self.whitening)
         return
     
     
