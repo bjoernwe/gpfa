@@ -15,19 +15,21 @@ def main():
     default_args = {'N2': 5000, 
                     'seed': 1, 
                     'noisy_dims': 0, 
-                    'repetitions': 5, 
+                    'repetitions': 25, 
                     'include_random': True, 
                     'include_sfa':    True, 
+                    'include_sffa':   True, 
                     'include_foreca': False, # 
                     'include_gfa1':   True, 
                     'include_gfa2':   True,
                     'use_test_set':   True,  #
                     'cachedir': '/scratch/weghebvc',
+                    'manage_seed': 'auto',
                     'processes': None}
 
-    datasets = [#({'dataset': eb.Datasets.EEG,           'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50}, {'N': [2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000], 'keep_variance': list(np.arange(.90, 1.01, .01))}),
-                #({'dataset': eb.Datasets.EEG2,          'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50}, {'N': [2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000], 'keep_variance': list(np.arange(.90, 1.01, .01))}),
-                #({'dataset': eb.Datasets.EEG2_stft_128, 'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance': .98, 'output_dim': 2, 'iterations': 50}, {'N': [2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000]}),
+    datasets = [#({'dataset': eb.Datasets.EEG,           'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
+                #({'dataset': eb.Datasets.EEG2,          'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
+                #({'dataset': eb.Datasets.EEG2_stft_128, 'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance': .98, 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
                 #({'dataset': eb.Datasets.WAV_11k,       'N':  6000, 'k': 2, 'p': 1, 'K': 0, 'keep_variance': .98, 'output_dim': 5, 'iterations': 50}, {'N': [2000, 3000, 4000, 5000, 6000]}),
                 #({'dataset': eb.Datasets.WAV2_22k,      'N':  7000, 'k': 2, 'p': 6, 'K': 1, 'keep_variance': .96, 'output_dim': 5, 'iterations': 50}, {'N': [2000, 3000, 4000, 5000, 6000, 7000]}),
                 ({'dataset': eb.Datasets.WAV_22k,       'N': 10000, 'k': 10, 'p': 5, 'K': 10, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0, 4),   (0,6)),
