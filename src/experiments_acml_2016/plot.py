@@ -16,7 +16,11 @@ def _get_values(result, plot_time=False):
     return result.values
 
 
-def plot_experiment(dataset, N, k, k_eval, p, K, noisy_dims, keep_variance, iterations, output_dim, repetitions, include_random, include_sfa, include_foreca, include_gfa1, include_gfa2, N2, cachedir, processes, use_test_set=True, x_offset=0, y_label=True, legend=True, plot_time=False, seed=0):
+def plot_experiment(dataset, N, k, k_eval, p, K, noisy_dims, keep_variance, iterations, 
+                    output_dim, repetitions, include_random, include_sfa, include_sffa, 
+                    include_foreca, include_gfa1, include_gfa2, N2, cachedir, processes, 
+                    use_test_set=True, x_offset=0, y_label=True, legend=True, plot_time=False, 
+                    manage_seed='external', seed=0):
     
     if plot_time:
         eb.set_cachedir(cachedir=None)
@@ -49,7 +53,7 @@ def plot_experiment(dataset, N, k, k_eval, p, K, noisy_dims, keep_variance, iter
                          measure=eb.Measures.gpfa, 
                          repetitions=repetitions, 
                          processes=processes,
-                         manage_seed='external', 
+                         manage_seed=manage_seed, 
                          cachedir=cachedir)
  
     # determine iter_arg
@@ -97,6 +101,40 @@ def plot_experiment(dataset, N, k, k_eval, p, K, noisy_dims, keep_variance, iter
     else:
         plt.errorbar(x=1, y=0, linewidth=1.2, elinewidth=.5, color='green', ecolor=cc.to_rgba('green', alpha=ecolor_alpha), marker=None, linestyle='-')
         legends.append('SFA')
+    
+    if include_sffa:
+        result = ep.evaluate(eb.prediction_error,
+                             algorithm=eb.Algorithms.SFFA, 
+                             N=N, 
+                             k=k,
+                             k_eval=k_eval, 
+                             p=p, 
+                             K=K, 
+                             seed=seed,
+                             num_steps_test=N2,
+                             iterations=iterations,
+                             noisy_dims=noisy_dims,
+                             keep_variance=keep_variance, 
+                             #neighborhood_graph=False,
+                             #weighted_edges=True, 
+                             output_dim=output_dim, 
+                             use_test_set=use_test_set, 
+                             dataset=dataset,
+                             measure=eb.Measures.gpfa, 
+                             repetitions=repetitions, 
+                             processes=processes, 
+                             manage_seed='external',
+                             cachedir=cachedir)
+        values = _get_values(result, plot_time=plot_time)
+        m = np.mean(values, axis=-1)
+        s = np.std(values, axis=-1)
+        x = np.array(result.iter_args[iter_arg]) - x_offset
+        ecolor = tuple(1-((1-c)*.25) for c in list(cc.to_rgb('green')))
+        plt.errorbar(x=x, y=m, yerr=s, linewidth=1.2, elinewidth=.5, color='green', ecolor=ecolor, marker='^', linestyle='-')
+        legends.append('SFFA')
+    else:
+        plt.errorbar(x=1, y=0, linewidth=1.2, elinewidth=.5, color='green', ecolor=cc.to_rgba('green', alpha=ecolor_alpha), marker=None, linestyle='-')
+        legends.append('SFFA')
     
     if include_foreca:
         N_foreca = N

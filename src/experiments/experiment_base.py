@@ -8,6 +8,7 @@ from enum import Enum
 
 import foreca.foreca_node as foreca_node
 import gpfa
+import sffa
 
 #sys.path.append('/home/weghebvc/workspace/git/explot/src/')
 #import explot as ep
@@ -38,7 +39,7 @@ mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 Datasets = Enum('Datasets', 'Random Sine Crowd1 Crowd2 Crowd3 Dancing Mouth SwissRoll Face MarkovChain RatLab Kai Teleporter Mario Mario_window EEG EEG2 EEG2_stft_128 MEG Traffic Traffic_window Tumor WAV_11k WAV_22k WAV2_22k WAV3_22k WAV4_22k')
 
-Algorithms = Enum('Algorithms', 'None Random SFA ForeCA PFA GPFA1 GPFA2 HiSFA HiForeCA HiPFA HiGPFA1 HiGPFA2')
+Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2 HiSFA HiForeCA HiPFA HiGPFA1 HiGPFA2')
 
 Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa pfa_ndim gpfa gpfa_ndim')
 
@@ -148,12 +149,27 @@ def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, s
     elif dataset == Datasets.EEG:
         fargs = update_seed_argument(dataset=EnvData.Datasets.EEG, seed=seed, repetition_index=repetition_index)
         env = EnvData(cachedir=mem.cachedir, **fargs)
+        chunks = env.generate_training_data(num_steps=N, 
+                                            num_steps_test=kwargs.get('num_steps_test'), 
+                                            keep_variance=kwargs.get('keep_variance', 1.), 
+                                            whitening=kwargs.get('whitening'), 
+                                            n_chunks=n_chunks)
     elif dataset == Datasets.EEG2:
         fargs = update_seed_argument(dataset=EnvData.Datasets.EEG2, seed=seed, repetition_index=repetition_index)
         env = EnvData(cachedir=mem.cachedir, **fargs)
+        chunks = env.generate_training_data(num_steps=N, 
+                                            num_steps_test=kwargs.get('num_steps_test'), 
+                                            keep_variance=kwargs.get('keep_variance', 1.), 
+                                            whitening=kwargs.get('whitening'), 
+                                            n_chunks=n_chunks)
     elif dataset == Datasets.EEG2_stft_128:
         fargs = update_seed_argument(dataset=EnvData.Datasets.EEG2_stft_128, seed=seed, repetition_index=repetition_index)
         env = EnvData(cachedir=mem.cachedir, **fargs)
+        chunks = env.generate_training_data(num_steps=N, 
+                                            num_steps_test=kwargs.get('num_steps_test'), 
+                                            keep_variance=kwargs.get('keep_variance', 1.), 
+                                            whitening=kwargs.get('whitening'), 
+                                            n_chunks=n_chunks)
     elif dataset == Datasets.MEG:
         fargs = update_seed_argument(dataset=EnvData.Datasets.MEG, seed=seed, repetition_index=repetition_index)
         env = EnvData(cachedir=mem.cachedir, **fargs)
@@ -364,6 +380,8 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, image
                     repetition_index=repetition_index)
     elif algorithm == Algorithms.SFA:
         return train_sfa(data_train=data_train, output_dim=output_dim)
+    elif algorithm == Algorithms.SFFA:
+        return train_sffa(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.ForeCA:
         return train_foreca(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.PFA:
@@ -469,6 +487,14 @@ def train_random(data_train, output_dim, seed, repetition_index):
 @mem.cache
 def train_sfa(data_train, output_dim):
     model = mdp.nodes.SFANode(output_dim=output_dim)
+    model.train(data_train)
+    return model
+
+ 
+ 
+@mem.cache
+def train_sffa(data_train, output_dim):
+    model = sffa.SFFA(output_dim=output_dim)
     model.train(data_train)
     return model
 
@@ -647,7 +673,7 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, N, use_test_set,
     
 
 def prediction_error(measure, dataset, algorithm, output_dim, N, use_test_set, 
-                     repetition_index, seed=None, **kwargs):
+                     repetition_index=None, seed=None, **kwargs):
     
     projected_data, model, data_chunks, _ = calc_projected_data(dataset=dataset, 
                                                                 algorithm=algorithm, 
