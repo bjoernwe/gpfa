@@ -15,7 +15,7 @@ def main():
     default_args = {'N2': 5000, 
                     'seed': 1, 
                     'noisy_dims': 0, 
-                    'repetitions': 25, 
+                    'repetitions': 40, 
                     'include_random': True, 
                     'include_sfa':    True, 
                     'include_sffa':   True, 
@@ -24,7 +24,7 @@ def main():
                     'include_gfa2':   True,
                     'use_test_set':   True,  #
                     'cachedir': '/scratch/weghebvc',
-                    'manage_seed': 'auto',
+                    'manage_seed': 'external',
                     'processes': None}
 
     datasets = [#({'dataset': eb.Datasets.EEG,           'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
