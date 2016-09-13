@@ -176,7 +176,7 @@ class gPFA(mdp.Node):
 
     def __init__(self, output_dim, k=10, p=1, iterations=10, variance_graph=False, 
                  neighborhood_graph=False, weighted_edges=True, causal_features=True, 
-                 input_dim=None, dtype=None):
+                 generalized_eigen_problem=True, input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.p = p
@@ -185,6 +185,7 @@ class gPFA(mdp.Node):
         self.neighborhood_graph = neighborhood_graph
         self.weighted_edges = weighted_edges
         self.causal_features = causal_features
+        self.generalized_eigen_problem = generalized_eigen_problem
         self.L = None
         self.D = None
         self.whitening = None
@@ -271,9 +272,10 @@ class gPFA(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                #iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
-                _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
-                #_, U = scipy.linalg.eigh(W2, b=D2, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+                if self.generalized_eigen_problem:
+                    _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
+                else:
+                    _, U = scipy.linalg.eigh(L2, eigvals=(0, self.output_dim-1))
                 # normalize eigenvectors 
                 for i in range(U.shape[1]):
                     U[:,i] /= np.linalg.norm(U[:,i])
@@ -291,8 +293,10 @@ class gPFA(mdp.Node):
 
 
     def _stop_training(self):
-        self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
-        #self.E, self.U = scipy.linalg.eigh(self.W, b=self.D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+        if self.generalized_eigen_problem:
+            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+        else:
+            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
         # normalize eigenvectors 
         for i in range(self.U.shape[1]):
             self.U[:,i] /= np.linalg.norm(self.U[:,i])
