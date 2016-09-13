@@ -31,15 +31,16 @@ def train(x, output_dim, whitening):
         np.savetxt("%s/foreca_node_train_%s.csv" % (cwd, run_id), x, delimiter=",")
 
         # run R script and load result (extraction matrix)
-        output_dim = max(2, output_dim)
         call(['Rscript', '%s/foreca_node.r' % fdir, run_id, str(output_dim), cwd])
         U = np.loadtxt('%s/foreca_node_result_%s.csv' % (cwd, run_id))
         if output_dim < 2:
-            U = U[:,0:1]
+            U = np.array(U, ndmin=2).T
 
         # clean files
         call(['rm', '%s/foreca_node_train_%s.csv' % (cwd, run_id)])
         call(['rm', '%s/foreca_node_result_%s.csv' % (cwd, run_id)])
+        assert U.shape == (x.shape[1], output_dim)
+        #assert W.shape == (x.shape[1], x.shape[1])
         return m, W, U
 
 
@@ -76,14 +77,16 @@ class ForeCA(mdp.Node):
         if self.m is not None:
             x = x - self.m
             x = x.dot(self.W)
-        return x.dot(self.U)
+        result = x.dot(self.U)
+        assert result.shape == (x.shape[0], self.output_dim)
+        return result
 
 
 
 if __name__ == '__main__':
     x = np.random.randn(100,10)
     x = np.hstack([x,x])
-    foreca = ForeCA(output_dim=2)
+    foreca = ForeCA(output_dim=1)
     foreca.train(x)
     y = foreca.execute(x)
     print np.cov(y.T)
