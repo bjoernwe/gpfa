@@ -12,21 +12,23 @@ import plot
 
 
 
-def plot_experiment(N=2500, k=2, p=2, K=0, keep_variance=.98, iterations=50, output_dim=2, include_random=False, include_foreca=False, include_gcfa=True, x_offset=0, y_label=True, legend=False):
-    plot.plot_experiment(data='eeg', 
+def plot_experiment(N=10000, k=2, p=3, K=0, keep_variance=.99, iterations=50, output_dim=2, 
+                    include_random=False, include_sfa=True, include_foreca=False, 
+                    include_gcfa=True, x_offset=0, y_label=True, legend=False):
+    plot.plot_experiment(dataset=eb.Datasets.EEG2_stft_128, 
                          N=N, 
                          k=k, 
                          p=p, 
-                         P=p,
                          K=K, 
                          noisy_dims=0,
                          keep_variance=keep_variance, 
                          iterations=iterations, 
                          output_dim=output_dim,
                          repetitions=1, 
-                         include_random=include_random, 
+                         include_random=include_random,
+                         include_sfa=include_sfa, 
                          include_foreca=include_foreca, 
-                         include_gcfa=include_gcfa, 
+                         include_gcfa=include_gcfa,
                          x_offset=x_offset, 
                          y_label=y_label, 
                          legend=legend,
@@ -35,15 +37,16 @@ def plot_experiment(N=2500, k=2, p=2, K=0, keep_variance=.98, iterations=50, out
     
     
 def main():
-    #plt.figure()
-    plt.subplot(2, 2, 1)
-    plot_experiment(keep_variance=list(np.arange(.80, 1.01, .02)))
-    plt.subplot(2, 2, 2)
-    #plot_experiment(N=[1500, 1750, 2000, 2250, 2500])
-    #plt.subplot(2, 2, 3)
-    #plot_experiment(iterations=[20, 40, 60, 80, 100, 150])
-    #plt.subplot(1, 2, 2)
+    plt.figure()
+    plot_experiment(keep_variance=list(np.arange(.90, .995, .01)))
+    plt.figure()
+    plot_experiment(N=[2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000])
+    plt.figure()
+    plot_experiment(iterations=[20, 40, 60, 80, 100, 150])
+    plt.figure()
     plot_experiment(k=range(2,5) + range(5,21,5))
+    plt.figure()
+    plot_experiment(p=[1,2,3,4])
     plt.show()
 
 

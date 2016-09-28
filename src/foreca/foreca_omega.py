@@ -9,7 +9,8 @@ def omega(x):
     # save training data in CSV
     cwd = os.getcwd()
     fdir = os.path.dirname(os.path.abspath(__file__))
-    run_id = str(np.random.randint(100000, 1000000))
+    rnd = np.random.RandomState()
+    run_id = str(rnd.randint(100000, 1000000))
     np.savetxt("%s/foreca_omega_input_%s.csv" % (cwd, run_id), x, delimiter=",")
     
     # run R script and load result

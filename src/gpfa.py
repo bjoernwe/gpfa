@@ -1,18 +1,16 @@
 import itertools
 import numpy as np
 import scipy.linalg
-import scipy.spatial
 import scipy.spatial.distance
 
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import polynomial_kernel
 from sklearn.metrics.pairwise import rbf_kernel
 
 import mdp
 
 
 
-def calc_predictability_trace_of_avg_cov(x, k, p):
+def calc_predictability_trace_of_avg_cov(x, k, p, ndim=False):
     """
     """
     
@@ -33,33 +31,10 @@ def calc_predictability_trace_of_avg_cov(x, k, p):
     
     covariances = map(_cov, range(p-1, N-1))
     covariance = reduce(lambda a,b: a+b, covariances) / (N-p)
+    if ndim:
+        E, _ = np.linalg.eigh(covariance)
+        return E
     return np.trace(covariance)
-
-
-
-def calc_predictability_trace_of_avg_cov_per_dim(x, k, p):
-    """
-    """
-    
-    def _cov(t):
-        successors = neighbors[t] + 1
-        successors = successors[successors<N]
-        suc_dat = x[successors]
-        return np.array(np.cov(suc_dat.T), ndmin=2)
-
-    # pairwise distances of data points
-    if x.ndim == 1:
-        x = np.array(x, ndmin=2).T 
-    N, _ = x.shape
-    y = concatenate_past(x, p=p)
-    tree = scipy.spatial.cKDTree(y)
-    neighbors = [tree.query(y[i], k=k+1)[1] for i in xrange(y.shape[0])]
-    assert len(neighbors) == N
-    
-    covariances = map(_cov, range(p-1, N-1))
-    covariance = reduce(lambda a,b: a+b, covariances) / (N-p)
-    E, _ = np.linalg.eigh(covariance)
-    return E
 
 
 
@@ -80,15 +55,24 @@ class RandomProjection(mdp.Node):
     def __init__(self, output_dim, input_dim=None, dtype=None, seed=None):
         super(RandomProjection, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.rnd = np.random.RandomState(seed=seed)
+        self.whitening = False
         return
     
     
-    def _train(self, x):
+    def _train(self, x, is_whitened=False):
+        # whiten data
+        if not is_whitened:
+            self.whitening = mdp.nodes.WhiteningNode(reduce=True)
+            self.whitening.train(x)
+            self.whitening.stop_training()
         return
 
 
     def _stop_training(self):
-        D = self.input_dim
+        if self.whitening:
+            D = self.whitening.output_dim
+        else:
+            D = self.input_dim
         A = self.rnd.rand(D, D)
         A = A + A.T
         _, self.U = scipy.linalg.eigh(A, eigvals=(0, self.output_dim-1))
@@ -97,6 +81,8 @@ class RandomProjection(mdp.Node):
 
 
     def _execute(self, x):
+        if self.whitening:
+            x = self.whitening.execute(x)
         return x.dot(self.U)
 
 
@@ -188,10 +174,9 @@ class LPP(mdp.Node):
 
 class gPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=10, p=1, iterations=10, #iteration_dim=None,
-                 variance_graph=True, neighborhood_graph=False, weighted_edges=True, 
-                 causal_features=True, input_dim=None, 
-                 dtype=None):
+    def __init__(self, output_dim, k=10, p=1, iterations=10, variance_graph=False, 
+                 neighborhood_graph=False, weighted_edges=True, causal_features=True, 
+                 generalized_eigen_problem=True, input_dim=None, dtype=None):
         super(gPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.p = p
@@ -199,16 +184,21 @@ class gPFA(mdp.Node):
         self.variance_graph = variance_graph
         self.neighborhood_graph = neighborhood_graph
         self.weighted_edges = weighted_edges
-        #self.iteration_dim = iteration_dim
         self.causal_features = causal_features
-        #self.constraint_optimization = constraint_optimization
+        self.generalized_eigen_problem = generalized_eigen_problem
         self.L = None
-        #self.W = None
         self.D = None
+        self.whitening = None
         return
     
     
-    def _train(self, x):
+    def _train(self, x, is_whitened=False):
+
+        # whiten data
+        if not is_whitened:
+            self.whitening = mdp.nodes.WhiteningNode(reduce=True)
+            self.whitening.train(x)
+            x = self.whitening.execute(x)
 
         # number of samples
         N, dim = x.shape
@@ -282,9 +272,10 @@ class gPFA(mdp.Node):
 
             # (if not the last iteration:) solve and project
             if l < self.iterations-1:
-                #iteration_dim = self.output_dim if self.iteration_dim is None else min(self.iteration_dim, self.output_dim)
-                _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
-                #_, U = scipy.linalg.eigh(W2, b=D2, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+                if self.generalized_eigen_problem:
+                    _, U = scipy.linalg.eigh(L2, b=D2, eigvals=(0, self.output_dim-1))
+                else:
+                    _, U = scipy.linalg.eigh(L2, eigvals=(0, self.output_dim-1))
                 # normalize eigenvectors 
                 for i in range(U.shape[1]):
                     U[:,i] /= np.linalg.norm(U[:,i])
@@ -302,8 +293,10 @@ class gPFA(mdp.Node):
 
 
     def _stop_training(self):
-        self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
-        #self.E, self.U = scipy.linalg.eigh(self.W, b=self.D, eigvals=(self.input_dim-self.output_dim-1, self.input_dim-1))
+        if self.generalized_eigen_problem:
+            self.E, self.U = scipy.linalg.eigh(self.L, b=self.D, eigvals=(0, self.output_dim-1))
+        else:
+            self.E, self.U = scipy.linalg.eigh(self.L, eigvals=(0, self.output_dim-1))
         # normalize eigenvectors 
         for i in range(self.U.shape[1]):
             self.U[:,i] /= np.linalg.norm(self.U[:,i])
@@ -315,6 +308,8 @@ class gPFA(mdp.Node):
 
 
     def _execute(self, x):
+        if self.whitening:
+            x = self.whitening.execute(x)
         return x.dot(self.U)
 
 
