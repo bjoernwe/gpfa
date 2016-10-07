@@ -16,7 +16,8 @@ sys.path.append('/home/weghebvc/workspace/git/GNUPFA/src/')
 import PFANodeMDP
 
 sys.path.append('/home/weghebvc/workspace/git/environments_new/src/')
-from envs.environment import Noise
+#from envs.environment import Noise
+#from envs import env_data
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
 from envs.env_kai import EnvKai
@@ -33,11 +34,11 @@ default_cachedir = '/scratch/weghebvc'
 mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 
-Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth Face RatLab Kai Mario Mario_window Mario_window_8 EEG EEG2 EEG2_stft_128 MEG SpaceInvaders SpaceInvaders_window SpaceInvaders_window_8 Traffic Traffic_window Traffic_window_8 Tumor WAV_11k WAV_22k WAV2_22k WAV3_22k WAV4_22k')
+#Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth Face RatLab Kai Mario Mario_window Mario_window_8 EEG EEG2 EEG2_stft_128 MEG SpaceInvaders SpaceInvaders_window SpaceInvaders_window_8 Traffic Traffic_window Traffic_window_8 Tumor STFT1 STFT2 STFT3')
 
 Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2')
 
-Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa pfa_ndim gpfa gpfa_ndim ndims')
+Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims')
 
 
 
@@ -64,186 +65,37 @@ def update_seed_argument(**kwargs):
 
 
 
-def generate_training_data(dataset, N, noisy_dims, n_chunks, repetition_index, seed=None, **kwargs):
+def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
 
-    image_shape = None
-    chunks = None
-
-    # generate dataset
-    if dataset == Datasets.Random:
-        #fargs = update_seed_argument(ndim=noisy_dims, noise_dist=Noise.normal, repetition_index=repetition_index, seed=seed)
-        #env = EnvRandom(**fargs)
-        env = EnvRandom(ndim=noisy_dims, noise_dist=Noise.normal)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            keep_variance=1.,
-                                            noisy_dims=0, 
-                                            whitening=kwargs.get('whitening'), 
-                                            n_chunks=n_chunks)
-    elif dataset == Datasets.Crowd1:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Crowd1, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Crowd2:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Crowd2, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Crowd3:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Crowd3, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Dancing:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Dancing, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Mouth:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Mouth, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Face:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Face, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.RatLab:
-        env = EnvData2D(dataset=EnvData2D.Datasets.RatLab, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Tumor:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Tumor, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Kai:
-        fargs = update_seed_argument(repetition_index=repetition_index, seed=seed)
-        env = EnvKai(**fargs)
-    elif dataset == Datasets.Mario:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Mario, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.Mario_window:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.Mario, window=((70,70),(90,90)), scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.Mario_window_8:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.Mario, window=((76,76),(84,84)), scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.EEG:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.EEG, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.EEG2:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.EEG2, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.EEG2_stft_128:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.EEG2_stft_128, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.MEG:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.MEG, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-    elif dataset == Datasets.Traffic:
-        env = EnvData2D(dataset=EnvData2D.Datasets.Traffic, scaling=kwargs.get('scaling', 1.), cachedir='/scratch/weghebvc', seed=0)
-        image_shape = env.image_shape
-    elif dataset == Datasets.SpaceInvaders:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.SpaceInvaders, scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.SpaceInvaders_window:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.SpaceInvaders, window=((16,30),(36,50)), scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.SpaceInvaders_window_8:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.SpaceInvaders, window=((22,36),(30,44)), scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.Traffic_window:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.Traffic, window=((35,65),(55,85)), scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.Traffic_window_8:
-        fargs = update_seed_argument(dataset=EnvData2D.Datasets.Traffic, window=((41,71),(49,79)), scaling=kwargs.get('scaling', 1.), seed=seed, repetition_index=repetition_index)
-        env = EnvData2D(cachedir='/scratch/weghebvc', **fargs)
-        image_shape = env.image_shape
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.WAV_11k:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.WAV_11k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.WAV_22k:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.WAV_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.WAV2_22k:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.WAV2_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.WAV3_22k:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.WAV3_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    elif dataset == Datasets.WAV4_22k:
-        fargs = update_seed_argument(dataset=EnvData.Datasets.WAV4_22k, seed=seed, repetition_index=repetition_index)
-        env = EnvData(cachedir=mem.cachedir, **fargs)
-        chunks = env.generate_training_data(num_steps=N, 
-                                            num_steps_test=kwargs.get('num_steps_test'), 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
+    if env is EnvData:
+        fargs = update_seed_argument(repetition_index=repetition_index, seed=seed) 
+        env_node = EnvData(dataset=dataset, **fargs)
+    elif env is EnvData2D:
+        fargs = update_seed_argument(window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
+        env_node = EnvData2D(dataset=dataset, **fargs)
+    elif env is EnvKai:
+        fargs = update_seed_argument(repetition_index=repetition_index, seed=seed) 
+        env_node = EnvKai(**fargs)
+    elif env is EnvRandom:
+        fargs = update_seed_argument(ndim=kwargs['ndim'], repetition_index=repetition_index, seed=seed) 
+        env_node = EnvRandom(**fargs)
     else:
         assert False
+        
+    (data_train, _, _), (data_test, _, _), _ = env_node.generate_training_data(n_train=n_train, 
+                                                                               n_test=n_test, 
+                                                                               n_validation=None, 
+                                                                               actions=None, 
+                                                                               noisy_dims=kwargs.get('noisy_dims', 0), 
+                                                                               pca=kwargs.get('pca'), 
+                                                                               pca_after_expansion=kwargs.get('pca_after_expansion'), 
+                                                                               expansion=kwargs.get('expansion', 1), 
+                                                                               whitening=True)
+    return [data_train, data_test]
 
-    # generate dataset
-    if chunks is None:
-        chunks = env.generate_training_data(num_steps=N, 
-                                            noisy_dims=noisy_dims, 
-                                            keep_variance=kwargs.get('keep_variance', 1.), 
-                                            whitening=kwargs.get('whitening'))
-    data_chunks = [chunk[0] for chunk in chunks]
-
-    del env
-    return data_chunks, image_shape
 
 
-
-def train_model(algorithm, data_train, output_dim, seed, repetition_index, image_shape=None, **kwargs):
+def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwargs):
     
     if algorithm == Algorithms.None:
         return None
@@ -351,70 +203,69 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 
 
 
-def calc_projected_data(dataset, algorithm, output_dim, num_train, num_test, repetition_index, 
+def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, repetition_index, 
                         noisy_dims=0, use_test_set=True, seed=None, **kwargs):
-
-    #n_chunks = 2 if use_test_set else 1
-    data_chunks, image_shape = generate_training_data(dataset=dataset, 
-                                                      num_train=num_train,
-                                                      num_test=num_test, 
-                                                      noisy_dims=noisy_dims,
-                                                      repetition_index=repetition_index, 
-                                                      seed=seed,
-                                                      **kwargs)
     
-    print '%s: %d dimensions\n' % (dataset, data_chunks[0].shape[1])
+    [data_train, data_test] = generate_training_data(env=env,
+                                                     dataset=dataset, 
+                                                     n_train=n_train,
+                                                     n_test=n_test, 
+                                                     noisy_dims=noisy_dims,
+                                                     repetition_index=repetition_index, 
+                                                     seed=seed,
+                                                     **kwargs)
+    print '%s: %d dimensions\n' % (dataset, data_train.shape[1])
     
     model = train_model(algorithm=algorithm, 
-                        data_train=data_chunks[0], 
+                        data_train=data_train, 
                         output_dim=output_dim, 
-                        image_shape=image_shape,
                         seed=seed,
                         repetition_index=repetition_index,
                         **kwargs)
     
     if model is None:
         if use_test_set:
-            projected_data = np.array(data_chunks[1], copy=True)
+            projected_data = np.array(data_test, copy=True)
         else:
-            projected_data = np.array(data_chunks[0], copy=True)
+            projected_data = np.array(data_train, copy=True)
     else:
         if use_test_set:
-            projected_data = model.execute(data_chunks[1])
+            projected_data = model.execute(data_test)
         else:
-            projected_data = model.execute(data_chunks[0])
+            projected_data = model.execute(data_train)
         
-    return projected_data, model, data_chunks, image_shape
+    return projected_data, model, [data_train, data_test]
 
 
 
-def dimensions_of_data(measure, dataset, algorithm, output_dim, num_train, num_test, 
+def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test, 
                        use_test_set, repetition_index, seed=None, **kwargs):
     
-    _, _, data_chunks, _ = calc_projected_data(dataset=dataset, 
-                                                  algorithm=algorithm, 
-                                                  output_dim=output_dim, 
-                                                  num_train=num_train,
-                                                  num_test=num_test, 
-                                                  use_test_set=use_test_set, 
-                                                  repetition_index=repetition_index, 
-                                                  seed=seed, **kwargs)
+    _, _, data_chunks = calc_projected_data(dataset=dataset, 
+                                            algorithm=algorithm, 
+                                            output_dim=output_dim, 
+                                            n_train=n_train,
+                                            n_test=n_test, 
+                                            use_test_set=use_test_set, 
+                                            repetition_index=repetition_index, 
+                                            seed=seed, **kwargs)
     
     return data_chunks[0].shape[1]
     
     
 
-def prediction_error(measure, dataset, algorithm, output_dim, num_train, num_test, use_test_set, 
+def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, use_test_set, 
                      repetition_index=None, seed=None, **kwargs):
     
-    projected_data, model, data_chunks, _ = calc_projected_data(dataset=dataset, 
-                                                                algorithm=algorithm, 
-                                                                output_dim=output_dim, 
-                                                                num_train=num_train,
-                                                                num_test=num_test, 
-                                                                use_test_set=use_test_set, 
-                                                                repetition_index=repetition_index, 
-                                                                seed=seed, **kwargs)
+    projected_data, model, data_chunks = calc_projected_data(env=env,
+                                                             dataset=dataset, 
+                                                             algorithm=algorithm, 
+                                                             output_dim=output_dim, 
+                                                             n_train=n_train,
+                                                             n_test=n_test, 
+                                                             use_test_set=use_test_set, 
+                                                             repetition_index=repetition_index, 
+                                                             seed=seed, **kwargs)
     
     return prediction_error_on_data(data=projected_data, measure=measure, model=model, data_chunks=data_chunks, **kwargs)
     
@@ -422,16 +273,6 @@ def prediction_error(measure, dataset, algorithm, output_dim, num_train, num_tes
 
 @mem.cache
 def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwargs):
-
-    # print arguments
-#     frame = inspect.currentframe()
-#     args, _, _, values = inspect.getargvalues(frame)
-#     print 'function name "%s"' % inspect.getframeinfo(frame)[2]
-#     for i in args:
-#         print "  %s: %s" % (i, values[i])
-#     for i in kwargs:
-#         print "  %s: %s" % (i, kwargs[i])
-#     print ''
 
     if data.ndim == 1:
         n = data.shape[0]
@@ -448,12 +289,12 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
         return calc_omega_ndim(data=data)
     elif measure == Measures.pfa:
         return calc_autoregressive_error(data=data, p=kwargs['p'])
-    elif measure == Measures.pfa_ndim:
-        return calc_autoregressive_error_ndim(data=data, 
-                                         p=kwargs['p'], 
-                                         K=kwargs['K'],
-                                         model=model,
-                                         data_chunks=data_chunks)
+#     elif measure == Measures.pfa_ndim:
+#         return calc_autoregressive_error_ndim(data=data, 
+#                                          p=kwargs['p'], 
+#                                          K=kwargs['K'],
+#                                          model=model,
+#                                          data_chunks=data_chunks)
     elif measure == Measures.gpfa:
         return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
                                                          k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
@@ -471,104 +312,104 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
     
     
     
-def _principal_angle(A, B):
-    """A and B must be column-orthogonal.
-    Golub: Matrix Computations, 1996
-    [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
-    """
-    #A = np.array(A, copy=True)
-    #B = np.array(B, copy=True)
-    if A.ndim == 1:
-        A = np.array(A, ndmin=2).T
-    if B.ndim == 1:
-        B = np.array(B, ndmin=2).T
-    assert A.ndim == B.ndim == 2
-    A = np.linalg.qr(A)[0]
-    B = np.linalg.qr(B)[0]
-    _, S, _ = np.linalg.svd(np.dot(A.T, B))
-    return np.arccos(min(S.min(), 1.0))
+# def _principal_angle(A, B):
+#     """A and B must be column-orthogonal.
+#     Golub: Matrix Computations, 1996
+#     [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
+#     """
+#     #A = np.array(A, copy=True)
+#     #B = np.array(B, copy=True)
+#     if A.ndim == 1:
+#         A = np.array(A, ndmin=2).T
+#     if B.ndim == 1:
+#         B = np.array(B, ndmin=2).T
+#     assert A.ndim == B.ndim == 2
+#     A = np.linalg.qr(A)[0]
+#     B = np.linalg.qr(B)[0]
+#     _, S, _ = np.linalg.svd(np.dot(A.T, B))
+#     return np.arccos(min(S.min(), 1.0))
 
 
 
-def principle_angle_models(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
-     
-    if dim1 is None:
-        dim1 = dim2
-     
-    _, model1, _, _ = calc_projected_data(dataset=dataset, 
-                                       algorithm=algorithm1, 
-                                       output_dim=dim1, 
-                                       N=N, 
-                                       use_test_set=use_test_set, 
-                                       repetition_index=repetition_index, 
-                                       seed=seed, **kwargs)
- 
-    _, model2, _, _ = calc_projected_data(dataset=dataset, 
-                                       algorithm=algorithm2, 
-                                       output_dim=dim2, 
-                                       N=N, 
-                                       use_test_set=use_test_set, 
-                                       repetition_index=repetition_index, 
-                                       seed=seed, **kwargs)
- 
-    A = None
-    if algorithm1 == Algorithms.Random:
-        A = model1.U
-    elif algorithm1 == Algorithms.SFA:
-        A = model1.sf
-    elif algorithm1 == algorithm1.ForeCA:
-        A = model1.U
-    elif algorithm1 == algorithm1.PFA:
-        A = model1.Ar
-    elif algorithm1 == algorithm1.GPFA1:
-        A = model1.U
-    elif algorithm1 == algorithm1.GPFA2:
-        A = model1.U
-    else:
-        assert False 
-          
-    B = None
-    if algorithm2 == Algorithms.Random:
-        B = model2.U
-    elif algorithm2 == Algorithms.SFA:
-        B = model2.sf
-    elif algorithm2 == Algorithms.ForeCA:
-        B = model2.U
-    elif algorithm2 == Algorithms.PFA:
-        B = model2.Ar
-    elif algorithm2 == Algorithms.GPFA1:
-        B = model2.U
-    elif algorithm2 == Algorithms.GPFA2:
-        B = model2.U
-    else:
-        assert False 
-         
-    return _principal_angle(A=A, B=B)
+# def principle_angle_models(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
+#      
+#     if dim1 is None:
+#         dim1 = dim2
+#      
+#     _, model1, _, _ = calc_projected_data(dataset=dataset, 
+#                                        algorithm=algorithm1, 
+#                                        output_dim=dim1, 
+#                                        N=N, 
+#                                        use_test_set=use_test_set, 
+#                                        repetition_index=repetition_index, 
+#                                        seed=seed, **kwargs)
+#  
+#     _, model2, _, _ = calc_projected_data(dataset=dataset, 
+#                                        algorithm=algorithm2, 
+#                                        output_dim=dim2, 
+#                                        N=N, 
+#                                        use_test_set=use_test_set, 
+#                                        repetition_index=repetition_index, 
+#                                        seed=seed, **kwargs)
+#  
+#     A = None
+#     if algorithm1 == Algorithms.Random:
+#         A = model1.U
+#     elif algorithm1 == Algorithms.SFA:
+#         A = model1.sf
+#     elif algorithm1 == algorithm1.ForeCA:
+#         A = model1.U
+#     elif algorithm1 == algorithm1.PFA:
+#         A = model1.Ar
+#     elif algorithm1 == algorithm1.GPFA1:
+#         A = model1.U
+#     elif algorithm1 == algorithm1.GPFA2:
+#         A = model1.U
+#     else:
+#         assert False 
+#           
+#     B = None
+#     if algorithm2 == Algorithms.Random:
+#         B = model2.U
+#     elif algorithm2 == Algorithms.SFA:
+#         B = model2.sf
+#     elif algorithm2 == Algorithms.ForeCA:
+#         B = model2.U
+#     elif algorithm2 == Algorithms.PFA:
+#         B = model2.Ar
+#     elif algorithm2 == Algorithms.GPFA1:
+#         B = model2.U
+#     elif algorithm2 == Algorithms.GPFA2:
+#         B = model2.U
+#     else:
+#         assert False 
+#          
+#     return _principal_angle(A=A, B=B)
     
     
     
-def principle_angle_signals(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
-    
-    if dim1 is None:
-        dim1 = dim2
-     
-    signals1, _, _, _ = calc_projected_data(dataset=dataset, 
-                                       algorithm=algorithm1, 
-                                       output_dim=dim1, 
-                                       N=N, 
-                                       use_test_set=use_test_set, 
-                                       repetition_index=repetition_index, 
-                                       seed=seed, **kwargs)
- 
-    signals2, _, _, _ = calc_projected_data(dataset=dataset, 
-                                       algorithm=algorithm2, 
-                                       output_dim=dim2, 
-                                       N=N, 
-                                       use_test_set=use_test_set, 
-                                       repetition_index=repetition_index, 
-                                       seed=seed, **kwargs)
-         
-    return _principal_angle(A=signals1, B=signals2)
+# def principle_angle_signals(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
+#     
+#     if dim1 is None:
+#         dim1 = dim2
+#      
+#     signals1, _, _, _ = calc_projected_data(dataset=dataset, 
+#                                        algorithm=algorithm1, 
+#                                        output_dim=dim1, 
+#                                        N=N, 
+#                                        use_test_set=use_test_set, 
+#                                        repetition_index=repetition_index, 
+#                                        seed=seed, **kwargs)
+#  
+#     signals2, _, _, _ = calc_projected_data(dataset=dataset, 
+#                                        algorithm=algorithm2, 
+#                                        output_dim=dim2, 
+#                                        N=N, 
+#                                        use_test_set=use_test_set, 
+#                                        repetition_index=repetition_index, 
+#                                        seed=seed, **kwargs)
+#          
+#     return _principal_angle(A=signals1, B=signals2)
     
     
     
@@ -582,16 +423,16 @@ def calc_delta(data, ndim=False):
 
 
 
-def calc_autoregressive_error_ndim(data, p, K, model=None, data_chunks=None):
-    #W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
-    print 'extracted_data:', data.shape
-    print 'training_data:', data_chunks[0].shape
-    print 'pfa.W', model.W.shape
-    print 'pfa.W0', model.W0.shape
-    print 'pfa.S', model.S.shape
-    print 'pfa.Ar', model.Ar.shape
-    #print 'pfa.Ar0', model.Ar.shape
-    return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data, W=model.W0.T.dot(model.Ar).T, k=K, srcData=data_chunks[0], W0=model.W0)
+# def calc_autoregressive_error_ndim(data, p, K, model=None, data_chunks=None):
+#     #W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
+#     print 'extracted_data:', data.shape
+#     print 'training_data:', data_chunks[0].shape
+#     print 'pfa.W', model.W.shape
+#     print 'pfa.W0', model.W0.shape
+#     print 'pfa.S', model.S.shape
+#     print 'pfa.Ar', model.Ar.shape
+#     #print 'pfa.Ar0', model.Ar.shape
+#     return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data, W=model.W0.T.dot(model.Ar).T, k=K, srcData=data_chunks[0], W0=model.W0)
 
 
 
