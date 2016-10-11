@@ -42,7 +42,7 @@ def main():
                     'manage_seed': 'external',
                     'processes': None}
 
-    datasets = [({'env': EnvKai, 'dataset': None,  'n_train': 2500, 'k': 40, 'p': 1, 'K': 0, 'noisy_dims':  10, 'output_dim': 2, 'iterations': 50, 'k_eval': 40}, {}, (0, 4),   (0,6)),
+    datasets = [#({'env': EnvKai, 'dataset': None,  'n_train': 2500, 'k': 40, 'p': 1, 'K': 0, 'noisy_dims':  10, 'output_dim': 2, 'iterations': 50, 'k_eval': 40}, {}, (0, 4),   (0,6)),
                 #({'dataset': eb.Datasets.EEG,           'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
                 #({'dataset': eb.Datasets.EEG2,          'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance':  1., 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
                 #({'dataset': eb.Datasets.EEG2_stft_128, 'N': 10000, 'k': 2, 'p': 2, 'K': 0, 'keep_variance': .98, 'output_dim': 2, 'iterations': 50, 'k_eval': 10}, {}, None, None),
@@ -51,12 +51,13 @@ def main():
                 #({'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'n_train': 10000, 'k': 10, 'p': 5, 'K': 10, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,4),   (0,6)),
                 #({'dataset': eb.Datasets.WAV3_22k,      'N': 10000, 'k':  2, 'p': 7, 'K':  4, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,5),   (0,9)),
                 #({'dataset': eb.Datasets.WAV4_22k,      'N': 10000, 'k': 20, 'p': 6, 'K':  0, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (-1, 15), None),
-                #({'dataset': eb.Datasets.Mario_window,  'N': 10000, 'k':  1, 'p': 1, 'K':  1, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,4),   (0,3)),
+                ({'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'n_train': 10000, 'k':  1, 'p': 1, 'K':  1, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10, 'window': ((70,70),(90,90))}, {}, (0,4), (0,3)),
+                ({'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'n_train': 10000, 'k':  2, 'p': 1, 'K':  1, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10, 'window': ((35,65),(55,85))}, {}, (0,4), (0,3)),
                 #({'dataset': eb.Datasets.Traffic_window, 'repetitions': 5,'N': 10000, 'k': 2,  'p': 1, 'K':  1, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,4),   (0,3)),
                 ]
     
-    experiments = OrderedDict([#('p', (range(1,9), .07, (0, 9))), 
-                               #('k', ([1, 2, 5, 10, 15, 20, 30, 50], .3, (-1, 55))),
+    experiments = OrderedDict([('p', (range(1,9), .07, (0, 9))), 
+                               ('k', ([1, 2, 5, 10, 15, 20, 30, 50], .3, (-1, 55))),
                                #('k_eval', ([1, 2, 5, 10, 15, 20, 30, 50], .3, (-1, 55))),
                                #('n_train', ([2000, 4000, 6000, 8000, 10000], 50, (1000, 11000))),
                                #('iterations', ([1, 10, 30, 50, 100], .07, (-10, 110))),

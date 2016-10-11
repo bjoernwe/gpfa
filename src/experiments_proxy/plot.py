@@ -25,11 +25,12 @@ def _get_values(result, plot_time=False):
 def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims, 
                     pca, iterations, output_dim, repetitions, include_random, 
                     include_sfa, include_sffa, include_foreca, include_pfa, 
-                    include_gfa1, include_gfa2, measure, cachedir, processes, 
-                    pca_after_expansion=1., causal_features=True, generalized_eigen_problem=True, 
-                    use_test_set=True, x_offset=0, y_label=True, legend=True, 
-                    plot_time=False, whitening=True, manage_seed='external', 
-                    legend_loc='best', seed=0):
+                    include_gfa1, include_gfa2, measure, cachedir, processes,
+                    window=None, pca_after_expansion=1., causal_features=True, 
+                    generalized_eigen_problem=True, use_test_set=True, 
+                    x_offset=0, y_label=True, legend=True, plot_time=False, 
+                    whitening=True, manage_seed='external', legend_loc='best', 
+                    seed=0):
     
     results = {}
     
@@ -48,7 +49,7 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                          algorithm=eb.Algorithms.Random, 
                          n_train=n_train,
                          n_test=n_test, 
-                         #k=k,
+                         k=k,
                          k_eval=k_eval, 
                          p=p, 
                          #K=K, 
@@ -65,11 +66,13 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                          use_test_set=use_test_set, 
                          env=env,
                          dataset=dataset, 
+                         window=window,
                          measure=measure, 
                          repetitions=repetitions, 
                          processes=processes,
                          manage_seed=manage_seed, 
-                         cachedir=cachedir)
+                         cachedir=cachedir,
+                         ignore_arguments=['window'])
     results[eb.Algorithms.Random] = result
  
     # determine iter_arg
@@ -90,7 +93,7 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              algorithm=eb.Algorithms.SFA, 
                              n_train=n_train,
                              n_test=n_test, 
-                             #k=k,
+                             k=k,
                              k_eval=k_eval, 
                              p=p, 
                              #K=K, 
@@ -107,11 +110,13 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              use_test_set=use_test_set,
                              env=env, 
                              dataset=dataset,
+                             window=window,
                              measure=measure, 
                              repetitions=repetitions, 
                              processes=processes, 
                              manage_seed=manage_seed,
-                             cachedir=cachedir)
+                             cachedir=cachedir,
+                             ignore_arguments=['window'])
         results[eb.Algorithms.SFA] = result
         values = _get_values(result, plot_time=plot_time)
         m = np.mean(values, axis=-1)
@@ -130,7 +135,7 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              algorithm=eb.Algorithms.SFFA, 
                              n_train=n_train,
                              n_test=n_test,
-                             #k=k,
+                             k=k,
                              k_eval=k_eval, 
                              p=p, 
                              #K=K, 
@@ -147,11 +152,13 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              use_test_set=use_test_set,
                              env=env, 
                              dataset=dataset,
+                             window=window,
                              measure=measure, 
                              repetitions=repetitions, 
                              processes=processes, 
                              manage_seed=manage_seed,
-                             cachedir=cachedir)
+                             cachedir=cachedir,
+                             ignore_arguments=['window'])
         results[eb.Algorithms.SFFA] = result
         values = _get_values(result, plot_time=plot_time)
         m = np.mean(values, axis=-1)
@@ -182,7 +189,7 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              algorithm=eb.Algorithms.ForeCA, 
                              n_train=n_train_foreca,
                              n_test=n_test, 
-                             #k=k,
+                             k=k,
                              k_eval=k_eval,
                              p=p, 
                              #K=K, 
@@ -199,11 +206,13 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              use_test_set=use_test_set, 
                              env=env,
                              dataset=dataset,
+                             window=window,
                              measure=measure, 
                              repetitions=repetitions, 
                              processes=processes,# if processes else 16, 
                              manage_seed=manage_seed,
-                             cachedir=cachedir)
+                             cachedir=cachedir,
+                             ignore_arguments=['window'])
         results[eb.Algorithms.ForeCA] = result
         values = _get_values(result, plot_time=plot_time)
         m = np.mean(values, axis=-1)
@@ -222,7 +231,7 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              algorithm=eb.Algorithms.PFA, 
                              n_train=n_train,
                              n_test=n_test,
-                             #k=k,
+                             k=k,
                              k_eval=k_eval,
                              p=p, 
                              K=K,
@@ -238,13 +247,15 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              output_dim=output_dim, 
                              env=env,
                              dataset=dataset,
+                             window=window,
                              use_test_set=use_test_set,
                              measure=measure, 
                              repetitions=repetitions, 
                              processes=processes,
                              manage_seed=manage_seed,
                              argument_order=['algorithm'], 
-                             cachedir=cachedir)
+                             cachedir=cachedir,
+                             ignore_arguments=['window'])
         results[eb.Algorithms.PFA] = result
         linestyles = ['--']
         #colors = ['red']
@@ -285,13 +296,15 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              output_dim=output_dim, 
                              env=env,
                              dataset=dataset,
+                             window=window,
                              measure=measure, 
                              use_test_set=use_test_set,
                              repetitions=repetitions, 
                              processes=processes,
                              manage_seed=manage_seed,
                              argument_order=['algorithm'], 
-                             cachedir=cachedir)
+                             cachedir=cachedir,
+                             ignore_arguments=['window'])
         results[eb.Algorithms.GPFA1] = result
         linestyles = ['-']
         #colors = ['blue']
@@ -329,13 +342,15 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
                              output_dim=output_dim,
                              env=env, 
                              dataset=dataset,
+                             window=window,
                              measure=measure, 
                              use_test_set=use_test_set,
                              repetitions=repetitions, 
                              processes=processes,
                              manage_seed=manage_seed,
                              argument_order=['algorithm'], 
-                             cachedir=cachedir)
+                             cachedir=cachedir,
+                             ignore_arguments=['window'])
         results[eb.Algorithms.GPFA2] = result
         linestyles = ['-']
         #colors = ['blue']
