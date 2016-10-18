@@ -42,7 +42,6 @@ def plot_experiment(env, dataset, n_train, n_test, k, k_eval, p, K, noisy_dims,
     legends = []
     cc = ColorConverter()
     
-    use_test_set = use_test_set
     ecolor_alpha = .5
     
     result = ep.evaluate(eb.prediction_error,

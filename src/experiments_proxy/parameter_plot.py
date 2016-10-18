@@ -51,8 +51,8 @@ def main():
                 #({'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'n_train': 10000, 'k': 10, 'p': 5, 'K': 10, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,4),   (0,6)),
                 #({'dataset': eb.Datasets.WAV3_22k,      'N': 10000, 'k':  2, 'p': 7, 'K':  4, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,5),   (0,9)),
                 #({'dataset': eb.Datasets.WAV4_22k,      'N': 10000, 'k': 20, 'p': 6, 'K':  0, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (-1, 15), None),
-                ({'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'n_train': 10000, 'k':  1, 'p': 1, 'K':  1, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10, 'window': ((70,70),(90,90))}, {}, (0,4), (0,3)),
-                ({'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'n_train': 10000, 'k':  2, 'p': 1, 'K':  1, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10, 'window': ((35,65),(55,85))}, {}, (0,4), (0,3)),
+                #({'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'n_train': 10000, 'k':  1, 'p': 1, 'K':  1, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10, 'window': ((70,70),(90,90))}, {}, (0,4), (0,3)),
+                #({'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'n_train': 10000, 'k':  2, 'p': 1, 'K':  1, 'pca': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10, 'window': ((35,65),(55,85))}, {}, (0,4), (0,3)),
                 #({'dataset': eb.Datasets.Traffic_window, 'repetitions': 5,'N': 10000, 'k': 2,  'p': 1, 'K':  1, 'keep_variance': .99, 'output_dim': 5, 'iterations': 50, 'k_eval': 10}, {}, (0,4),   (0,3)),
                 ]
     
