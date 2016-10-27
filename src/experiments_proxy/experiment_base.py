@@ -52,7 +52,7 @@ def set_cachedir(cachedir=None):
 
 
 
-def update_seed_argument(**kwargs):
+def update_seed_argument(remove_args=None, **kwargs):
     """
     Helper function that replaces the the seed argument by a new seed that
     depends on all arguments. If repetition_index is given it will be removed.
@@ -60,6 +60,10 @@ def update_seed_argument(**kwargs):
     new_seed = hash(frozenset(kwargs.items())) % np.iinfo(np.uint32).max
     if 'repetition_index' in kwargs:
         kwargs.pop('repetition_index')
+    if remove_args:
+        for arg in remove_args:
+            if arg in kwargs:
+                kwargs.pop(arg)
     kwargs['seed'] = new_seed
     return kwargs
 
@@ -68,16 +72,16 @@ def update_seed_argument(**kwargs):
 def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
 
     if env is EnvData:
-        fargs = update_seed_argument(repetition_index=repetition_index, seed=seed) 
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), repetition_index=repetition_index, seed=seed) 
         env_node = EnvData(dataset=dataset, **fargs)
     elif env is EnvData2D:
-        fargs = update_seed_argument(window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
         env_node = EnvData2D(dataset=dataset, **fargs)
     elif env is EnvKai:
-        fargs = update_seed_argument(repetition_index=repetition_index, seed=seed) 
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, repetition_index=repetition_index, seed=seed) 
         env_node = EnvKai(**fargs)
     elif env is EnvRandom:
-        fargs = update_seed_argument(ndim=kwargs['ndim'], repetition_index=repetition_index, seed=seed) 
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, ndim=kwargs['ndim'], repetition_index=repetition_index, seed=seed) 
         env_node = EnvRandom(**fargs)
     else:
         assert False
@@ -89,7 +93,8 @@ def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed
                                                                                noisy_dims=kwargs.get('noisy_dims', 0), 
                                                                                pca=kwargs.get('pca'), 
                                                                                pca_after_expansion=kwargs.get('pca_after_expansion'), 
-                                                                               expansion=kwargs.get('expansion', 1), 
+                                                                               expansion=kwargs.get('expansion', 1),
+                                                                               additive_noise=kwargs.get('additive_noise', 0), 
                                                                                whitening=True)
     return [data_train, data_test]
 
