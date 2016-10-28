@@ -24,12 +24,12 @@ def main():
     default_args = {'p':            range(1,11),
                     'K':            [0,1] + range(2, 13, 2),
                     'seed':         0,
-                    'n_train':      1000, 
-                    'n_test':       200, 
+                    'n_train':      10000, 
+                    'n_test':       2000, 
                     'limit_data':   20000,
                     'pca':          .99,
                     'noisy_dims':   0,
-                    'output_dim':   range(1,6), 
+                    'output_dim':   range(1,11), 
                     'algorithm':    eb.Algorithms.PFA, 
                     'measure':      eb.Measures.pfa,
                     'use_test_set': True,
@@ -39,20 +39,13 @@ def main():
                     'processes':    1}
 
     datasets = [#{'env': EnvKai, 'dataset': None, 'noisy_dims': 10, 'pca': 1., 'output_dim': [1,2]},
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG,  'pca': 1.}, # K=0,  p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'pca': 1.}, # K=0,  p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'pca': 1.},
-                #{'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000, 'n_test': 2500},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'pca': 1.},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'pca': 1.},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'pca': 1.},
-                #{'env': EnvData, 'dataset': env_data.Datasets.STFT1},           # K=10, p=8
-                #{'env': EnvData, 'dataset': env_data.Datasets.STFT2},           # K=0,  p=1
-                #{'env': EnvData, 'dataset': env_data.Datasets.STFT3},           # K=0,  p=1
-                #{'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},        # K=0, p=3
-                #{'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},        # K=1, p=3
-                #{'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},  # K=1, p=8
+                #{'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000,},
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT1},           # K=10, p=8
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT2},           # K=0,  p=1
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT3},           # K=0,  p=1
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},        # K=0, p=3
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},        # K=1, p=3
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},  # K=1, p=8
                 ]
     
     for _, dataset_args in enumerate(datasets):

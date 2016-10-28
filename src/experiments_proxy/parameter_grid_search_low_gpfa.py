@@ -43,10 +43,11 @@ def main():
 
     datasets = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},  # p=1, k=2
                 {'env': EnvData, 'dataset': env_data.Datasets.EEG2}, # p=1, k=1
+                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},   # p=10, k=1 
                 {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},   # p=10, k=1
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},  # p=10, k=1
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},  # p=2, k=1
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},  # p=2, k=2
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},  # p=2, k=1
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},  # p=2, k=2
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},  # p=1, k=2
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},  # p=1, k=2
                 ]
     
@@ -63,6 +64,7 @@ def main():
         idc_min = np.unravel_index(np.argmin(result_averaged), result_averaged.shape) # convert to 2D index
         print dataset_args['env'], dataset_args['dataset']
         print '  ', ', '.join(['%s = %d' % (parameters[i][0], parameters[i][1][idx]) for i, idx in enumerate(idc_min)])
+        print ''
         
         #plt.plot(result_averaged.T)
         #plt.show()

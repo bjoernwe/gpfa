@@ -25,7 +25,7 @@ def main():
 
     default_args = {'seed':         0,
                     'n_train':      10000, 
-                    'n_test':       4000, 
+                    'n_test':       2000, 
                     'pca':          .99,
                     'noisy_dims':   0,
                     'output_dim':   range(1,11), 
@@ -39,13 +39,15 @@ def main():
 
     datasets = [{'env': EnvRandom, 'dataset': None, 'ndim': 20, 'pca': 1., 'K': 0, 'p': 1},
                 #{'env': EnvKai, 'dataset': None, 'noisy_dims': 10, 'pca': 1., 'output_dim': [1,2]},
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG,  'pca': 1., 'K': 0, 'p': 10}, # K=0,  p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'pca': 1., 'K': 0, 'p': 10}, # K=0,  p=10
-                #{'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000, 'n_test': 2500},
-                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'pca': 1.},
-                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'pca': 1.},
-                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
-                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'pca': 1.},
+                {'env': EnvData, 'dataset': env_data.Datasets.EEG,  'pca': 1., 'K': 0, 'p': 10, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'pca': 1., 'K': 0, 'p':  8, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'pca': 1., 'K': 6, 'p': 10, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'pca': 1., 'K': 6, 'p': 10, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'pca': 1., 'K': 0, 'p': 10, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'pca': 1., 'K': 6, 'p':  6, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1., 'K': 1, 'p': 10, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'pca': 1., 'K': 1, 'p': 10, 'n_train': 1000, 'n_test': 200, 'output_dim': range(1,6)},
+                {'env': EnvData, 'dataset': env_data.Datasets.HAPT,  'K':  0, 'p': 4, 'n_train': 5000},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'K': 10, 'p': 8},           # K=10, p=8
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT2, 'K':  0, 'p': 1},           # K=0,  p=1
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT3, 'K':  0, 'p': 1},           # K=0,  p=1

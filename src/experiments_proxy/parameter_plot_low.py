@@ -42,16 +42,17 @@ def main():
                     'manage_seed': 'external',
                     'processes': None}
 
-    datasets = [{'env': EnvData, 'dataset': env_data.Datasets.EEG,  'k': 1, 'p': 1, 'K': 0},
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'k': 1, 'p': 1, 'K': 0},
-                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'k': 1, 'p': 10, 'K': 0},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'k': 1, 'p': 10, 'K': 0},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'k': 1, 'p': 2, 'K': 0},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'k': 2, 'p': 2, 'K': 0},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'k': 2, 'p': 1, 'K': 0},
+    datasets = [#{'env': EnvData, 'dataset': env_data.Datasets.EEG,  'k': 1, 'p': 1, 'K': 0},
+                #{'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'k': 1, 'p': 1, 'K': 0},
+                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'k': 1, 'p': 10, 'K': 6},
+                #{'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'k': 1, 'p': 10, 'K': 0},
+                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'k': 1, 'p': 10, 'K': 0},
+                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'k': 1, 'p': 2, 'K': 0},
+                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'k': 2, 'p': 2, 'K': 0},
+                #{'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'k': 2, 'p': 1, 'K': 0},
                 ]
     
-    experiments = OrderedDict([('p', range(1,11)), 
+    experiments = OrderedDict([#('p', range(1,11)), 
                                #('k', [1, 2, 5, 10, 15, 20, 30, 50]),
                                #('k_eval', ([1, 2, 5, 10, 15, 20, 30, 50], .3, (-1, 55))),
                                ('n_train', range(200, 1100, 100)),
@@ -71,6 +72,7 @@ def main():
             plt.figure()
             plot.plot_experiment(**kwargs)
             
+            plt.title(dataset_args['dataset'])
             plt.xlabel(plt.gca().xaxis.label.get_text() + ' (default: %s)' % dataset_args.get(experiment_arg, None))
 
     plt.show()

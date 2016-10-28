@@ -19,7 +19,7 @@ from envs.env_kai import EnvKai
 
 def main():
     
-    #mkl.set_num_threads(1)
+    mkl.set_num_threads(1)
 
     default_args = {'p':            [1,2,4,6,8,10],
                     'K':            [0,1] + range(2, 11, 2),
@@ -39,12 +39,13 @@ def main():
                     'processes':    None}
 
     datasets = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},  # K=0,  p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG2}, # K=0,  p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},
+                {'env': EnvData, 'dataset': env_data.Datasets.EEG2}, # K=0,  p=8
+                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},   # K=6, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},   # K=6, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},  # K=0, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},  # K=6, p=6
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},  # K=1, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},  # K=1, p=10
                 ]
     
     for _, dataset_args in enumerate(datasets):
@@ -60,6 +61,7 @@ def main():
         idc_min = np.unravel_index(np.argmin(result_averaged), result_averaged.shape) # convert to 2D index
         print dataset_args['env'], dataset_args['dataset']
         print '  ', ', '.join(['%s = %d' % (parameters[i][0], parameters[i][1][idx]) for i, idx in enumerate(idc_min)])
+        print ''
         
         #plt.plot(result_averaged.T)
         #plt.show()
