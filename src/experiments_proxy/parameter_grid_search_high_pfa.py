@@ -19,7 +19,7 @@ from envs.env_kai import EnvKai
 
 def main():
     
-    #mkl.set_num_threads(1)
+    mkl.set_num_threads(1)
 
     default_args = {'p':            range(1,11),
                     'K':            [0,1] + range(2, 13, 2),
@@ -36,16 +36,16 @@ def main():
                     'repetitions':  5,
                     'cachedir':     '/scratch/weghebvc',
                     'manage_seed':  'external',
-                    'processes':    1}
+                    'processes':    None}
 
     datasets = [#{'env': EnvKai, 'dataset': None, 'noisy_dims': 10, 'pca': 1., 'output_dim': [1,2]},
-                #{'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000,},
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT1},           # K=10, p=8
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT2},           # K=0,  p=1
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT3},           # K=0,  p=1
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},        # K=0, p=3
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},        # K=1, p=3
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},  # K=1, p=8
+                {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000,}, # K=1, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT1},           # K=12, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT2},           # K=12, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT3},           # K=0,  p=7
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},        # K=0, p=4
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},        # K=0, p=10
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},  # K=1, p=10
                 ]
     
     for _, dataset_args in enumerate(datasets):
@@ -61,6 +61,7 @@ def main():
         idc_min = np.unravel_index(np.argmin(result_averaged), result_averaged.shape) # convert to 2D index
         print dataset_args['env'], dataset_args['dataset']
         print '  ', ', '.join(['%s = %d' % (parameters[i][0], parameters[i][1][idx]) for i, idx in enumerate(idc_min)])
+        print ''
         
         #plt.plot(result_averaged.T)
         #plt.show()
