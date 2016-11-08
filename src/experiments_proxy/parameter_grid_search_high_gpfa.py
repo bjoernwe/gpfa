@@ -22,8 +22,8 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8],
-                    'k':            [1,2,5,10,20,30],
+    default_args = {'p':            [1,2,4,6,8,10,15,20,30],
+                    'k':            [1,2,5,10],
                     'iterations':   30,
                     'k_eval':       10,
                     'seed':         0,
@@ -58,17 +58,22 @@ def main():
         kwargs = dict(default_args)
         kwargs.update(dataset_args)
         result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
+        result_averaged = np.mean(result.values, axis=(0, -1)) # 1st axis = output_dim, last axis = repetitions
 
-        # print best parameters
-        parameters = result.iter_args.items()[1:] # iter_args w/o output_dim
-        result_averaged = np.mean(result.values, axis=(0, -1)) # 1st axis = output_dim, last axis = repetitions 
-        idc_min = np.unravel_index(np.argmin(result_averaged), result_averaged.shape) # convert to 2D index
-        print dataset_args['env'], dataset_args['dataset']
-        print '  ', ', '.join(['%s = %d' % (parameters[i][0], parameters[i][1][idx]) for i, idx in enumerate(idc_min)])
-        print ''
-        
-        #plt.plot(result_averaged.T)
-        #plt.show()
+        if len(result.iter_args) == 3:  # grid search
+            # print best parameters
+            parameters = result.iter_args.items()[1:] # iter_args w/o output_dim
+            idc_min = np.unravel_index(np.argmin(result_averaged), result_averaged.shape) # convert to 2D index
+            print dataset_args['env'], dataset_args['dataset']
+            print '  ', ', '.join(['%s = %d' % (parameters[i][0], parameters[i][1][idx]) for i, idx in enumerate(idc_min)])
+            print ''
+        elif len(result.iter_args) == 2:
+            iter_arg_values = result.iter_args.values()[1]
+            plt.figure()
+            plt.plot(iter_arg_values, result_averaged)
+            plt.xlabel(result.iter_args.keys()[1])
+        else:
+            assert False
 
     plt.show()
 
