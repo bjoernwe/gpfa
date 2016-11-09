@@ -181,7 +181,7 @@ def train_foreca(data_train, output_dim):
  
  
  
-@mem.cache
+#@mem.cache
 def train_pfa(data_train, p, K, output_dim):
     model = PFANodeMDP.PFANode(p=p, k=K, affine=False, output_dim=output_dim)
     model.train(data_train)
