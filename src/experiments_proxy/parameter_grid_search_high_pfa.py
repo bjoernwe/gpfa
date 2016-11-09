@@ -21,7 +21,7 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8,10,15,20,30],
+    default_args = {'p':            [1,2,4,6,8,10,15,20],
                     'K':            [0,1] + range(2, 13, 2),
                     'seed':         0,
                     'n_train':      10000, 
@@ -48,22 +48,28 @@ def main():
                 {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},  # K=1, p=10
                 ]
     
+    # dict to store results in
+    result_dict = {}
+    
     for _, dataset_args in enumerate(datasets):
 
         # run cross-validation        
         kwargs = dict(default_args)
         kwargs.update(dataset_args)
         result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-        result_averaged = np.mean(result.values, axis=(0, -1)) # 1st axis = output_dim, last axis = repetitions
+        result_averaged = np.mean(result.values, axis=(0, -1)) # average out 1st axis = output_dim and last axis = repetitions
 
-        if len(result.iter_args) == 3:  # grid search
-            # print best parameters
+        if len(result.iter_args) == 3:
+            # grid search
             parameters = result.iter_args.items()[1:] # iter_args w/o output_dim
             idc_min = np.unravel_index(np.argmin(result_averaged), result_averaged.shape) # convert to 2D index
+            # assemble result dict
+            result_dict[dataset_args['dataset']] = {}
+            for i, idx in enumerate(idc_min):
+                result_dict[dataset_args['dataset']][parameters[i][0]] = parameters[i][1][idx]
             print dataset_args['env'], dataset_args['dataset']
-            print '  ', ', '.join(['%s = %d' % (parameters[i][0], parameters[i][1][idx]) for i, idx in enumerate(idc_min)])
-            print ''
         elif len(result.iter_args) == 2:
+            # plot results for the one changing parameter
             iter_arg_values = result.iter_args.values()[1]
             plt.figure()
             plt.plot(iter_arg_values, result_averaged)
@@ -71,6 +77,11 @@ def main():
         else:
             assert False
         
+    # print results as code ready to copy & paste
+    print '{'
+    for dataset, values in result_dict.items():
+        print '                       env_data.%s: %s,' % (dataset.__str__(), values)
+    print '}'
     plt.show()
 
 
