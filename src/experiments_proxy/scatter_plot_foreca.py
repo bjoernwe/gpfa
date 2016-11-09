@@ -28,7 +28,7 @@ def main():
                            'algorithm':    eb.Algorithms.ForeCA, 
                            'measure':      eb.Measures.omega,
                            'use_test_set': True,
-                           'repetitions':  20,
+                           'repetitions':  50,
                            'cachedir':     '/scratch/weghebvc',
                            'manage_seed':  'external',
                            'processes':    None}
@@ -40,14 +40,15 @@ def main():
                         'output_dim':   5,
                         'omega_dim':    range(5)}
 
-    datasets_low = [{'env': EnvData, 'dataset': env_data.Datasets.EEG,  'k': 2, 'p': 1},
-                    {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'k': 1, 'p': 1},
-                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'k': 1, 'p': 10},
-                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'k': 1, 'p': 10},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'k': 1, 'p': 2},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'k': 2, 'p': 2},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'k': 2, 'p': 1},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'k': 2, 'p': 1}
+    datasets_low = [{'env': EnvRandom, 'dataset': None, 'ndim': 20},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EEG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EEG2},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},
+                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD}
                     ]
                 
     colors = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(datasets_low))))
