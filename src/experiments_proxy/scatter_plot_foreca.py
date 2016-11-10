@@ -16,6 +16,8 @@ from envs.env_data2d import EnvData2D
 from envs.env_kai import EnvKai
 from envs.env_random import EnvRandom
 
+import error_ellipse
+
 
 
 def main():
@@ -76,6 +78,11 @@ def main():
             marker = next(markers)
             label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
             plt.scatter(X, Y, c=color, marker=marker, label=label, s=80)
+            
+            # ellipses
+            for i in range(result.values.shape[0]):
+                pts = np.vstack([result.values[i], result_sfa.values[i]]).T
+                error_ellipse.plot_point_cov(pts, nstd=1, alpha=.2, color=color, linewidth=1)
 
     # 
     plt.xlabel('predictability of ForeCA')
