@@ -21,7 +21,7 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8,10,15,20],
+    default_args = {'p':            [1,2,4,6,8,10],
                     'K':            [0,1] + range(2, 13, 2),
                     'seed':         0,
                     'n_train':      10000, 
@@ -39,13 +39,13 @@ def main():
                     'processes':    None}
 
     datasets = [#{'env': EnvKai, 'dataset': None, 'noisy_dims': 10, 'pca': 1., 'output_dim': [1,2]},
-                {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000,}, # K=1, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT1},           # K=12, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT2},           # K=12, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT3},           # K=0,  p=7
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},        # K=0, p=4
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},        # K=0, p=10
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},  # K=1, p=10
+                {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000,},
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT2},
+                {'env': EnvData, 'dataset': env_data.Datasets.STFT3},
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},
+                {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},
                 ]
     
     # dict to store results in

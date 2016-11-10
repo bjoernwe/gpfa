@@ -22,7 +22,7 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8,10,15,20],
+    default_args = {'p':            [1,2,4,6,8,10],
                     'k':            [1,2,5,10],
                     'iterations':   30,
                     'k_eval':       10,

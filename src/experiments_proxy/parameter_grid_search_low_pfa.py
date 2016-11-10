@@ -21,7 +21,7 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8,10,15,20],
+    default_args = {'p':            [1,2,4,6,8,10],
                     'K':            [0,1] + range(2, 11, 2),
                     'seed':         0,
                     'n_train':      1000, 
@@ -38,14 +38,14 @@ def main():
                     'manage_seed':  'external',
                     'processes':    None}
 
-    datasets = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},  # K=0,  p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG2}, # K=0,  p=8
-                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},   # K=6, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},   # K=6, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},  # K=0, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},  # K=6, p=6
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},  # K=1, p=10
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},  # K=1, p=10
+    datasets = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
+                {'env': EnvData, 'dataset': env_data.Datasets.EEG2},
+                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},
+                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},
+                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},
                 ]
     
     # dict to store results in
