@@ -13,14 +13,13 @@ from envs import env_data
 from envs import env_data2d
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
-from envs.env_kai import EnvKai
 from envs.env_random import EnvRandom
 
 
 
 def main():
     
-    #mkl.set_num_threads(1)
+    mkl.set_num_threads(1)
 
     default_args_global = {'seed':         0,
                            'noisy_dims':   0,
@@ -30,7 +29,7 @@ def main():
                            'iterations':   30,
                            'k_eval':       10,
                            'use_test_set': True,
-                           'repetitions':  25,
+                           'repetitions':  30,
                            'cachedir':     '/scratch/weghebvc',
                            'manage_seed':  'external',
                            'processes':    None}
@@ -47,49 +46,77 @@ def main():
                          'pca':          .99,
                          'output_dim':   range(1,11)}
 
-    datasets_low = [{'env': EnvData, 'dataset': env_data.Datasets.EEG,  'k': 2, 'p': 1},
-                    {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'k': 1, 'p': 1},
-                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'k': 1, 'p': 10},
-                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'k': 1, 'p': 10},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG, 'k': 1, 'p': 2},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'k': 2, 'p': 2},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'k': 2, 'p': 1},
-                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'k': 2, 'p': 1}
+    datasets_low = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EEG2},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},
+                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD}
                     ]
+    
+    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 2, 'k': 2},
+                       env_data.Datasets.PHYSIO_EHG: {'p': 6, 'k': 1},
+                       env_data.Datasets.PHYSIO_UCD: {'p': 1, 'k': 5},
+                       env_data.Datasets.PHYSIO_MMG: {'p': 2, 'k': 2},
+                       env_data.Datasets.EIGHT_EMOTION: {'p': 10, 'k': 1},
+                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 2, 'k': 1},
+                       env_data.Datasets.EEG: {'p': 1, 'k': 2},
+                       env_data.Datasets.EEG2: {'p': 1, 'k': 2}}
                 
     datasets_high = [{'env': EnvRandom, 'dataset': None, 'ndim': 200, 'k': 2, 'p': 1},
-                     {'env': EnvData, 'dataset': env_data.Datasets.HAPT,  'k': 10, 'p': 1, 'n_train': 5000},
-                     {'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'k': 30, 'p': 4},
-                     {'env': EnvData, 'dataset': env_data.Datasets.STFT2, 'k':  2, 'p': 4},
-                     {'env': EnvData, 'dataset': env_data.Datasets.STFT3, 'k':  1, 'p': 4},
-                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,         'k': 1,  'p': 1, 'window': ((70,70),(90,90))},
-                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic,       'k': 5,  'p': 1, 'window': ((35,65),(55,85))},
-                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'k': 20, 'p': 4, 'window': ((16,30),(36,50))}
+                     {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
+                     {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
+                     {'env': EnvData, 'dataset': env_data.Datasets.STFT2},
+                     {'env': EnvData, 'dataset': env_data.Datasets.STFT3},
+                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,         'window': ((70,70),(90,90))},
+                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic,       'window': ((35,65),(55,85))},
+                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))}
                      ]
     
-    colors = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(datasets_low) + len(datasets_high))))
+    parameters_high = {env_data.Datasets.HAPT: {'p': 1, 'k': 10},
+                       env_data.Datasets.STFT1: {'p': 4, 'k': 10},
+                       env_data.Datasets.STFT2: {'p': 4, 'k': 2},
+                       env_data.Datasets.STFT3: {'p': 4, 'k': 1},
+                       env_data2d.Datasets.Mario: {'p': 1, 'k': 1},
+                       env_data2d.Datasets.Traffic: {'p': 1, 'k': 5},
+                       env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 5}}
+    
+    colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(datasets_low) + len(datasets_high))))
     markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
-    plt.plot([1e-7, 8], [1e-7,8], '-')
+    plt.plot([1e-4, 1e2], [1e-4, 1e2], '-')
 
-    for default_args, datasets in zip([default_args_low, default_args_high], [datasets_low, datasets_high]):
+    for default_args, datasets, parameters in zip([default_args_low, default_args_high], 
+                                                  [datasets_low, datasets_high], 
+                                                  [parameters_low, parameters_high]):
         
         for _, dataset_args in enumerate(datasets):
+            
+            print dataset_args['dataset']
             
             # PFA/GPFA signals
             kwargs = dict(default_args_global)
             kwargs.update(default_args)
             kwargs.update(dataset_args)
+            dataset = dataset_args['dataset']
+            if dataset in parameters:
+                kwargs.update(parameters[dataset])
             result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
             
             # SFA signals for comparison
             kwargs.update({'algorithm': eb.Algorithms.SFA})
             result_sfa = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
     
-            # plot
+            # point cloud
             color = next(colors)
             marker = next(markers)
+            for i in range(result.values.shape[0]):
+                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0)
+
+            # plot
+            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
+            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
             label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
             plt.scatter(X, Y, c=color, marker=marker, label=label, s=80)
 

@@ -1,7 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import mkl
+#import mkl
 #import sys
 
 import explot as ep
@@ -13,10 +13,7 @@ from envs import env_data
 from envs import env_data2d
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
-from envs.env_kai import EnvKai
 from envs.env_random import EnvRandom
-
-import error_ellipse
 
 
 
@@ -84,9 +81,9 @@ def main():
                        env_data2d.Datasets.Traffic: {'p': 10, 'K': 0},
                        env_data2d.Datasets.SpaceInvaders: {'p': 10, 'K': 1}}
     
-    colors = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(datasets_low) + len(datasets_high))))
+    colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(datasets_low) + len(datasets_high))))
     markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
-    plt.plot([1e-7, 8], [1e-7,8], '-')
+    plt.plot([1e-7, 1e2], [1e-7, 1e2], '-', zorder=3)
 
     for default_args, datasets, parameters in zip([default_args_low, default_args_high], 
                                                   [datasets_low, datasets_high], 
@@ -104,22 +101,22 @@ def main():
             if dataset in parameters:
                 kwargs.update(parameters[dataset])
             result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
             
             # SFA signals for comparison
             kwargs.update({'algorithm': eb.Algorithms.SFA})
             result_sfa = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
     
-            # plot
+            # point cloud
             color = next(colors)
             marker = next(markers)
-            label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
-            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80)
-
-            # point cloud
             for i in range(result.values.shape[0]):
-                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.1, linewidths=0)
+                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
+
+            # plot
+            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
+            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
+            label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
+            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80, zorder=2)
 
     # 
     plt.xlabel('error of PFA')

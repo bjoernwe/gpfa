@@ -1,7 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import mkl
+#import mkl
 #import sys
 
 import explot as ep
@@ -10,13 +10,11 @@ import experiments_proxy.experiment_base as eb
 
 #sys.path.append('/home/weghebvc/workspace/git/environments_new/src/')
 from envs import env_data
-from envs import env_data2d
+#from envs import env_data2d
 from envs.env_data import EnvData
-from envs.env_data2d import EnvData2D
-from envs.env_kai import EnvKai
+#from envs.env_data2d import EnvData2D
+#from envs.env_kai import EnvKai
 from envs.env_random import EnvRandom
-
-import error_ellipse
 
 
 
@@ -53,7 +51,7 @@ def main():
                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD}
                     ]
                 
-    colors = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(datasets_low))))
+    colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(datasets_low))))
     markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
     plt.plot([1e0, 1e2], [1e0, 1e2], '-')
 
@@ -66,23 +64,22 @@ def main():
             kwargs.update(default_args)
             kwargs.update(dataset_args)
             result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
             
             # SFA signals for comparison
             kwargs.update({'algorithm': eb.Algorithms.SFA})
             result_sfa = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
     
-            # plot
+            # point cloud
             color = next(colors)
             marker = next(markers)
-            label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
-            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80)
-            
-            # ellipses
             for i in range(result.values.shape[0]):
-                pts = np.vstack([result.values[i], result_sfa.values[i]]).T
-                error_ellipse.plot_point_cov(pts, nstd=1, alpha=.2, color=color, linewidth=1)
+                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
+
+            # plot
+            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
+            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
+            label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
+            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80, zorder=2)
 
     # 
     plt.xlabel('predictability of ForeCA')
