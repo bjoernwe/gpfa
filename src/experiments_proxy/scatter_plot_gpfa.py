@@ -112,13 +112,13 @@ def main():
             color = next(colors)
             marker = next(markers)
             for i in range(result.values.shape[0]):
-                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0)
+                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
 
             # plot
             X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
             Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
             label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
-            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80)
+            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80, zorder=2)
 
     # 
     plt.xlabel('error of GPFA')
