@@ -1,10 +1,6 @@
-import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import mkl
 #import sys
-
-import explot as ep
 
 import experiments_proxy.experiment_base as eb
 
@@ -14,6 +10,8 @@ from envs import env_data2d
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
 from envs.env_random import EnvRandom
+
+from scatter_plot import scatter_plot
 
 
 
@@ -29,7 +27,7 @@ def main():
                            'iterations':   30,
                            'k_eval':       10,
                            'use_test_set': True,
-                           'repetitions':  30,
+                           'repetitions':  50,
                            'cachedir':     '/scratch/weghebvc',
                            'manage_seed':  'external',
                            'processes':    None}
@@ -45,7 +43,7 @@ def main():
                          'n_test':       2000, 
                          'pca':          .99,
                          'output_dim':   range(1,11)}
-
+    
     datasets_low = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
                     {'env': EnvData, 'dataset': env_data.Datasets.EEG2},
                     {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},
@@ -56,15 +54,6 @@ def main():
                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD}
                     ]
     
-    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 2, 'k': 2},
-                       env_data.Datasets.PHYSIO_EHG: {'p': 6, 'k': 1},
-                       env_data.Datasets.PHYSIO_UCD: {'p': 1, 'k': 5},
-                       env_data.Datasets.PHYSIO_MMG: {'p': 2, 'k': 2},
-                       env_data.Datasets.EIGHT_EMOTION: {'p': 10, 'k': 1},
-                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 2, 'k': 1},
-                       env_data.Datasets.EEG: {'p': 1, 'k': 2},
-                       env_data.Datasets.EEG2: {'p': 1, 'k': 2}}
-                
     datasets_high = [{'env': EnvRandom, 'dataset': None, 'ndim': 200, 'k': 2, 'p': 1},
                      {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
                      {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
@@ -75,6 +64,15 @@ def main():
                      {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))}
                      ]
     
+    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 2, 'k': 2},
+                       env_data.Datasets.PHYSIO_EHG: {'p': 6, 'k': 1},
+                       env_data.Datasets.PHYSIO_UCD: {'p': 1, 'k': 5},
+                       env_data.Datasets.PHYSIO_MMG: {'p': 2, 'k': 2},
+                       env_data.Datasets.EIGHT_EMOTION: {'p': 10, 'k': 1},
+                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 2, 'k': 1},
+                       env_data.Datasets.EEG: {'p': 1, 'k': 2},
+                       env_data.Datasets.EEG2: {'p': 1, 'k': 2}}
+                
     parameters_high = {env_data.Datasets.HAPT: {'p': 1, 'k': 10},
                        env_data.Datasets.STFT1: {'p': 4, 'k': 10},
                        env_data.Datasets.STFT2: {'p': 4, 'k': 2},
@@ -83,42 +81,15 @@ def main():
                        env_data2d.Datasets.Traffic: {'p': 1, 'k': 5},
                        env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 5}}
     
-    colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(datasets_low) + len(datasets_high))))
-    markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
-    plt.plot([1e-4, 1e2], [1e-4, 1e2], '-')
+    plt.plot([1e-4, 1e3], [1e-4, 1e3], '-')
 
-    for default_args, datasets, parameters in zip([default_args_low, default_args_high], 
-                                                  [datasets_low, datasets_high], 
-                                                  [parameters_low, parameters_high]):
-        
-        for _, dataset_args in enumerate(datasets):
-            
-            print dataset_args['dataset']
-            
-            # PFA/GPFA signals
-            kwargs = dict(default_args_global)
-            kwargs.update(default_args)
-            kwargs.update(dataset_args)
-            dataset = dataset_args['dataset']
-            if dataset in parameters:
-                kwargs.update(parameters[dataset])
-            result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-            
-            # SFA signals for comparison
-            kwargs.update({'algorithm': eb.Algorithms.SFA})
-            result_sfa = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
-    
-            # point cloud
-            color = next(colors)
-            marker = next(markers)
-            for i in range(result.values.shape[0]):
-                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
-
-            # plot
-            X = np.mean(result.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
-            Y = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
-            label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
-            plt.scatter(X, Y, c=color, marker=marker, label=label, s=80, zorder=2)
+    scatter_plot(default_args_global=default_args_global,
+                 default_args_low=default_args_low,
+                 default_args_high=default_args_high,
+                 datasets_low=datasets_low, 
+                 datasets_high=datasets_high, 
+                 parameters_low=parameters_low, 
+                 parameters_high=parameters_high)
 
     # 
     plt.xlabel('error of GPFA')
