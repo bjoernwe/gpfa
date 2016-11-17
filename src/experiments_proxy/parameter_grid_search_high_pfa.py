@@ -13,7 +13,6 @@ from envs import env_data
 from envs import env_data2d
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
-from envs.env_kai import EnvKai
 
 
 
@@ -21,40 +20,40 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8,10],
-                    'K':            [0,1] + range(2, 13, 2),
-                    'seed':         0,
-                    'n_train':      10000, 
-                    'n_test':       2000, 
-                    'limit_data':   20000,
-                    'pca':          .99,
-                    'noisy_dims':   0,
-                    'output_dim':   range(1,11), 
-                    'algorithm':    eb.Algorithms.PFA, 
-                    'measure':      eb.Measures.pfa,
-                    'use_test_set': True,
-                    'repetitions':  5,
-                    'cachedir':     '/scratch/weghebvc',
-                    'manage_seed':  'external',
-                    'processes':    None}
+    default_args_global = {'p':            [1,2,4,6,8,10],
+                           'K':            [0,1] + range(2, 11, 2),
+                           'pca':          .99,
+                           'output_dim':   range(1,11),
+                           'algorithm':    eb.Algorithms.PFA, 
+                           'measure':      eb.Measures.pfa,
+                           'n_train':      10000, 
+                           'n_test':       2000, 
+                           'seed':         0,
+                           'noisy_dims':   0,
+                           'limit_data':   25000,
+                           'use_test_set': True,
+                           'repetitions':  5,
+                           'cachedir':     '/scratch/weghebvc',
+                           'manage_seed':  'external',
+                           'processes':    None}
 
-    datasets = [#{'env': EnvKai, 'dataset': None, 'noisy_dims': 10, 'pca': 1., 'output_dim': [1,2]},
-                {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000,},
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT2},
-                {'env': EnvData, 'dataset': env_data.Datasets.STFT3},
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,   'window': ((70,70),(90,90))},
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic, 'window': ((35,65),(55,85))},
-                {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))},
-                ]
+    datasets_high = [{'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
+                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
+                     {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
+                     {'env': EnvData, 'dataset': env_data.Datasets.STFT2},
+                     {'env': EnvData, 'dataset': env_data.Datasets.STFT3},
+                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,         'window': ((70,70),(90,90))},
+                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic,       'window': ((35,65),(55,85))},
+                     {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))}
+                     ]
     
     # dict to store results in
     result_dict = {}
     
-    for _, dataset_args in enumerate(datasets):
+    for _, dataset_args in enumerate(datasets_high):
 
         # run cross-validation        
-        kwargs = dict(default_args)
+        kwargs = dict(default_args_global)
         kwargs.update(dataset_args)
         result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
         result_averaged = np.mean(result.values, axis=(0, -1)) # average out 1st axis = output_dim and last axis = repetitions

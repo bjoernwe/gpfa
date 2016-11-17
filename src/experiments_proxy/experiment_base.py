@@ -261,7 +261,7 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
 
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, use_test_set, 
                      repetition_index=None, seed=None, **kwargs):
-    
+    # rev: 2
     projected_data, model, data_chunks = calc_projected_data(env=env,
                                                              dataset=dataset, 
                                                              algorithm=algorithm, 

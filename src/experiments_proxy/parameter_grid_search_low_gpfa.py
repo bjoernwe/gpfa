@@ -22,42 +22,41 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args = {'p':            [1,2,4,6,8,10],
-                    'k':            [1,2,5,10],
-                    'iterations':   30,
-                    'k_eval':       10,
-                    'seed':         0,
-                    'n_train':      1000, 
-                    'n_test':       200,
-                    'limit_data':   20000, 
-                    'pca':          1.,
-                    'noisy_dims':   0,
-                    'output_dim':   range(1,6), 
-                    'algorithm':    eb.Algorithms.GPFA2, 
-                    'measure':      eb.Measures.gpfa,
-                    'use_test_set': True,
-                    'repetitions':  10,
-                    'cachedir':     '/scratch/weghebvc',
-                    'manage_seed':  'external',
-                    'processes':    None}
+    default_args_global = {'p':            [1,2,4,6,8,10],
+                           'k':            [1,2,5,10],
+                           'iterations':   30,
+                           'k_eval':       10,
+                           'pca':          1.,
+                           'output_dim':   range(1,6),
+                           'algorithm':    eb.Algorithms.GPFA2, 
+                           'measure':      eb.Measures.gpfa,
+                           'n_train':      10000, 
+                           'n_test':       2000, 
+                           'seed':         0,
+                           'noisy_dims':   0,
+                           'limit_data':   25000,
+                           'use_test_set': True,
+                           'repetitions':  10,
+                           'cachedir':     '/scratch/weghebvc',
+                           'manage_seed':  'external',
+                           'processes':    None}
 
-    datasets = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},  # p=1, k=2
-                {'env': EnvData, 'dataset': env_data.Datasets.EEG2}, # p=1, k=1
-                {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},   # p=10, k=1 
-                {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},   # p=10, k=1
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},  # p=2, k=1
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},  # p=2, k=2
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},  # p=1, k=2
-                {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},  # p=1, k=2
-                ]
+    datasets_low = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EEG2},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'n_train': 1000, 'n_test': 200},
+                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'n_train': 1000, 'n_test': 200},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
+                    {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD}
+                    ]
     
     # dict to store results in
     result_dict = {}
     
-    for _, dataset_args in enumerate(datasets):
+    for _, dataset_args in enumerate(datasets_low):
 
         # run cross-validation        
-        kwargs = dict(default_args)
+        kwargs = dict(default_args_global)
         kwargs.update(dataset_args)
         result = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
         result_averaged = np.mean(result.values, axis=(0, -1)) # average out 1st axis = output_dim and last axis = repetitions
