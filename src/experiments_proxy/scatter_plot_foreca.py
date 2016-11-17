@@ -17,29 +17,28 @@ def main():
     
     #mkl.set_num_threads(1)
 
-    default_args_global = {'seed':         0,
-                           'noisy_dims':   0,
-                           'limit_data':   20000,
-                           'algorithm':    eb.Algorithms.ForeCA, 
+    default_args_global = {'algorithm':    eb.Algorithms.ForeCA, 
                            'measure':      eb.Measures.omega,
+                           'n_train':      10000, 
+                           'n_test':       2000, 
+                           'seed':         0,
+                           'limit_data':   25000,
                            'use_test_set': True,
                            'repetitions':  50,
+                           'noisy_dims':   0,
                            'cachedir':     '/scratch/weghebvc',
                            'manage_seed':  'external',
                            'processes':    None}
 
-    default_args_low = {'seed':         0,
-                        'n_train':      1000, 
-                        'n_test':       200, 
-                        'pca':          1.,
+    default_args_low = {'pca':          1.,
                         'output_dim':   5,
                         'omega_dim':    range(5)}
 
     datasets_low = [{'env': EnvRandom, 'dataset': None, 'ndim': 20},
                     {'env': EnvData, 'dataset': env_data.Datasets.EEG},
                     {'env': EnvData, 'dataset': env_data.Datasets.EEG2},
-                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION},
-                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS},
+                    {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'n_train': 1000, 'n_test': 200},
+                    {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'n_train': 1000, 'n_test': 200},
                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG},

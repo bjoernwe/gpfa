@@ -16,7 +16,7 @@ def scatter_plot(default_args_global, default_args_low, default_args_high, datas
                                                   [datasets_low, datasets_high], 
                                                   [parameters_low, parameters_high]):
         
-        for _, dataset_args in enumerate(datasets):
+        for dataset_args in datasets:
             
             print dataset_args['dataset']
             
