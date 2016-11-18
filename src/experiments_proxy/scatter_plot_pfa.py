@@ -58,19 +58,19 @@ def main():
                      {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))}
                      ]
     
-    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 6, 'K': 1},
+    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 10, 'K': 0},
                        env_data.Datasets.PHYSIO_EHG: {'p': 10, 'K': 2},
-                       env_data.Datasets.PHYSIO_UCD: {'p': 10, 'K': 1},
-                       env_data.Datasets.EIGHT_EMOTION: {'p': 10, 'K': 6},
-                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 0},
+                       env_data.Datasets.PHYSIO_UCD: {'p': 10, 'K': 0},
+                       env_data.Datasets.EIGHT_EMOTION: {'p': 8, 'K': 0},
+                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 10},
                        env_data.Datasets.EEG: {'p': 10, 'K': 0},
-                       env_data.Datasets.EEG2: {'p': 10, 'K': 0}}
-                
-    parameters_high = {env_data.Datasets.HAPT: {'p': 10, 'K': 1},
-                       env_data.Datasets.PHYSIO_MMG: {'p': 6, 'K': 1},
-                       env_data.Datasets.STFT1: {'p': 10, 'K': 12},
-                       env_data.Datasets.STFT2: {'p': 10, 'K': 12},
-                       env_data.Datasets.STFT3: {'p': 8, 'K': 0},
+                       env_data.Datasets.EEG2: {'p': 10, 'K': 1}}
+
+    parameters_high = {env_data.Datasets.HAPT: {'p': 10, 'K': 0},
+                       env_data.Datasets.PHYSIO_MMG: {'p': 2, 'K': 0},
+                       env_data.Datasets.STFT1: {'p': 10, 'K': 10},
+                       env_data.Datasets.STFT2: {'p': 10, 'K': 10},
+                       env_data.Datasets.STFT3: {'p': 10, 'K': 1},
                        env_data2d.Datasets.Mario: {'p': 4, 'K': 0},
                        env_data2d.Datasets.Traffic: {'p': 10, 'K': 0},
                        env_data2d.Datasets.SpaceInvaders: {'p': 10, 'K': 1}}
