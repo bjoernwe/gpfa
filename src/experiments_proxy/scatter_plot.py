@@ -1,6 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats
 
 import explot as ep
 
@@ -62,6 +63,13 @@ def scatter_plot(default_args_global, default_args_low, default_args_high, datas
             xerr = np.vstack([errors_neg, errors_pos])
             yerr = np.vstack([errors_sfa_neg, errors_sfa_pos])
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=7, label=label, zorder=2)
+            
+            # Wilcoxon signed-rank test
+            x = np.mean(result.values, axis=0) # axis 0 = output_dim
+            y = np.mean(result_sfa.values, axis=0)
+            _, pvalue = scipy.stats.wilcoxon(x, y)
+            print 'p-value for X > Y:', pvalue / 2.
+            print 'p-value for X < Y:', 1 - pvalue / 2.
             
     return
 

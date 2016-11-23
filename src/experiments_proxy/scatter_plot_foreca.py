@@ -19,8 +19,8 @@ def main():
 
     default_args_global = {'algorithm':    eb.Algorithms.ForeCA, 
                            'measure':      eb.Measures.omega,
-                           'n_train':      10000, 
-                           'n_test':       2000, 
+                           'n_train':      1000, 
+                           'n_test':       200, 
                            'seed':         0,
                            'limit_data':   25000,
                            'use_test_set': True,
@@ -45,8 +45,6 @@ def main():
                     {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD}
                     ]
                 
-    plt.plot([1e-1, 1e2], [1e-1, 1e2], '-')
-
     scatter_plot(default_args_global=default_args_global,
                  default_args_low=default_args_low,
                  default_args_high={},
@@ -54,6 +52,8 @@ def main():
                  datasets_high=[], 
                  parameters_low={}, 
                  parameters_high={})
+
+    plt.plot([1e-1, 1e2], [1e-1, 1e2], '-', zorder=3)
 
     #
     plt.xlabel('predictability of ForeCA')

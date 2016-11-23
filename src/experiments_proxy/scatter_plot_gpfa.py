@@ -60,25 +60,23 @@ def main():
                      {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))}
                      ]
     
-    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 2, 'k': 2},
-                       env_data.Datasets.PHYSIO_EHG: {'p': 6, 'k': 1},
-                       env_data.Datasets.PHYSIO_UCD: {'p': 1, 'k': 5},
-                       env_data.Datasets.EIGHT_EMOTION: {'p': 10, 'k': 1},
-                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 2, 'k': 1},
-                       env_data.Datasets.EEG: {'p': 1, 'k': 2},
-                       env_data.Datasets.EEG2: {'p': 1, 'k': 2}}
+    parameters_low =  {env_data.Datasets.PHYSIO_MGH: {'p': 1, 'k': 10},
+                       env_data.Datasets.PHYSIO_EHG: {'p': 4, 'k': 10},
+                       env_data.Datasets.PHYSIO_UCD: {'p': 2, 'k': 10},
+                       env_data.Datasets.EIGHT_EMOTION: {'p': 2, 'k': 10},
+                       env_data.Datasets.FIN_EQU_FUNDS: {'p': 6, 'k': 1},
+                       env_data.Datasets.EEG: {'p': 1, 'k': 1},
+                       env_data.Datasets.EEG2: {'p': 1, 'k': 1}}
                 
     parameters_high = {env_data.Datasets.HAPT: {'p': 1, 'k': 10},
-                       env_data.Datasets.PHYSIO_MMG: {'p': 2, 'k': 2},
-                       env_data.Datasets.STFT1: {'p': 4, 'k': 10},
-                       env_data.Datasets.STFT2: {'p': 4, 'k': 2},
-                       env_data.Datasets.STFT3: {'p': 4, 'k': 1},
-                       env_data2d.Datasets.Mario: {'p': 1, 'k': 1},
-                       env_data2d.Datasets.Traffic: {'p': 1, 'k': 5},
-                       env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 5}}
+                       env_data.Datasets.PHYSIO_MMG: {'p': 1, 'k': 1},
+                       env_data.Datasets.STFT1: {'p': 4, 'k': 5},
+                       env_data.Datasets.STFT2: {'p': 6, 'k': 1},
+                       env_data.Datasets.STFT3: {'p': 6, 'k': 1},
+                       env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
+                       env_data2d.Datasets.Traffic: {'p': 1, 'k': 2},
+                       env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 10}}
     
-    plt.plot([1e-4, 1e3], [1e-4, 1e3], '-')
-
     scatter_plot(default_args_global=default_args_global,
                  default_args_low=default_args_low,
                  default_args_high=default_args_high,
@@ -86,6 +84,8 @@ def main():
                  datasets_high=datasets_high, 
                  parameters_low=parameters_low, 
                  parameters_high=parameters_high)
+
+    plt.plot([1e-4, 1e1], [1e-4, 1e1], '-', zorder=3)
 
     # 
     plt.xlabel('error of GPFA')

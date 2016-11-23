@@ -20,7 +20,7 @@ def main():
     
     mkl.set_num_threads(1)
 
-    default_args_global = {'p':            [1,2,4,6,8,10,12],
+    default_args_global = {'p':            [1,2,4,6,8,10],
                            'K':            [0,1] + range(2, 11, 2),
                            'algorithm':    eb.Algorithms.PFA, 
                            'measure':      eb.Measures.pfa,
