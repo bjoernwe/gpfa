@@ -93,6 +93,7 @@ def main():
                 plt.figure()
                 plt.plot(iter_arg_values, result_averaged)
                 plt.xlabel(result.iter_args.keys()[1])
+                plt.title(dataset_args['dataset'])
             else:
                 assert False
         

@@ -64,7 +64,7 @@ def main():
                        env_data.Datasets.EIGHT_EMOTION: {'p': 8, 'K': 0},
                        env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 10},
                        env_data.Datasets.EEG: {'p': 10, 'K': 0},
-                       env_data.Datasets.EEG2: {'p': 10, 'K': 1}}
+                       env_data.Datasets.EEG2: {'p': 6, 'K': 1}}
 
     parameters_high = {env_data.Datasets.HAPT: {'p': 10, 'K': 0},
                        env_data.Datasets.PHYSIO_MMG: {'p': 2, 'K': 0},
