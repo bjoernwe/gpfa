@@ -72,7 +72,7 @@ def update_seed_argument(remove_args=None, **kwargs):
 def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
 
     if env is EnvData:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), repetition_index=repetition_index, seed=seed) 
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), repetition_index=repetition_index, seed=seed)
         env_node = EnvData(dataset=dataset, **fargs)
     elif env is EnvData2D:
         fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
@@ -261,22 +261,22 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
 
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, use_test_set, 
                      repetition_index=None, seed=None, **kwargs):
-    # rev: 2
-    projected_data, model, data_chunks = calc_projected_data(env=env,
-                                                             dataset=dataset, 
-                                                             algorithm=algorithm, 
-                                                             output_dim=output_dim, 
-                                                             n_train=n_train,
-                                                             n_test=n_test, 
-                                                             use_test_set=use_test_set, 
-                                                             repetition_index=repetition_index, 
-                                                             seed=seed, **kwargs)
+    # rev: 4
+    projected_data, model, [data_train, data_test] = calc_projected_data(env=env,
+                                                                         dataset=dataset, 
+                                                                         algorithm=algorithm, 
+                                                                         output_dim=output_dim, 
+                                                                         n_train=n_train,
+                                                                         n_test=n_test, 
+                                                                         use_test_set=use_test_set, 
+                                                                         repetition_index=repetition_index, 
+                                                                         seed=seed, **kwargs)
     
-    return prediction_error_on_data(data=projected_data, measure=measure, model=model, data_chunks=data_chunks, **kwargs)
+    return prediction_error_on_data(data=projected_data, measure=measure, model=model, 
+                                    data_chunks=[data_train, data_test], **kwargs)
     
     
 
-@mem.cache
 def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwargs):
 
     if data.ndim == 1:
@@ -293,7 +293,7 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
     elif measure == Measures.omega_ndim:
         return calc_omega_ndim(data=data)
     elif measure == Measures.pfa:
-        return calc_autoregressive_error(data=data, p=kwargs['p'])
+        return calc_autoregressive_error(data=data, model=model, p=kwargs['p'], data_train=data_chunks[0])
 #     elif measure == Measures.pfa_ndim:
 #         return calc_autoregressive_error_ndim(data=data, 
 #                                          p=kwargs['p'], 
@@ -317,107 +317,7 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
     
     
     
-# def _principal_angle(A, B):
-#     """A and B must be column-orthogonal.
-#     Golub: Matrix Computations, 1996
-#     [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
-#     """
-#     #A = np.array(A, copy=True)
-#     #B = np.array(B, copy=True)
-#     if A.ndim == 1:
-#         A = np.array(A, ndmin=2).T
-#     if B.ndim == 1:
-#         B = np.array(B, ndmin=2).T
-#     assert A.ndim == B.ndim == 2
-#     A = np.linalg.qr(A)[0]
-#     B = np.linalg.qr(B)[0]
-#     _, S, _ = np.linalg.svd(np.dot(A.T, B))
-#     return np.arccos(min(S.min(), 1.0))
-
-
-
-# def principle_angle_models(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
-#      
-#     if dim1 is None:
-#         dim1 = dim2
-#      
-#     _, model1, _, _ = calc_projected_data(dataset=dataset, 
-#                                        algorithm=algorithm1, 
-#                                        output_dim=dim1, 
-#                                        N=N, 
-#                                        use_test_set=use_test_set, 
-#                                        repetition_index=repetition_index, 
-#                                        seed=seed, **kwargs)
-#  
-#     _, model2, _, _ = calc_projected_data(dataset=dataset, 
-#                                        algorithm=algorithm2, 
-#                                        output_dim=dim2, 
-#                                        N=N, 
-#                                        use_test_set=use_test_set, 
-#                                        repetition_index=repetition_index, 
-#                                        seed=seed, **kwargs)
-#  
-#     A = None
-#     if algorithm1 == Algorithms.Random:
-#         A = model1.U
-#     elif algorithm1 == Algorithms.SFA:
-#         A = model1.sf
-#     elif algorithm1 == algorithm1.ForeCA:
-#         A = model1.U
-#     elif algorithm1 == algorithm1.PFA:
-#         A = model1.Ar
-#     elif algorithm1 == algorithm1.GPFA1:
-#         A = model1.U
-#     elif algorithm1 == algorithm1.GPFA2:
-#         A = model1.U
-#     else:
-#         assert False 
-#           
-#     B = None
-#     if algorithm2 == Algorithms.Random:
-#         B = model2.U
-#     elif algorithm2 == Algorithms.SFA:
-#         B = model2.sf
-#     elif algorithm2 == Algorithms.ForeCA:
-#         B = model2.U
-#     elif algorithm2 == Algorithms.PFA:
-#         B = model2.Ar
-#     elif algorithm2 == Algorithms.GPFA1:
-#         B = model2.U
-#     elif algorithm2 == Algorithms.GPFA2:
-#         B = model2.U
-#     else:
-#         assert False 
-#          
-#     return _principal_angle(A=A, B=B)
-    
-    
-    
-# def principle_angle_signals(dataset, algorithm1, algorithm2, dim1, dim2, N, use_test_set, repetition_index=None, seed=None, **kwargs):
-#     
-#     if dim1 is None:
-#         dim1 = dim2
-#      
-#     signals1, _, _, _ = calc_projected_data(dataset=dataset, 
-#                                        algorithm=algorithm1, 
-#                                        output_dim=dim1, 
-#                                        N=N, 
-#                                        use_test_set=use_test_set, 
-#                                        repetition_index=repetition_index, 
-#                                        seed=seed, **kwargs)
-#  
-#     signals2, _, _, _ = calc_projected_data(dataset=dataset, 
-#                                        algorithm=algorithm2, 
-#                                        output_dim=dim2, 
-#                                        N=N, 
-#                                        use_test_set=use_test_set, 
-#                                        repetition_index=repetition_index, 
-#                                        seed=seed, **kwargs)
-#          
-#     return _principal_angle(A=signals1, B=signals2)
-    
-    
-    
+@mem.cache
 def calc_delta(data, ndim=False):
     sfa = mdp.nodes.SFANode()
     sfa.train(data)
@@ -428,31 +328,27 @@ def calc_delta(data, ndim=False):
 
 
 
-# def calc_autoregressive_error_ndim(data, p, K, model=None, data_chunks=None):
-#     #W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
-#     print 'extracted_data:', data.shape
-#     print 'training_data:', data_chunks[0].shape
-#     print 'pfa.W', model.W.shape
-#     print 'pfa.W0', model.W0.shape
-#     print 'pfa.S', model.S.shape
-#     print 'pfa.Ar', model.Ar.shape
-#     #print 'pfa.Ar0', model.Ar.shape
-#     return PFACoreUtil.empiricalRawErrorComponentsRefImp(data=data, W=model.W0.T.dot(model.Ar).T, k=K, srcData=data_chunks[0], W0=model.W0)
-
-
-
-def calc_autoregressive_error(data, p):
-    W = PFACoreUtil.calcRegressionCoeffRefImp(data=data, p=p)
+@mem.cache
+def calc_autoregressive_error(data, model, p, data_train):
+    if isinstance(model, PFANodeMDP.PFANode):
+        W = model.W 
+    else:
+        # for instance when evaluating SFA signals with PFA measure
+        # then PFA model needs to be trained first
+        projected_data_train = model.execute(data_train)
+        W = PFACoreUtil.calcRegressionCoeffRefImp(data=projected_data_train, p=p)
     return PFACoreUtil.empiricalRawErrorRefImp(data=data, W=W)
 
 
 
+@mem.cache
 def calc_omega(data, omega_dim):
     from foreca.foreca_omega import omega
     return omega(data)[omega_dim]
 
 
 
+@mem.cache
 def calc_omega_ndim(data):
     from foreca.foreca_omega import omega
     return omega(data)
