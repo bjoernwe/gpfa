@@ -94,28 +94,28 @@ def main():
                 kwargs.update(parameters[dataset])
 
             # signals
-#             reps = 5
-#             plt.figure()
-#             plt.suptitle(kwargs['dataset'])
-            
-#             for r in range(reps):
-#                 plt.subplot2grid((2,reps), loc=(0,r))
-#                 signals, _, _      = eb.calc_projected_data(use_test_set=False, repetition_index=r, **kwargs)
-#                 signals_test, _, _ = eb.calc_projected_data(use_test_set=True,  repetition_index=r, **kwargs)
-#                 alphas = np.linspace(0, 1, kwargs['output_dim']+1)[::-1]
-#                 x = range(kwargs['n_train'], kwargs['n_train'] + kwargs['n_test'])
-#                 for i in range(kwargs['output_dim']):
-#                     plt.plot(signals[:,i], c='b', alpha=alphas[i])
-#                     plt.plot(x, signals_test[:,i], c='r', alpha=alphas[i])
-#                 
-#                 # SFA signals for comparison
-#                 plt.subplot2grid((2,reps), loc=(1,r))
-#                 kwargs.update({'algorithm': eb.Algorithms.SFA})
-#                 signals_sfa, _, _      = eb.calc_projected_data(use_test_set=False, repetition_index=r, **kwargs)
-#                 signals_sfa_test, _, _ = eb.calc_projected_data(use_test_set=True,  repetition_index=r, **kwargs)
-#                 for i in range(kwargs['output_dim']):
-#                     plt.plot(signals_sfa[:,i], c='b', alpha=alphas[i])
-#                     plt.plot(x, signals_sfa_test[:,i], c='r', alpha=alphas[i])
+            reps = 5
+            plt.figure()
+            plt.suptitle(kwargs['dataset'])
+             
+            for r in range(reps):
+                plt.subplot2grid((2,reps), loc=(0,r))
+                signals, _, _      = eb.calc_projected_data(use_test_set=False, repetition_index=r, **kwargs)
+                signals_test, _, _ = eb.calc_projected_data(use_test_set=True,  repetition_index=r, **kwargs)
+                alphas = np.linspace(0, 1, kwargs['output_dim']+1)[::-1]
+                x = range(kwargs['n_train'], kwargs['n_train'] + kwargs['n_test'])
+                for i in range(kwargs['output_dim']):
+                    plt.plot(signals[:,i], c='b', alpha=alphas[i])
+                    plt.plot(x, signals_test[:,i], c='r', alpha=alphas[i])
+                 
+                # SFA signals for comparison
+                plt.subplot2grid((2,reps), loc=(1,r))
+                kwargs.update({'algorithm': eb.Algorithms.SFA})
+                signals_sfa, _, _      = eb.calc_projected_data(use_test_set=False, repetition_index=r, **kwargs)
+                signals_sfa_test, _, _ = eb.calc_projected_data(use_test_set=True,  repetition_index=r, **kwargs)
+                for i in range(kwargs['output_dim']):
+                    plt.plot(signals_sfa[:,i], c='b', alpha=alphas[i])
+                    plt.plot(x, signals_sfa_test[:,i], c='r', alpha=alphas[i])
                     
             # FFT
             # signals

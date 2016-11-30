@@ -71,9 +71,9 @@ def main():
                        env_data.Datasets.STFT1: {'p': 10, 'K': 10},
                        env_data.Datasets.STFT2: {'p': 10, 'K': 10},
                        env_data.Datasets.STFT3: {'p': 10, 'K': 1},
-                       env_data2d.Datasets.Mario: {'p': 4, 'K': 0},
-                       env_data2d.Datasets.Traffic: {'p': 10, 'K': 0},
-                       env_data2d.Datasets.SpaceInvaders: {'p': 10, 'K': 1}}
+                       env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
+                       env_data2d.Datasets.Traffic: {'p': 1, 'K': 0},
+                       env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0}}
     
     scatter_plot(default_args_global=default_args_global,
                  default_args_low=default_args_low,

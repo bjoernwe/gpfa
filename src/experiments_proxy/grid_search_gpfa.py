@@ -18,7 +18,7 @@ from envs.env_data2d import EnvData2D
 
 def main():
     
-    mkl.set_num_threads(1)
+    #mkl.set_num_threads(1)
 
     default_args_global = {'p':            [1,2,4,6,8],
                            'k':            [1,2,5,10],

@@ -30,7 +30,6 @@ import PFACoreUtil
 
 # prepare joblib.Memory
 default_cachedir = '/scratch/weghebvc'
-#default_cachedir = '/scratch/weghebvc/timing'
 mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 
