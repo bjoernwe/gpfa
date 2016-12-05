@@ -32,7 +32,7 @@ def main():
                            'noisy_dims':   0,
                            'limit_data':   25000,
                            'use_test_set': True,
-                           'repetitions':  10,
+                           'repetitions':  50,
                            'cachedir':     '/scratch/weghebvc',
                            'manage_seed':  'external',
                            'processes':    None}

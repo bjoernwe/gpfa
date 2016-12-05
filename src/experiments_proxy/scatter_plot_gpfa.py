@@ -72,10 +72,10 @@ def main():
                        env_data.Datasets.PHYSIO_MMG: {'p': 1, 'k': 1},
                        env_data.Datasets.STFT1: {'p': 4, 'k': 5},
                        env_data.Datasets.STFT2: {'p': 6, 'k': 1},
-                       env_data.Datasets.STFT3: {'p': 6, 'k': 1},
+                       env_data.Datasets.STFT3: {'p': 8, 'k': 1},
                        env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
                        env_data2d.Datasets.Traffic: {'p': 1, 'k': 2},
-                       env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 10}}
+                       env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 10}}
     
     scatter_plot(default_args_global=default_args_global,
                  default_args_low=default_args_low,
