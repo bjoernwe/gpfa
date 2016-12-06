@@ -16,7 +16,7 @@ def main():
                    'K': [0,1] + range(2, 11, 2)}
 
     # run cross-validation        
-    results = parameters.get_results(alg=eb.Algorithms.PFA, overide_args=search_args)
+    results = parameters.get_results(alg=eb.Algorithms.PFA, overide_args=search_args, include_random=False)
 
     # dict to store results in
     result_dict = {}

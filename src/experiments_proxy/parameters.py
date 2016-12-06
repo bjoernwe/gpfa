@@ -45,7 +45,7 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},
-                {'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1},
+                {'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'output_dim': range(1,11)},
                 {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
@@ -109,17 +109,19 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.PHYSIO_MGH: {'p': 
 
 
 
-def get_results(alg, overide_args={}):
+def get_results(alg, overide_args={}, include_random=True):
 
     results = {}
     
-    kwargs = dict(default_args_global)
-    kwargs['algorithm'] = alg
-    kwargs['measure'] = algorithm_measures[alg]
-    
     for args in dataset_args:
+        env = args['env']
         dataset = args['dataset']
         print dataset
+        if not include_random and env is EnvRandom:
+            continue
+        kwargs = dict(default_args_global)
+        kwargs['algorithm'] = alg
+        kwargs['measure'] = algorithm_measures[alg]
         kwargs.update(args)
         kwargs.update(dataset_default_args.get(dataset, {}))
         kwargs.update(algorithm_parameters.get(alg, {}).get(dataset, {}))
