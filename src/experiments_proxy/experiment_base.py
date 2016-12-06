@@ -300,15 +300,15 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
 #                                          model=model,
 #                                          data_chunks=data_chunks)
     elif measure == Measures.gpfa:
-        return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
-                                                         k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
-                                                         p=kwargs['p'],
-                                                         ndim=False)
+        return calc_predictability_trace_of_avg_cov(x=data, 
+                                                    k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
+                                                    p=kwargs['p'],
+                                                    ndim=False)
     elif measure == Measures.gpfa_ndim:
-        return gpfa.calc_predictability_trace_of_avg_cov(x=data, 
-                                                         k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
-                                                         p=kwargs['p'],
-                                                         ndim=True)
+        return calc_predictability_trace_of_avg_cov(x=data, 
+                                                    k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
+                                                    p=kwargs['p'],
+                                                    ndim=True)
     elif measure == Measures.ndims:
         return data_chunks[0].shape[1]
     else:
@@ -337,6 +337,12 @@ def calc_autoregressive_error(data, model, p, data_train):
         projected_data_train = model.execute(data_train)
         W = PFACoreUtil.calcRegressionCoeffRefImp(data=projected_data_train, p=p)
     return PFACoreUtil.empiricalRawErrorRefImp(data=data, W=W)
+
+
+
+@mem.cache
+def calc_predictability_trace_of_avg_cov(x, k, p, ndim):
+    return gpfa.calc_predictability_trace_of_avg_cov(x=x, k=k, p=p, ndim=ndim)
 
 
 
