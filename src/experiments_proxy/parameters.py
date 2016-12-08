@@ -20,10 +20,14 @@ default_args_global = {'n_train':      10000,
                        'processes':    None}
 
 default_args_low  = {'pca':         1.,
-                     'output_dim':  range(1,6)}
+                     'output_dim':  range(1,6),
+                     #'repetitions': 10
+                     }
 
 default_args_high = {'pca':         .99,
-                     'output_dim':  range(1,11)}
+                     'output_dim':  range(1,11),
+                     #'repetitions': 5
+                     }
 
 algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
                       eb.Algorithms.ForeCA: eb.Measures.omega_ndim,
@@ -90,22 +94,22 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.EEG: {'p': 10, 'K'
                                             env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
                                             env_data2d.Datasets.Traffic: {'p': 1, 'K': 0},
                                             env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0}},
-                        eb.Algorithms.GPFA2: {env_data.Datasets.PHYSIO_MGH: {'p': 1, 'k': 10},
-                                            env_data.Datasets.PHYSIO_EHG: {'p': 4, 'k': 10},
-                                            env_data.Datasets.PHYSIO_UCD: {'p': 2, 'k': 10},
-                                            env_data.Datasets.EIGHT_EMOTION: {'p': 2, 'k': 10},
-                                            env_data.Datasets.FIN_EQU_FUNDS: {'p': 6, 'k': 1},
-                                            env_data.Datasets.EEG: {'p': 1, 'k': 1},
-                                            env_data.Datasets.EEG2: {'p': 1, 'k': 1},
-                                            #
-                                            env_data.Datasets.HAPT: {'p': 1, 'k': 10},
-                                            env_data.Datasets.PHYSIO_MMG: {'p': 1, 'k': 1},
-                                            env_data.Datasets.STFT1: {'p': 4, 'k': 5},
-                                            env_data.Datasets.STFT2: {'p': 6, 'k': 1},
-                                            env_data.Datasets.STFT3: {'p': 8, 'k': 1},
-                                            env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
-                                            env_data2d.Datasets.Traffic: {'p': 1, 'k': 2},
-                                            env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 10}}}
+                        eb.Algorithms.GPFA2: {env_data.Datasets.EEG: {'p': 1, 'k': 1},
+                                              env_data.Datasets.EEG2: {'p': 1, 'k': 1},
+                                              env_data.Datasets.EIGHT_EMOTION: {'p': 2, 'k': 10},
+                                              env_data.Datasets.FIN_EQU_FUNDS: {'p': 6, 'k': 1},
+                                              env_data.Datasets.PHYSIO_EHG: {'p': 4, 'k': 10},
+                                              env_data.Datasets.PHYSIO_MGH: {'p': 1, 'k': 10},
+                                              env_data.Datasets.PHYSIO_UCD: {'p': 2, 'k': 10},
+                                              env_data.Datasets.HAPT: {'p': 1, 'k': 10},
+                                              env_data.Datasets.PHYSIO_MMG: {'p': 1, 'k': 5},
+                                              env_data.Datasets.STFT1: {'p': 2, 'k': 1},
+                                              env_data.Datasets.STFT2: {'p': 6, 'k': 1},
+                                              env_data.Datasets.STFT3: {'p': 6, 'k': 1},
+                                              env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
+                                              env_data2d.Datasets.Traffic: {'p': 1, 'k': 2},
+                                              env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 10}}
+}
 
 
 
