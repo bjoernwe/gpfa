@@ -30,15 +30,16 @@ default_args_high = {'pca':         .99,
                      }
 
 algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
-                      eb.Algorithms.ForeCA: eb.Measures.omega_ndim,
+                      eb.Algorithms.SFFA:   eb.Measures.delta,
+                      eb.Algorithms.ForeCA: eb.Measures.omega,
                       eb.Algorithms.PFA:    eb.Measures.pfa,
                       eb.Algorithms.GPFA2:  eb.Measures.gpfa}
 
 algorithm_args = {eb.Algorithms.ForeCA: {'n_train':      1000, 
                                          'n_test':       200,
-                                         'pca':          .99,
+                                         #'pca':          1.,
                                          'output_dim':   5,
-                                         'omega_dim':    range(1,6)},
+                                         'omega_dim':    range(5)},
                   eb.Algorithms.GPFA2:  {'iterations':   30,
                                          'k_eval':       10,}}
 
@@ -49,7 +50,7 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},
-                {'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'output_dim': range(1,11)},
+                {'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'k': 1, 'output_dim': range(1,11)},
                 {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
@@ -59,6 +60,14 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
                 {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic,       'window': ((35,65),(55,85))},
                 {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50))}
                 ]
+
+datasets_low_dimensional = set([env_data.Datasets.EEG,
+                                env_data.Datasets.EEG2,
+                                env_data.Datasets.EIGHT_EMOTION,
+                                env_data.Datasets.FIN_EQU_FUNDS,
+                                env_data.Datasets.PHYSIO_EHG,
+                                env_data.Datasets.PHYSIO_MGH,
+                                env_data.Datasets.PHYSIO_UCD])
 
 dataset_default_args = {env_data.Datasets.PHYSIO_MGH: default_args_low,
                         env_data.Datasets.PHYSIO_EHG: default_args_low,
@@ -79,21 +88,21 @@ dataset_default_args = {env_data.Datasets.PHYSIO_MGH: default_args_low,
 
 # results from grid-search
 algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.EEG: {'p': 10, 'K': 0},
-                                            env_data.Datasets.EEG2: {'p': 10, 'K': 0},
+                                            env_data.Datasets.EEG2: {'p': 8, 'K': 0},
                                             env_data.Datasets.EIGHT_EMOTION: {'p': 8, 'K': 0},
-                                            env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 10},
+                                            env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 8},
                                             env_data.Datasets.PHYSIO_EHG: {'p': 10, 'K': 2},
                                             env_data.Datasets.PHYSIO_MGH: {'p': 10, 'K': 0},
                                             env_data.Datasets.PHYSIO_UCD: {'p': 10, 'K': 0},
                                             #
                                             env_data.Datasets.HAPT: {'p': 10, 'K': 0},
-                                            env_data.Datasets.PHYSIO_MMG: {'p': 2, 'K': 0},
+                                            env_data.Datasets.PHYSIO_MMG: {'p': 2, 'K': 10},
                                             env_data.Datasets.STFT1: {'p': 10, 'K': 10},
                                             env_data.Datasets.STFT2: {'p': 10, 'K': 10},
                                             env_data.Datasets.STFT3: {'p': 10, 'K': 1},
                                             env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
                                             env_data2d.Datasets.Traffic: {'p': 1, 'K': 0},
-                                            env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0}},
+                                            env_data2d.Datasets.SpaceInvaders: {'p': 10, 'K': 0}},
                         eb.Algorithms.GPFA2: {env_data.Datasets.EEG: {'p': 1, 'k': 1},
                                               env_data.Datasets.EEG2: {'p': 1, 'k': 1},
                                               env_data.Datasets.EIGHT_EMOTION: {'p': 2, 'k': 10},
@@ -101,6 +110,7 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.EEG: {'p': 10, 'K'
                                               env_data.Datasets.PHYSIO_EHG: {'p': 4, 'k': 10},
                                               env_data.Datasets.PHYSIO_MGH: {'p': 1, 'k': 10},
                                               env_data.Datasets.PHYSIO_UCD: {'p': 2, 'k': 10},
+                                              #
                                               env_data.Datasets.HAPT: {'p': 1, 'k': 10},
                                               env_data.Datasets.PHYSIO_MMG: {'p': 1, 'k': 5},
                                               env_data.Datasets.STFT1: {'p': 2, 'k': 1},
@@ -113,7 +123,7 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.EEG: {'p': 10, 'K'
 
 
 
-def get_results(alg, overide_args={}, include_random=True):
+def get_results(alg, overide_args={}, include_random=True, only_low_dimensional=False):
 
     results = {}
     
@@ -121,6 +131,8 @@ def get_results(alg, overide_args={}, include_random=True):
         env = args['env']
         dataset = args['dataset']
         print dataset
+        if only_low_dimensional and dataset not in datasets_low_dimensional:
+            continue
         if not include_random and env is EnvRandom:
             continue
         kwargs = dict(default_args_global)

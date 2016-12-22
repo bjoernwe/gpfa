@@ -10,17 +10,27 @@ import parameters
 
 def main():
 
-    for alg in [eb.Algorithms.PFA]:
-
+    for alg in [eb.Algorithms.ForeCA,
+                eb.Algorithms.SFFA,
+                eb.Algorithms.PFA,
+                #eb.Algorithms.GPFA2
+                ]:
+        
+        plt.figure()
         colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters.dataset_args))))
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
         
-        results = parameters.get_results(alg)
-        results_sfa = parameters.get_results(eb.Algorithms.SFA)
+        print alg
+        only_low_dimensional = alg is eb.Algorithms.ForeCA
+        results = parameters.get_results(alg, only_low_dimensional=only_low_dimensional)
+        print eb.Algorithms.SFA
+        results_sfa = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA}, only_low_dimensional=only_low_dimensional)
         
         for dataset_args in parameters.dataset_args:
             
             dataset = dataset_args['dataset']
+            if not dataset in results:
+                continue
             result = results[dataset]
             result_sfa = results_sfa[dataset]
             
@@ -61,13 +71,14 @@ def main():
             print 'p-value for X > Y:', pvalue / 2.
             print 'p-value for X < Y:', 1 - pvalue / 2.
 
-    # 
-    plt.plot([1e-6, 1e1], [1e-6, 1e1], '-', zorder=3)
-    plt.xlabel('error of algorithm')
-    plt.ylabel('error of SFA')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.legend(loc='best', prop={'size': 8})
+        # 
+        plt.plot([1e-6, 1e1], [1e-6, 1e1], '-', zorder=3)
+        plt.xlabel('error of %s' % alg)
+        plt.ylabel('error of SFA')
+        plt.xscale('log')
+        plt.yscale('log')
+        plt.legend(loc='best', prop={'size': 8})
+        
     plt.show()
 
 
