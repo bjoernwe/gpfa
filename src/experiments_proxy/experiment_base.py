@@ -146,7 +146,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
 
 
 
-@mem.cache
+#@mem.cache
 def train_random(data_train, output_dim, seed, repetition_index):
     # rev: 2
     fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
@@ -156,7 +156,7 @@ def train_random(data_train, output_dim, seed, repetition_index):
 
 
 
-@mem.cache
+#@mem.cache
 def train_sfa(data_train, output_dim):
     model = mdp.nodes.SFANode(output_dim=output_dim)
     model.train(data_train)
@@ -164,7 +164,7 @@ def train_sfa(data_train, output_dim):
 
  
  
-@mem.cache
+#@mem.cache
 def train_sffa(data_train, output_dim):
     model = sffa.SFFA(output_dim=output_dim)
     model.train(data_train)
