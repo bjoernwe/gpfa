@@ -21,12 +21,12 @@ default_args_global = {'n_train':      10000,
 
 default_args_low  = {'pca':         1.,
                      'output_dim':  range(1,6),
-                     'repetitions': 10
+                     #'repetitions': 10
                      }
 
 default_args_high = {'pca':         .99,
                      'output_dim':  range(1,11),
-                     'repetitions': 5
+                     #'repetitions': 5
                      }
 
 algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
@@ -50,7 +50,7 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},
-                #{'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'k': 1, 'output_dim': range(1,11)},
+                {'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'k': 1, 'output_dim': range(1,11)},
                 {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
@@ -117,8 +117,8 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.EEG: {'p': 10, 'K'
                                               env_data.Datasets.STFT2: {'p': 6, 'k': 1},
                                               env_data.Datasets.STFT3: {'p': 6, 'k': 1},
                                               env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
-                                              env_data2d.Datasets.Traffic: {'p': 1, 'k': 2},
-                                              env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 10}}
+                                              env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 10},
+                                              env_data2d.Datasets.Traffic: {'p': 2, 'k': 2}}
 }
 
 

@@ -13,7 +13,7 @@ def main():
     for alg in [eb.Algorithms.ForeCA,
                 eb.Algorithms.SFFA,
                 eb.Algorithms.PFA,
-                #eb.Algorithms.GPFA2
+                eb.Algorithms.GPFA2
                 ]:
         
         plt.figure()
