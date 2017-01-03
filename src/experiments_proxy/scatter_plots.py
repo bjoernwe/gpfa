@@ -31,18 +31,23 @@ def main():
             dataset = dataset_args['dataset']
             if not dataset in results:
                 continue
-            result = results[dataset]
-            result_sfa = results_sfa[dataset]
+            result = results[dataset].values
+            result_sfa = results_sfa[dataset].values
+            
+            if True:
+                # average over first dim (output_dim)
+                result = np.mean(result, axis=0, keepdims=True) 
+                result_sfa = np.mean(result_sfa, axis=0, keepdims=True) 
             
             # point cloud
             color = next(colors)
             marker = next(markers)
-            for i in range(result.values.shape[0]):
-                plt.scatter(result.values[i], result_sfa.values[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
+            for i in range(result.shape[0]):
+                plt.scatter(result[i], result_sfa[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
     
             # plot
-            mu = np.mean(result.values, axis=-1) # last axis = repetitions
-            values0 = (result.values.T - mu).T
+            mu = np.mean(result, axis=-1) # last axis = repetitions
+            values0 = (result.T - mu).T
             values0_dummy = np.array(values0, copy=True)
             values0_dummy[values0 < 0] = np.NaN
             errors_pos = np.sqrt(np.nanmean(values0_dummy**2, axis=-1))
@@ -50,8 +55,8 @@ def main():
             values0_dummy[values0 > 0] = np.NaN
             errors_neg = np.sqrt(np.nanmean(values0_dummy**2, axis=-1))
     
-            mu_sfa = np.mean(result_sfa.values, axis=-1) # 1st axis = output_dim, last axis = repetitions
-            values0_sfa = (result_sfa.values.T - mu_sfa).T
+            mu_sfa = np.mean(result_sfa, axis=-1) # 1st axis = output_dim, last axis = repetitions
+            values0_sfa = (result_sfa.T - mu_sfa).T
             values0_sfa_dummy = np.array(values0_sfa, copy=True)
             values0_sfa_dummy[values0_sfa < 0] = np.NaN
             errors_sfa_pos = np.sqrt(np.nanmean(values0_sfa_dummy**2, axis=-1))
@@ -65,14 +70,14 @@ def main():
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=7, label=label, zorder=2)
             
             # Wilcoxon signed-rank test
-            x = np.mean(result.values, axis=0) # axis 0 = output_dim
-            y = np.mean(result_sfa.values, axis=0)
+            x = np.mean(result, axis=0) # axis 0 = output_dim
+            y = np.mean(result_sfa, axis=0)
             _, pvalue = scipy.stats.wilcoxon(x, y)
             print 'p-value for X > Y:', pvalue / 2.
             print 'p-value for X < Y:', 1 - pvalue / 2.
 
         # 
-        plt.plot([1e-6, 1e1], [1e-6, 1e1], '-', zorder=3)
+        plt.plot([1e-6, 1e2], [1e-6, 1e2], '-', zorder=3)
         plt.xlabel('error of %s' % alg)
         plt.ylabel('error of SFA')
         plt.xscale('log')
