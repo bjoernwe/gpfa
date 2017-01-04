@@ -150,6 +150,35 @@ def get_results(alg, overide_args={}, include_random=True, only_low_dimensional=
 
 
 
+def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=False):
+
+    results = {}
+    
+    for args in dataset_args:
+        env = args['env']
+        dataset = args['dataset']
+        print dataset
+        if only_low_dimensional and dataset not in datasets_low_dimensional:
+            continue
+        if not include_random and env is EnvRandom:
+            continue
+        kwargs = dict(default_args_global)
+        kwargs['algorithm'] = alg
+        kwargs['measure'] = algorithm_measures[alg]
+        kwargs.update(args)
+        kwargs.update(dataset_default_args.get(dataset, {}))
+        kwargs.update(algorithm_parameters.get(alg, {}).get(dataset, {}))
+        kwargs.update(algorithm_args.get(alg, {}))
+        kwargs.update(overide_args)
+    
+        projected_data, _, [data_train, data_test] = ep.evaluate(eb.calc_projected_data, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
+        result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
+        results[dataset] = result
+        
+    return results
+
+
+
 if __name__ == '__main__':
     print get_results(eb.Algorithms.SFA)
 
