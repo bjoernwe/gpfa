@@ -150,7 +150,7 @@ def get_results(alg, overide_args={}, include_random=True, only_low_dimensional=
 
 
 
-def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=False):
+def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=False, repetition_index=0):
 
     results = {}
     
@@ -169,9 +169,10 @@ def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=
         kwargs.update(dataset_default_args.get(dataset, {}))
         kwargs.update(algorithm_parameters.get(alg, {}).get(dataset, {}))
         kwargs.update(algorithm_args.get(alg, {}))
+        kwargs.update({'output_dim': 5, 'omega_dim': 4})
         kwargs.update(overide_args)
     
-        projected_data, _, [data_train, data_test] = ep.evaluate(eb.calc_projected_data, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
+        projected_data, _, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
         results[dataset] = result
         
