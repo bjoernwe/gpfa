@@ -9,7 +9,7 @@ import parameters
 
 def main():
 
-    algs = [eb.Algorithms.ForeCA,
+    algs = [#eb.Algorithms.ForeCA,
             eb.Algorithms.SFA,
             #eb.Algorithms.SFFA,
             eb.Algorithms.PFA,
@@ -21,11 +21,13 @@ def main():
 
     results_test  = {}
     results_train = {}
+    results_angle = {}
     
     for alg in algs:
         only_low_dimensional = alg is eb.Algorithms.ForeCA
         results_test[alg]  = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, repetition_index=repetition_index)
         results_train[alg] = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, overide_args={'use_test_set': False}, repetition_index=repetition_index)
+        results_angle[alg] = parameters.get_results(alg, only_low_dimensional=only_low_dimensional, overide_args={'measure': eb.Measures.angle_to_sfa})
         
     
     alphas = np.linspace(0, 1, 6)[::-1]
@@ -63,14 +65,23 @@ def main():
                 plt.plot(range(n_train, n_train+n_test), signal_test, c='r', alpha=alphas[i])
                 plt.ylabel(alg)
             # FFT
-            plt.subplot2grid(shape=(n_algs,4), loc=(a,2))
+            ax1 = plt.subplot2grid(shape=(n_algs,4), loc=(a,2))
             for i in range(5)[::-1]:
                 spectrum_train = np.abs(np.fft.fft(signals_train[:,i]))[:N_train//2]
                 plt.plot(spectrum_train, c='b', alpha=alphas[i])
-            plt.subplot2grid(shape=(n_algs,4), loc=(a,3))
+            #plt.subplot2grid(shape=(n_algs,4), loc=(a,3))
             for i in range(5)[::-1]:
                 spectrum_test  = np.abs(np.fft.fft(signals_test[:,i]))[:N_test//2]
-                plt.plot(spectrum_test, c='r', alpha=alphas[i])
+                xscale = N_train * np.arange(N_test//2, dtype=np.float) / N_test
+                plt.plot(xscale, -spectrum_test, c='r', alpha=alphas[i])
+            #ax2 = ax1.twinx()
+            # angles
+            plt.subplot2grid(shape=(n_algs,4), loc=(a,3))
+            values = results_angle[alg][dataset].values
+            d, _ = values.shape
+            plt.errorbar(x=range(1,d+1), y=np.mean(values, axis=1), yerr=np.std(values, axis=1))
+            plt.xlim(-.1, d + .1)
+            plt.ylim(-.1, np.pi/2 + .1)
                 
             # title
             dataset_str = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])

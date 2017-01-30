@@ -37,7 +37,7 @@ mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2')
 
-Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims')
+Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa')
 
 
 
@@ -271,6 +271,15 @@ def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_te
                                                                          repetition_index=repetition_index, 
                                                                          seed=seed, **kwargs)
     
+    kwargs.update({'env': env, 
+                   'dataset': dataset, 
+                   'algorithm': algorithm, 
+                   'output_dim': output_dim, 
+                   'n_train': n_train, 
+                   'n_test': n_test, 
+                   'use_test_set': use_test_set, 
+                   'repetition_index': repetition_index, 
+                   'seed': seed})
     return prediction_error_on_data(data=projected_data, measure=measure, model=model, 
                                     data_chunks=[data_train, data_test], **kwargs)
     
@@ -311,6 +320,9 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
                                                     ndim=True)
     elif measure == Measures.ndims:
         return data_chunks[0].shape[1]
+    elif measure == Measures.angle_to_sfa:
+        #return np.sin(calc_angle_to_sfa_signals(data, **kwargs))
+        return calc_angle_to_sfa_signals(data, **kwargs)
     else:
         assert False
     
@@ -357,6 +369,33 @@ def calc_omega(data, omega_dim):
 def calc_omega_ndim(data):
     from foreca.foreca_omega import omega
     return omega(data)
+
+
+
+@mem.cache
+def calc_angle_to_sfa_signals(data, **kwargs):
+    kwargs['algorithm'] = Algorithms.SFA
+    signals_sfa, _, _ = calc_projected_data(**kwargs)
+    return _principal_angle(signals_sfa, data) 
+
+
+
+def _principal_angle(A, B):
+    """A and B must be column-orthogonal.
+    Golub: Matrix Computations, 1996
+    [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
+    """
+    #A = np.array(A, copy=True)
+    #B = np.array(B, copy=True)
+    if A.ndim == 1:
+        A = np.array(A, ndmin=2).T
+    if B.ndim == 1:
+        B = np.array(B, ndmin=2).T
+    assert A.ndim == B.ndim == 2
+    A = np.linalg.qr(A)[0]
+    B = np.linalg.qr(B)[0]
+    _, S, _ = np.linalg.svd(np.dot(A.T, B))
+    return np.arccos(min(S.min(), 1.0))
 
 
 
