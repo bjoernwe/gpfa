@@ -113,7 +113,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
     elif algorithm == Algorithms.SFFA:
         return train_sffa(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.ForeCA:
-        return train_foreca(data_train=data_train, output_dim=output_dim)
+        return train_foreca(data_train=data_train, output_dim=kwargs['output_dim_max'])
     elif algorithm == Algorithms.PFA:
         return train_pfa(data_train=data_train, 
                     output_dim=output_dim,
@@ -237,6 +237,9 @@ def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, re
             projected_data = model.execute(data_test)
         else:
             projected_data = model.execute(data_train)
+        # reduce dim because ForeCA calculated output_dim_max dimensions 
+        if algorithm == Algorithms.ForeCA:
+            projected_data = projected_data[:,:output_dim]
         
     return projected_data, model, [data_train, data_test]
 
@@ -297,7 +300,7 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
     elif measure == Measures.delta_ndim:
         return calc_delta(data=data, ndim=True)
     elif measure == Measures.omega:
-        return calc_omega(data=data, omega_dim=kwargs['omega_dim'])
+        return calc_omega(data=data, omega_dim=kwargs['output_dim']-1)
     elif measure == Measures.omega_ndim:
         return calc_omega_ndim(data=data)
     elif measure == Measures.pfa:
@@ -321,7 +324,6 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
     elif measure == Measures.ndims:
         return data_chunks[0].shape[1]
     elif measure == Measures.angle_to_sfa:
-        #return np.sin(calc_angle_to_sfa_signals(data, **kwargs))
         return calc_angle_to_sfa_signals(data, **kwargs)
     else:
         assert False

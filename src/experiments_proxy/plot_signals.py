@@ -9,7 +9,7 @@ import parameters
 
 def main():
 
-    algs = [#eb.Algorithms.ForeCA,
+    algs = [eb.Algorithms.ForeCA,
             eb.Algorithms.SFA,
             #eb.Algorithms.SFFA,
             eb.Algorithms.PFA,

@@ -38,8 +38,8 @@ algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
 algorithm_args = {eb.Algorithms.ForeCA: {'n_train':      1000, 
                                          'n_test':       200,
                                          #'pca':          1.,
-                                         'output_dim':   5,
-                                         'omega_dim':    range(5)},
+                                         'output_dim_max': 5,
+                                         },
                   eb.Algorithms.GPFA2:  {'iterations':   30,
                                          'k_eval':       10,}}
 
@@ -144,6 +144,7 @@ def get_results(alg, overide_args={}, include_random=True, only_low_dimensional=
         kwargs.update(algorithm_args.get(alg, {}))
         kwargs.update(overide_args)
     
+        #print 'results: %s' % kwargs
         results[dataset] = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
         
     return results
@@ -173,6 +174,7 @@ def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=
         kwargs.update(overide_args)
     
         projected_data, _, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
+        #print 'signals: %s' % kwargs
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
         results[dataset] = result
         
