@@ -1,3 +1,5 @@
+import numpy as np
+
 import explot as ep
 
 import experiments_proxy.experiment_base as eb
@@ -173,8 +175,16 @@ def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=
         kwargs.update({'output_dim': 5, 'omega_dim': 4})
         kwargs.update(overide_args)
     
-        projected_data, _, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
-        #print 'signals: %s' % kwargs
+        try:
+            projected_data_list = []
+            for i in repetition_index:
+                projected_data, _, [_, _] = eb.calc_projected_data(repetition_index=i, **kwargs)
+                projected_data_list.append(projected_data)
+            projected_data = np.stack(projected_data_list, axis=2)
+            data_train     = None
+            data_test      = None
+        except TypeError:
+            projected_data, _, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
         results[dataset] = result
         
