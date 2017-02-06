@@ -9,8 +9,8 @@ import parameters
 
 def main():
 
-    algs = [eb.Algorithms.ForeCA,
-            eb.Algorithms.SFA,
+    algs = [eb.Algorithms.SFA,
+            eb.Algorithms.ForeCA,
             #eb.Algorithms.SFFA,
             eb.Algorithms.PFA,
             eb.Algorithms.GPFA2
@@ -22,8 +22,8 @@ def main():
     
     for alg in algs:
         only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results_test[alg]  = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, repetition_index=range(50))
-        results_train[alg] = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, overide_args={'use_test_set': False}, repetition_index=range(50))
+        results_test[alg]  = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, repetition_index=range(3))
+        results_train[alg] = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, overide_args={'use_test_set': False}, repetition_index=range(3))
         
     alphas = np.linspace(0, 1, 6)[::-1]
 
@@ -47,6 +47,7 @@ def main():
             # plot signals
             plt.subplot(4, 4, ids+1)
             plt.xlim(-20, N_train//2+20)
+            #plt.yscale('log')
             
             # FFT
             for i in range(1)[::-1]:

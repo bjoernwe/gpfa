@@ -17,7 +17,8 @@ import PFANodeMDP
 
 sys.path.append('/home/weghebvc/workspace/git/environments_new/src/')
 #from envs.environment import Noise
-#from envs import env_data
+from envs import env_data
+from envs import env_data2d
 from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
 from envs.env_kai import EnvKai
@@ -71,10 +72,10 @@ def update_seed_argument(remove_args=None, **kwargs):
 def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
 
     if env is EnvData:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), repetition_index=repetition_index, seed=seed)
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], repetition_index=repetition_index, seed=seed)
         env_node = EnvData(dataset=dataset, **fargs)
     elif env is EnvData2D:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs.get('limit_data', None), window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
         env_node = EnvData2D(dataset=dataset, **fargs)
     elif env is EnvKai:
         fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, repetition_index=repetition_index, seed=seed) 
@@ -398,6 +399,58 @@ def _principal_angle(A, B):
     B = np.linalg.qr(B)[0]
     _, S, _ = np.linalg.svd(np.dot(A.T, B))
     return np.arccos(min(S.min(), 1.0))
+
+
+
+def get_dataset_name(env, ds, latex=False):
+    
+    result = 'FOO'
+    
+    if env is EnvData:
+        if ds is env_data.Datasets.STFT1:
+            result = 'AUD_STFT1'
+        elif ds is env_data.Datasets.STFT2:
+            result = 'AUD_STFT2'
+        elif ds is env_data.Datasets.STFT3:
+            result = 'AUD_STFT3'
+        elif ds is env_data.Datasets.EEG:
+            result = 'PHY_EEG_GAL'
+        elif ds is env_data.Datasets.EEG2:
+            result = 'PHY_EEG_BCI'
+        elif ds is env_data.Datasets.PHYSIO_EHG:
+            result = 'PHY_EHG'
+        elif ds is env_data.Datasets.EIGHT_EMOTION:
+            result = 'PHY_EIGHT_EMOTION'
+        elif ds is env_data.Datasets.PHYSIO_MGH:
+            result = 'PHY_MGH_MF'
+        elif ds is env_data.Datasets.PHYSIO_MMG:
+            result = 'PHY_MMG'
+        elif ds is env_data.Datasets.PHYSIO_UCD:
+            result = 'PHY_PHY_UCDDB'
+        elif ds is env_data.Datasets.HAPT:
+            result = 'MISC_SBHAR'
+        elif ds is env_data.Datasets.FIN_EQU_FUNDS:
+            result = 'MISC_EQUITY_FUNDS'
+        else:
+            assert False
+    elif env is EnvData2D:
+        if ds is env_data2d.Datasets.Mario:
+            result = 'VIS_SUPER_MARIO'
+        elif ds is env_data2d.Datasets.SpaceInvaders:
+            result = 'VIS_SPACE_INVADERS'
+        elif ds is env_data2d.Datasets.Traffic:
+            result = 'VIS_URBAN1'
+        else:
+            assert False
+    elif env is EnvRandom:
+        result = 'MISC_NOISE'
+    else:
+        assert False
+    
+    if latex:
+        result = result.replace('_', '\_')
+    
+    return result 
 
 
 

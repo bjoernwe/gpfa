@@ -14,21 +14,21 @@ default_args_global = {'n_train':      10000,
                        'n_test':       2000,
                        'seed':         0,
                        'noisy_dims':   0,
-                       'limit_data':   25000,
+                       'limit_data':   100000,
                        'use_test_set': True,
-                       'repetitions':  50,
+                       #'repetitions':  50,
                        'cachedir':     '/scratch/weghebvc',
                        'manage_seed':  'external',
                        'processes':    None}
 
 default_args_low  = {'pca':         1.,
                      'output_dim':  range(1,6),
-                     #'repetitions': 10
+                     'repetitions': 10
                      }
 
 default_args_high = {'pca':         .99,
                      'output_dim':  range(1,11),
-                     #'repetitions': 5
+                     'repetitions': 5
                      }
 
 algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
@@ -52,8 +52,8 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.EEG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_EHG},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD},
-                {'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'k': 1, 'output_dim': range(1,11)},
-                {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000},
+                #{'env': EnvRandom, 'dataset': None, 'ndim': 200, 'K': 0, 'p': 1, 'k': 1, 'output_dim': range(1,11)},
+                {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'n_train': 5000, 'n_test': 1000},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT1},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT2},
@@ -90,21 +90,21 @@ dataset_default_args = {env_data.Datasets.PHYSIO_MGH: default_args_low,
 
 # results from grid-search
 algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.EEG: {'p': 10, 'K': 0},
-                                            env_data.Datasets.EEG2: {'p': 8, 'K': 0},
-                                            env_data.Datasets.EIGHT_EMOTION: {'p': 8, 'K': 0},
-                                            env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 8},
+                                            env_data.Datasets.EEG2: {'p': 10, 'K': 0},
+                                            env_data.Datasets.EIGHT_EMOTION: {'p': 6, 'K': 0},
+                                            env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 10},
                                             env_data.Datasets.PHYSIO_EHG: {'p': 10, 'K': 2},
                                             env_data.Datasets.PHYSIO_MGH: {'p': 10, 'K': 0},
-                                            env_data.Datasets.PHYSIO_UCD: {'p': 10, 'K': 0},
+                                            env_data.Datasets.PHYSIO_UCD: {'p': 4, 'K': 0},
                                             #
                                             env_data.Datasets.HAPT: {'p': 10, 'K': 0},
                                             env_data.Datasets.PHYSIO_MMG: {'p': 2, 'K': 10},
                                             env_data.Datasets.STFT1: {'p': 10, 'K': 10},
                                             env_data.Datasets.STFT2: {'p': 10, 'K': 10},
-                                            env_data.Datasets.STFT3: {'p': 10, 'K': 1},
+                                            env_data.Datasets.STFT3: {'p': 10, 'K': 10},
                                             env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
-                                            env_data2d.Datasets.Traffic: {'p': 1, 'K': 0},
-                                            env_data2d.Datasets.SpaceInvaders: {'p': 10, 'K': 0}},
+                                            env_data2d.Datasets.SpaceInvaders: {'p': 4, 'K': 0},
+                                            env_data2d.Datasets.Traffic: {'p': 1, 'K': 0}},
                         eb.Algorithms.GPFA2: {env_data.Datasets.EEG: {'p': 1, 'k': 1},
                                               env_data.Datasets.EEG2: {'p': 1, 'k': 1},
                                               env_data.Datasets.EIGHT_EMOTION: {'p': 2, 'k': 10},
@@ -172,7 +172,7 @@ def get_signals(alg, overide_args={}, include_random=True, only_low_dimensional=
         kwargs.update(dataset_default_args.get(dataset, {}))
         kwargs.update(algorithm_parameters.get(alg, {}).get(dataset, {}))
         kwargs.update(algorithm_args.get(alg, {}))
-        kwargs.update({'output_dim': 5, 'omega_dim': 4})
+        #kwargs.update({'output_dim': 5, 'omega_dim': 4})
         kwargs.update(overide_args)
     
         try:
