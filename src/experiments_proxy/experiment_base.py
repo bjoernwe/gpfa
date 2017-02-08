@@ -426,7 +426,7 @@ def get_dataset_name(env, ds, latex=False):
         elif ds is env_data.Datasets.PHYSIO_MMG:
             result = 'PHY_MMG'
         elif ds is env_data.Datasets.PHYSIO_UCD:
-            result = 'PHY_PHY_UCDDB'
+            result = 'PHY_UCDDB'
         elif ds is env_data.Datasets.HAPT:
             result = 'MISC_SBHAR'
         elif ds is env_data.Datasets.FIN_EQU_FUNDS:

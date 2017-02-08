@@ -16,13 +16,13 @@ def main():
     results_sfa = {}
     for alg in [eb.Algorithms.ForeCA,
                 eb.Algorithms.PFA,
-                #eb.Algorithms.GPFA2
+                eb.Algorithms.GPFA2
                 ]:
 
         print(alg)
-        only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results[alg] = parameters.get_results(alg, only_low_dimensional=only_low_dimensional)
-        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA}, only_low_dimensional=only_low_dimensional)
+        #only_low_dimensional = alg is eb.Algorithms.ForeCA
+        results[alg] = parameters.get_results(alg)
+        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})
     #results_sfa = parameters.get_results(eb.Algorithms.SFA)
 
     for alg in results.keys():
