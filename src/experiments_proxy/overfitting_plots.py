@@ -9,9 +9,9 @@ import parameters
 
 def main():
 
-    for alg in [eb.Algorithms.ForeCA,
-                eb.Algorithms.SFA,
-                eb.Algorithms.SFFA,
+    for alg in [eb.Algorithms.SFA,
+                eb.Algorithms.ForeCA,
+                #eb.Algorithms.SFFA,
                 eb.Algorithms.PFA,
                 eb.Algorithms.GPFA2
                 ]:
@@ -21,9 +21,9 @@ def main():
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
         
         print alg
-        only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results_x = parameters.get_results(alg, only_low_dimensional=only_low_dimensional)
-        results_y = parameters.get_results(alg, overide_args={'use_test_set': False}, only_low_dimensional=only_low_dimensional)
+        #only_low_dimensional = alg is eb.Algorithms.ForeCA
+        results_x = parameters.get_results(alg)
+        results_y = parameters.get_results(alg, overide_args={'use_test_set': False})
         
         for dataset_args in parameters.dataset_args:
             

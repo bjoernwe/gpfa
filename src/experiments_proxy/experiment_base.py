@@ -212,26 +212,19 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
                          channels_xy_1, spacing_xy_1, channels_xy_n, spacing_xy_n, 
                          node_kwargs, expansion=1):
 
-    #channels_xy_1 = kwargs.pop('channels_xy_1', (12, 12))
-    #spacing_xy_1  = kwargs.pop('spacing_xy_1',  ( 8,  8))
-    #channels_xy_n = kwargs.pop('channels_xy_n', ( 3,  3))
-    #spacing_xy_n  = kwargs.pop('spacing_xy_1',  ( 2,  2))
-    
-    #print 'channels_xy_1 = %s' % (channels_xy_1, )
-    #print 'spacing_xy_1  = %s' % (spacing_xy_1, )
-    #print 'channels_xy_n = %s' % (channels_xy_n, )
-    #print 'spacing_xy_n  = %s' % (spacing_xy_n, )
-
     switchboards = []
     layers = []
     
-    while len(layers) == 0 or layers[-1].output_dim > 20:
+    while len(layers) == 0 or layers[-1].output_dim >= 90:
+
+        first_layer = True if len(layers) == 0 else False
+        last_layer  = True if len(layers) != 0 and layers[-1].output_dim <= 90 else False
 
         if channels_xy_n == (2,1) or channels_xy_n == (1,2):
             channels_xy_n = (channels_xy_n[1], channels_xy_n[0])
             spacing_xy_n = (spacing_xy_n[1], spacing_xy_n[0])
 
-        if len(layers) == 0:
+        if first_layer:
             # first layer
             switchboards.append(mdp.hinet.Rectangular2dSwitchboard(in_channels_xy    = (image_x, image_y),
                                                                    field_channels_xy = channels_xy_1,
@@ -246,26 +239,23 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
                                                                    ignore_cover      = True))
     
         flow_nodes = []
-        print 'creating layer with %s = %d nodes' % (switchboards[-1].out_channels_xy, switchboards[-1].output_channels)
-        for _ in range(switchboards[-1].output_channels):
+        print 'creating layer with %s = %d nodes (last: %s)' % (switchboards[-1].out_channels_xy, switchboards[-1].output_channels, last_layer)
+        for i in range(switchboards[-1].output_channels):
             nodes = []
             nodes.append(mdp.nodes.IdentityNode(input_dim=switchboards[-1].out_channel_dim))
-            nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-6), input_dim=nodes[-1].output_dim))
+            if not last_layer:
+                nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-6), input_dim=nodes[-1].output_dim))
             nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=node_output_dim, **node_kwargs))
-            print '%s: %d -> %d' % (node_class.__name__, nodes[-1].input_dim, nodes[-1].output_dim)
-            #if len(layers) == 0:
-            #    # first layer
-            #    nodes.append(mdp.nodes.NoiseNode(noise_args=(0, .01), input_dim=nodes[-1].output_dim))
-            #    nodes.append(mdp.nodes.PCANode(input_dim=nodes[-1].output_dim, output_dim=int(.95*nodes[-1].output_dim), reduce=False))
-            if expansion != 1:
-                #nodes.append(PowerExpansion(input_dim=nodes[-1].output_dim))
-                #nodes.append(mdp.nodes.NoiseNode(noise_args=(0, .01), input_dim=nodes[-1].output_dim, output_dim=nodes[-1].output_dim))
-                nodes.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=nodes[-1].output_dim))
-                nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=node_output_dim, **node_kwargs))
-                print '%s: %d -> %d' % (node_class.__name__, nodes[-1].input_dim, nodes[-1].output_dim)
-            nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=-4, input_dim=nodes[-1].output_dim))
+            if not last_layer:
+                if expansion != 1:
+                    nodes.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=nodes[-1].output_dim))
+                    nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=node_output_dim, **node_kwargs))
+                nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=-4, input_dim=nodes[-1].output_dim))
             flow_node = mdp.hinet.FlowNode(mdp.Flow(nodes))
             flow_nodes.append(flow_node)
+            if i==0:
+                for node in nodes:
+                    print '%s: %d -> %d' % (node.__class__.__name__, node.input_dim, node.output_dim)
         layers.append(mdp.hinet.Layer(flow_nodes))
         
     hierarchy = []
@@ -273,13 +263,6 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
         hierarchy.append(switch)
         hierarchy.append(layer)
         
-    if expansion:
-        #hierarchy.append(PowerExpansion(input_dim=hierarchy[-1].output_dim))
-        #hierarchy.append(mdp.nodes.NoiseNode(noise_args=(0, .01), input_dim=hierarchy[-1].output_dim, output_dim=hierarchy[-1].output_dim))
-        hierarchy.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=hierarchy[-1].output_dim))
-        #hierarchy.append(node_class(input_dim=hierarchy[-1].output_dim, output_dim=node_output_dim, **node_kwargs))
-    
-    hierarchy.append(node_class(input_dim=hierarchy[-1].output_dim, output_dim=output_dim, **node_kwargs))
     flow = mdp.Flow(hierarchy)
     
     print ''
