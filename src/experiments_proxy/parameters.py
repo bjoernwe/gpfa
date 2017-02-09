@@ -85,7 +85,7 @@ dataset_default_args = {env_data.Datasets.PHYSIO_MGH: default_args_low,
                         env_data.Datasets.FIN_EQU_FUNDS: default_args_low,
                         env_data.Datasets.EEG: default_args_high,
                         env_data.Datasets.EEG2: default_args_high,
-                        #
+                        None: default_args_high,
                         env_data.Datasets.HAPT: default_args_high,
                         env_data.Datasets.PHYSIO_MMG: default_args_low,
                         env_data.Datasets.STFT1: default_args_high,
