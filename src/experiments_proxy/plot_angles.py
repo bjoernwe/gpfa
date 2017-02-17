@@ -18,8 +18,7 @@ def main():
     results_angle = {}
     
     for alg in algs:
-        only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results_angle[alg] = parameters.get_results(alg, only_low_dimensional=only_low_dimensional, overide_args={'measure': eb.Measures.angle_to_sfa})
+        results_angle[alg] = parameters.get_results(alg, overide_args={'measure': eb.Measures.angle_to_sfa})
         
     for _, alg in enumerate(algs):
             

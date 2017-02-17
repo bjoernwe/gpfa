@@ -1,4 +1,3 @@
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,13 +14,14 @@ def main():
             eb.Algorithms.PFA,
             eb.Algorithms.GPFA2
             ]
+    repetition_index = 0
 
     results_test  = {}
     results_train = {}
     
     for alg in algs:
-        results_test[alg]  = parameters.get_signals(alg, repetition_index=range(3))
-        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=range(3))
+        results_test[alg]  = parameters.get_signals(alg, overide_args={}, repetition_index=repetition_index)
+        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=repetition_index)
         
     alphas = np.linspace(0, 1, 6)[::-1]
 
@@ -36,26 +36,26 @@ def main():
             if not dataset in results_test[alg]:
                 continue
 
-            signals_train = np.mean(results_train[alg][dataset]['projected_data'], axis=2)
-            signals_test  = np.mean(results_test[alg][dataset]['projected_data'], axis=2)
+            signals_train = results_train[alg][dataset]['projected_data']
+            signals_test  = results_test[alg][dataset]['projected_data']
             N_train = signals_train.shape[0]
             N_test  = signals_test.shape[0]
             print N_train, N_test
 
-            # plot signals
             plt.subplot(4, 4, ids+1)
-            plt.xlim(-20, N_train//2+20)
-            #plt.yscale('log')
             
-            # FFT
             for i in range(1)[::-1]:
-                spectrum_train = np.abs(np.fft.fft(signals_train[:,i]))[:N_train//2]
-                plt.plot(spectrum_train, c='b', alpha=alphas[i])
-            for i in range(1)[::-1]:
-                spectrum_test  = np.abs(np.fft.fft(signals_test[:,i]))[:N_test//2]
-                xscale = N_train * np.arange(N_test//2, dtype=np.float) / N_test
-                plt.plot(xscale, -spectrum_test, c='r', alpha=alphas[i])
-                
+                signal_train = signals_train[:,i]
+                signal_test  = signals_test[:,i]
+                signal_train = signal_train[-1000:]
+                signal_test  = signal_test[:1000]
+                n_train = signal_train.shape[0]
+                n_test  = signal_test.shape[0]
+                sign = np.sign(np.correlate(signal_train, results_train[eb.Algorithms.SFA][dataset]['projected_data'][:,i])[0])
+                plt.plot(range(n_train), sign*signal_train, c='b', alpha=alphas[i])
+                plt.plot(range(n_train, n_train+n_test), sign*signal_test, c='r', alpha=alphas[i])
+                plt.ylabel(alg)
+
             # title
             #dataset_str = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
             dataset_str = '%s' % (dataset_args['dataset'])

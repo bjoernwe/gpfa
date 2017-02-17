@@ -11,7 +11,7 @@ def main():
 
     for alg in [eb.Algorithms.ForeCA,
                 eb.Algorithms.SFA,
-                eb.Algorithms.SFFA,
+                #eb.Algorithms.SFFA,
                 eb.Algorithms.PFA,
                 eb.Algorithms.GPFA2
                 ]:
@@ -21,9 +21,8 @@ def main():
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
         
         print alg
-        only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results_x = parameters.get_results(alg, overide_args={'measure': eb.Measures.ndims}, only_low_dimensional=only_low_dimensional)
-        results_y = parameters.get_results(alg, only_low_dimensional=only_low_dimensional)
+        results_x = parameters.get_results(alg, overide_args={'measure': eb.Measures.ndims})
+        results_y = parameters.get_results(alg)
         
         for dataset_args in parameters.dataset_args:
             

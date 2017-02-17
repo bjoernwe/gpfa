@@ -8,6 +8,7 @@ from enum import Enum
 import foreca.foreca_node as foreca_node
 import gpfa
 import sffa
+from utils import echo
 
 #sys.path.append('/home/weghebvc/workspace/git/explot/src/')
 #import explot as ep
@@ -30,13 +31,14 @@ import PFACoreUtil
 
 
 # prepare joblib.Memory
-default_cachedir = '/scratch/weghebvc'
+#default_cachedir = '/scratch/weghebvc'
+default_cachedir = '/home/weghebvc'
 mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 
 #Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth Face RatLab Kai Mario Mario_window Mario_window_8 EEG EEG2 EEG2_stft_128 MEG SpaceInvaders SpaceInvaders_window SpaceInvaders_window_8 Traffic Traffic_window Traffic_window_8 Tumor STFT1 STFT2 STFT3')
 
-Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2')
+Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2 HiSFA HiPFA HiGPFA')
 
 Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa')
 
@@ -69,13 +71,14 @@ def update_seed_argument(remove_args=None, **kwargs):
 
 
 
+@echo
 def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
 
     if env is EnvData:
         fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], repetition_index=repetition_index, seed=seed)
         env_node = EnvData(dataset=dataset, **fargs)
     elif env is EnvData2D:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=1, repetition_index=repetition_index, seed=seed)
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=kwargs.get('scaling', 1), repetition_index=repetition_index, seed=seed)
         env_node = EnvData2D(dataset=dataset, **fargs)
     elif env is EnvKai:
         fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, repetition_index=repetition_index, seed=seed) 
@@ -95,7 +98,8 @@ def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed
                                                                                pca_after_expansion=kwargs.get('pca_after_expansion'), 
                                                                                expansion=kwargs.get('expansion', 1),
                                                                                additive_noise=kwargs.get('additive_noise', 0), 
-                                                                               whitening=True)
+                                                                               whitening=kwargs.get('whitening', True))
+    print data_train.shape, data_test.shape
     return [data_train, data_test]
 
 
@@ -142,6 +146,41 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                     causal_features=kwargs.get('causal_features', True),
                     generalized_eigen_problem=kwargs.get('generalized_eigen_problem', True),
                     output_dim=output_dim)
+    elif algorithm == Algorithms.HiSFA:
+        return train_hi_sfa(data_train=data_train, 
+                            image_shape=(50,50), 
+                            output_dim=output_dim, 
+                            expansion=2, 
+                            channels_xy_1=10, 
+                            spacing_xy_1=5, 
+                            channels_xy_n=3, 
+                            spacing_xy_n=3, 
+                            node_output_dim=10)
+    elif algorithm == Algorithms.HiPFA:
+        return train_hi_pfa(data_train=data_train,
+                            p=kwargs['p'],
+                            K=kwargs['K'],
+                            image_shape=(50,50), 
+                            output_dim=output_dim, 
+                            expansion=2, 
+                            channels_xy_1=10, 
+                            spacing_xy_1=5, 
+                            channels_xy_n=3, 
+                            spacing_xy_n=3, 
+                            node_output_dim=10)
+    elif algorithm == Algorithms.HiGPFA:
+        return train_hi_gpfa(data_train=data_train,
+                             p=kwargs['p'],
+                             k=kwargs['k'],
+                             iterations=kwargs['iterations'],
+                             image_shape=(50,50), 
+                             output_dim=output_dim, 
+                             expansion=2, 
+                             channels_xy_1=10, 
+                             spacing_xy_1=5, 
+                             channels_xy_n=3, 
+                             spacing_xy_n=3, 
+                             node_output_dim=10)
     else:
         assert False
 
@@ -208,6 +247,72 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 
 
 
+@mem.cache
+def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1, 
+                 spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
+    # rev: 4
+    flow = build_hierarchy_flow(image_x=image_shape[1], 
+                                image_y=image_shape[0], 
+                                output_dim=output_dim, 
+                                node_class=mdp.nodes.SFANode, 
+                                node_output_dim=node_output_dim,
+                                expansion=expansion,
+                                channels_xy_1=channels_xy_1,
+                                spacing_xy_1=spacing_xy_1,
+                                channels_xy_n=channels_xy_n,
+                                spacing_xy_n=spacing_xy_n,
+                                node_kwargs={})
+    flow.train(data_train)
+    return flow
+
+
+
+@mem.cache
+def train_hi_pfa(data_train, p, K, image_shape, output_dim, expansion, channels_xy_1, 
+                 spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
+    # rev: 4
+    flow = build_hierarchy_flow(image_x=image_shape[1], 
+                                image_y=image_shape[0], 
+                                output_dim=output_dim, 
+                                node_class=PFANodeMDP.PFANode, 
+                                node_output_dim=node_output_dim,
+                                expansion=expansion,
+                                channels_xy_1=channels_xy_1,
+                                spacing_xy_1=spacing_xy_1,
+                                channels_xy_n=channels_xy_n,
+                                spacing_xy_n=spacing_xy_n,
+                                node_kwargs={'p': p, 'k': K, 'affine': False})
+    flow.train(data_train)
+    return flow
+
+
+
+@mem.cache
+def train_hi_gpfa(data_train, p, k, iterations, image_shape, output_dim, expansion, 
+                  channels_xy_1, spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
+    flow = build_hierarchy_flow(image_x=image_shape[1], 
+                                image_y=image_shape[0], 
+                                output_dim=output_dim, 
+                                node_class=gpfa.gPFA, 
+                                node_output_dim=node_output_dim,
+                                expansion=expansion,
+                                channels_xy_1=channels_xy_1,
+                                spacing_xy_1=spacing_xy_1,
+                                channels_xy_n=channels_xy_n,
+                                spacing_xy_n=spacing_xy_n,
+                                node_kwargs={'k': k,
+                                             'p': p,
+                                             'iterations': iterations, 
+                                             'variance_graph': False,
+                                             'neighborhood_graph': False,
+                                             'weighted_edges': True,
+                                             'causal_features': True,
+                                             'generalized_eigen_problem': True})
+    flow.train(data_train)
+    return flow
+
+
+
 def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_dim, 
                          channels_xy_1, spacing_xy_1, channels_xy_n, spacing_xy_n, 
                          node_kwargs, expansion=1):
@@ -220,9 +325,9 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
         first_layer = True if len(layers) == 0 else False
         last_layer  = True if len(layers) != 0 and layers[-1].output_dim <= 90 else False
 
-        if channels_xy_n == (2,1) or channels_xy_n == (1,2):
-            channels_xy_n = (channels_xy_n[1], channels_xy_n[0])
-            spacing_xy_n = (spacing_xy_n[1], spacing_xy_n[0])
+        #if channels_xy_n == (2,1) or channels_xy_n == (1,2):
+        #    channels_xy_n = (channels_xy_n[1], channels_xy_n[0])
+        #    spacing_xy_n = (spacing_xy_n[1], spacing_xy_n[0])
 
         if first_layer:
             # first layer
@@ -230,28 +335,32 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
                                                                    field_channels_xy = channels_xy_1,
                                                                    field_spacing_xy  = spacing_xy_1,
                                                                    in_channel_dim    = 1,
-                                                                   ignore_cover      = True))
+                                                                   ignore_cover      = False))
         else:
             switchboards.append(mdp.hinet.Rectangular2dSwitchboard(in_channels_xy    = switchboards[-1].out_channels_xy,
                                                                    field_channels_xy = channels_xy_n,
                                                                    field_spacing_xy  = spacing_xy_n,
                                                                    in_channel_dim    = layers[-1][-1].output_dim,
-                                                                   ignore_cover      = True))
+                                                                   ignore_cover      = False))
     
         flow_nodes = []
         print 'creating layer with %s = %d nodes (last: %s)' % (switchboards[-1].out_channels_xy, switchboards[-1].output_channels, last_layer)
         for i in range(switchboards[-1].output_channels):
             nodes = []
-            nodes.append(mdp.nodes.IdentityNode(input_dim=switchboards[-1].out_channel_dim))
-            if not last_layer:
-                nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-6), input_dim=nodes[-1].output_dim))
-            nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=node_output_dim, **node_kwargs))
-            if not last_layer:
+            #nodes.append(mdp.nodes.IdentityNode(input_dim=switchboards[-1].out_channel_dim))
+            #if not last_layer:
+            nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-4), input_dim=switchboards[-1].out_channel_dim, dtype=np.float64))
+            nodes.append(mdp.nodes.WhiteningNode(input_dim=nodes[-1].output_dim, output_dim=nodes[-1].output_dim, reduce=False, dtype=np.float64))
+            nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=node_output_dim, dtype=np.float64, **node_kwargs))
+            #if not last_layer:
+            if True:
                 if expansion != 1:
-                    nodes.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=nodes[-1].output_dim))
-                    nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=node_output_dim, **node_kwargs))
-                nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=-4, input_dim=nodes[-1].output_dim))
-            flow_node = mdp.hinet.FlowNode(mdp.Flow(nodes))
+                    nodes.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=nodes[-1].output_dim, dtype=np.float64))
+                    nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-4), input_dim=nodes[-1].output_dim, dtype=np.float64))
+                    nodes.append(mdp.nodes.WhiteningNode(input_dim=nodes[-1].output_dim, output_dim=nodes[-1].output_dim, reduce=False, dtype=np.float64))
+                    nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=output_dim if last_layer else node_output_dim, dtype=np.float64, **node_kwargs))
+                nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=4, input_dim=nodes[-1].output_dim, dtype=np.float64))
+            flow_node = mdp.hinet.FlowNode(mdp.Flow(nodes, verbose=True))
             flow_nodes.append(flow_node)
             if i==0:
                 for node in nodes:
@@ -263,7 +372,7 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
         hierarchy.append(switch)
         hierarchy.append(layer)
         
-    flow = mdp.Flow(hierarchy)
+    flow = mdp.Flow(hierarchy, verbose=True)
     
     print ''
     for node in flow:
@@ -273,6 +382,7 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
 
 
 
+@echo
 def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, repetition_index, 
                         noisy_dims=0, use_test_set=True, seed=None, **kwargs):
     
@@ -304,7 +414,10 @@ def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, re
         else:
             projected_data = model.execute(data_train)
         # reduce dim because ForeCA calculated output_dim_max dimensions 
-        if algorithm == Algorithms.ForeCA:
+        if  algorithm == Algorithms.ForeCA:# or \
+            #algorithm == Algorithms.HiSFA:
+            #algorithm == Algorithms.SFA or \
+            #algorithm == Algorithms.SFFA or \
             projected_data = projected_data[:,:output_dim]
         
     return projected_data, model, [data_train, data_test]
@@ -327,6 +440,7 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
     
     
 
+@echo
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, use_test_set, 
                      repetition_index=None, seed=None, **kwargs):
     # rev: 4
@@ -407,7 +521,8 @@ def calc_delta(data, ndim=False):
 
 
 
-@mem.cache
+#@mem.cache
+@echo
 def calc_autoregressive_error(data, model, p, data_train):
     if isinstance(model, PFANodeMDP.PFANode):
         W = model.W 
@@ -531,7 +646,7 @@ if __name__ == '__main__':
     #                           p=1,
     #                           iterations=50,
     #                           seed=0)
-    print build_hierarchy_flow(image_x=50, 
+    hierarchy = build_hierarchy_flow(image_x=50, 
                                image_y=50, 
                                output_dim=10, 
                                node_class=mdp.nodes.SFANode, 
@@ -539,7 +654,8 @@ if __name__ == '__main__':
                                channels_xy_1=10, 
                                spacing_xy_1=5, 
                                channels_xy_n=3, 
-                               spacing_xy_n=1, 
+                               spacing_xy_n=3, 
                                node_kwargs={}, 
                                expansion=2)
-
+        
+        

@@ -1,3 +1,4 @@
+import mdp
 import numpy as np
 
 import explot as ep
@@ -10,6 +11,8 @@ from envs.env_data import EnvData
 from envs.env_data2d import EnvData2D
 from envs.env_random import EnvRandom
 
+
+
 default_args_global = {'n_train':      10000, 
                        'n_test':       2000,
                        'seed':         0,
@@ -17,8 +20,9 @@ default_args_global = {'n_train':      10000,
                        'limit_data':   100000,
                        'use_test_set': True,
                        'repetitions':  50,
-                       'cachedir':     '/scratch/weghebvc',
+                       'cachedir':     '/home/weghebvc',#'/scratch/weghebvc',
                        'manage_seed':  'external',
+                       'verbose':      True,
                        'processes':    None}
 
 default_args_low  = {#'pca':         1.,
@@ -37,7 +41,12 @@ algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
                       eb.Algorithms.SFFA:   eb.Measures.delta,
                       eb.Algorithms.ForeCA: eb.Measures.omega,
                       eb.Algorithms.PFA:    eb.Measures.pfa,
-                      eb.Algorithms.GPFA2:  eb.Measures.gpfa}
+                      eb.Algorithms.GPFA2:  eb.Measures.gpfa,
+                      #
+                      eb.Algorithms.HiSFA:  eb.Measures.delta,
+                      eb.Algorithms.HiPFA:  eb.Measures.pfa,
+                      eb.Algorithms.HiGPFA: eb.Measures.gpfa,
+                      }
 
 algorithm_args = {eb.Algorithms.ForeCA: {'n_train':      1000, 
                                          'n_test':       200,
@@ -46,7 +55,13 @@ algorithm_args = {eb.Algorithms.ForeCA: {'n_train':      1000,
                                          'output_dim_max': 5,
                                          },
                   eb.Algorithms.GPFA2:  {'iterations':   30,
-                                         'k_eval':       10,}}
+                                         'k_eval':       10,},
+                  eb.Algorithms.HiSFA:  {'output_dim':     5,
+                                         'output_dim_max': 5,},
+                  eb.Algorithms.HiPFA:  {'output_dim':   5,},
+                  eb.Algorithms.HiGPFA: {'output_dim':   5,
+                                         'iterations':   30}
+                  }
 
 dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'pca': .99},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT2, 'pca': .99},
@@ -66,16 +81,8 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'pca': .99}
 
                 {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'pca': 1., 'n_train': 1000, 'n_test': 200},
                 {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'pca': .99, 'n_train': 5000, 'n_test': 1000},
-                {'env': EnvRandom, 'dataset': None, 'ndim': 50, 'K': 0, 'p': 1, 'k': 1, 'pca': 1},
+                {'env': EnvRandom, 'dataset': None, 'ndim': 20, 'K': 0, 'p': 1, 'k': 1, 'pca': 1},
                 ]
-
-#datasets_low_dimensional = set([env_data.Datasets.EEG,
-#                                env_data.Datasets.EEG2,
-#                                env_data.Datasets.EIGHT_EMOTION,
-#                                env_data.Datasets.FIN_EQU_FUNDS,
-#                                env_data.Datasets.PHYSIO_EHG,
-#                                env_data.Datasets.PHYSIO_MGH,
-#                                env_data.Datasets.PHYSIO_UCD])
 
 # extracting 10 dimensions when dim >= 20, extracting 5 otherwise
 dataset_default_args = {env_data.Datasets.PHYSIO_MGH: default_args_low,
@@ -85,7 +92,7 @@ dataset_default_args = {env_data.Datasets.PHYSIO_MGH: default_args_low,
                         env_data.Datasets.FIN_EQU_FUNDS: default_args_low,
                         env_data.Datasets.EEG: default_args_high,
                         env_data.Datasets.EEG2: default_args_high,
-                        None: default_args_high,
+                        None: default_args_low,
                         env_data.Datasets.HAPT: default_args_high,
                         env_data.Datasets.PHYSIO_MMG: default_args_low,
                         env_data.Datasets.STFT1: default_args_high,
@@ -144,7 +151,13 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.STFT1: {'p': 10, '
                                               env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
                                               env_data2d.Datasets.Traffic: {'p': 2, 'k': 2},
                                               env_data.Datasets.FIN_EQU_FUNDS: {'p': 2, 'k': 1},
-                                              env_data.Datasets.HAPT: {'p': 1, 'k': 10}}
+                                              env_data.Datasets.HAPT: {'p': 1, 'k': 10}},
+                        eb.Algorithms.HiPFA: {env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0},
+                                              env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
+                                              env_data2d.Datasets.Traffic: {'p': 2, 'K': 0}},
+                        eb.Algorithms.HiGPFA:{env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 2},
+                                              env_data2d.Datasets.Mario: {'p': 2, 'k': 2},
+                                              env_data2d.Datasets.Traffic: {'p': 2, 'k': 2}},
 
 }
 
@@ -172,7 +185,7 @@ def get_results(alg, overide_args={}, include_random=True):
         kwargs.update(overide_args)
     
         #print 'results: %s' % kwargs
-        results[dataset] = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window'], **kwargs)
+        results[dataset] = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window', 'scaling'], **kwargs)
         
     return results
 
@@ -181,7 +194,7 @@ def get_results(alg, overide_args={}, include_random=True):
 def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
 
     results = {}
-    
+
     for args in dataset_args:
         env = args['env']
         dataset = args['dataset']
@@ -197,22 +210,35 @@ def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
         kwargs.update(dataset_default_args.get(dataset, {}))
         kwargs.update(algorithm_parameters.get(alg, {}).get(dataset, {}))
         kwargs.update(algorithm_args.get(alg, {}))
-        #kwargs.update({'output_dim': 5, 'omega_dim': 4})
+        kwargs.update({'output_dim': 5, 'output_dim_max': 5})
         kwargs.update(overide_args)
     
         try:
+            # list of repetition indices?
             projected_data_list = []
             for i in repetition_index:
-                projected_data, _, [_, _] = eb.calc_projected_data(repetition_index=i, **kwargs)
+                projected_data, model, [_, _] = eb.calc_projected_data(repetition_index=i, **kwargs)
                 projected_data_list.append(projected_data)
             projected_data = np.stack(projected_data_list, axis=2)
             data_train     = None
             data_test      = None
         except TypeError:
-            projected_data, _, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
+            projected_data, model, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
         results[dataset] = result
-        
+
+#         print ''
+#         for i, layer in enumerate(model):
+#             print '\nLayer %d\n' % i
+#             if type(layer) is mdp.hinet.Layer:
+#                 for j, flownode in enumerate(layer):
+#                     print '\nNode #%d\n' % j
+#                     for node in flownode:
+#                         if type(node) is mdp.nodes.SFANode:
+#                             print node, ': %s' % node.d
+#                         else:
+#                             print node
+                
     return results
 
 

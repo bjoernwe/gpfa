@@ -17,24 +17,24 @@ def main():
                 ]:
 
         print(alg)
-        only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results[alg] = parameters.get_results(alg, only_low_dimensional=only_low_dimensional)
-        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA}, only_low_dimensional=only_low_dimensional)
+        results[alg] = parameters.get_results(alg)
+        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})
 
+    f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_sfa_comparison.tex', 'w+')
     print("""
 \\begin{center}
 \\begin{tabular}{|c|c|c|c|}
 \\hline 
 - & ForeCA & PFA & GPFA \\\\
-\\hline""")
+\\hline""", file=f)
     for dataset_args in parameters.dataset_args:
         env = dataset_args['env']
         dataset = dataset_args['dataset']
-        print('\\texttt{%s}' % eb.get_dataset_name(env=env, ds=dataset, latex=True), end='') 
+        print('\\texttt{%s}' % eb.get_dataset_name(env=env, ds=dataset, latex=True), end='', file=f)
         for alg in results.keys():
-            print(' & ', end='')
+            print(' & ', end='', file=f)
             if not dataset in results[alg]:
-                print(' n/a ', end='')
+                print(' n/a ', end='', file=f)
             else:
                 x = np.mean(results[alg][dataset].values, axis=0) # axis 0 = output_dim
                 y = np.mean(results_sfa[alg][dataset].values, axis=0)
@@ -45,13 +45,13 @@ def main():
                     sfa_advantage = np.mean(x) > np.mean(y)
                     sfa_advantage_soft = np.mean(x) + 1*np.std(x) > np.mean(y)
                 if sfa_advantage:
-                    print('**', end='')
+                    print('**', end='', file=f)
                 elif sfa_advantage_soft:
-                    print('*', end='')
+                    print('*', end='', file=f)
                 else:
-                    print('', end='')
-        print(' \\\\\n\\hline')
-    print('\\end{tabular}\n\\end{center}')
+                    print('', end='', file=f)
+        print(' \\\\\n\\hline', file=f)
+    print('\\end{tabular}\n\\end{center}', file=f)
 
 
 

@@ -24,10 +24,9 @@ def main():
     results_angle = {}
     
     for alg in algs:
-        only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results_test[alg]  = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, repetition_index=repetition_index)
-        results_train[alg] = parameters.get_signals(alg, only_low_dimensional=only_low_dimensional, overide_args={'use_test_set': False}, repetition_index=repetition_index)
-        results_angle[alg] = parameters.get_results(alg, only_low_dimensional=only_low_dimensional, overide_args={'measure': eb.Measures.angle_to_sfa})
+        results_test[alg]  = parameters.get_signals(alg, repetition_index=repetition_index)
+        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=repetition_index)
+        results_angle[alg] = parameters.get_results(alg, overide_args={'measure': eb.Measures.angle_to_sfa})
         
     
     alphas = np.linspace(0, 1, 6)[::-1]

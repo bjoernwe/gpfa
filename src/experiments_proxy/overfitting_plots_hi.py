@@ -3,29 +3,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import experiments_proxy.experiment_base as eb
-import parameters
+import parameters_hi
 
 
 
 def main():
 
-    for alg in [#eb.Algorithms.SFA,
-                #eb.Algorithms.ForeCA,
-                #eb.Algorithms.SFFA,
-                eb.Algorithms.PFA,
-                #eb.Algorithms.GPFA2
+    for alg in [eb.Algorithms.HiSFA,
+                eb.Algorithms.HiPFA,
+                #eb.Algorithms.HiGPFA
                 ]:
         
         plt.figure()
-        colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters.dataset_args))))
+        colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters_hi.dataset_args_hi))))
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
         
         print alg
         #only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results_x = parameters.get_results(alg, overide_args={})
-        results_y = parameters.get_results(alg, overide_args={'use_test_set': False})
+        results_x = parameters_hi.get_results(alg, overide_args={})
+        results_y = parameters_hi.get_results(alg, overide_args={'use_test_set': False})
         
-        for dataset_args in parameters.dataset_args:
+        for dataset_args in parameters_hi.dataset_args_hi:
             
             dataset = dataset_args['dataset']
             if not dataset in results_x:
