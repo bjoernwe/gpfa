@@ -14,7 +14,7 @@ def main():
     results = {}
     results_sfa = {}
     for alg in [eb.Algorithms.HiPFA,
-                #eb.Algorithms.HiGPFA
+                eb.Algorithms.HiGPFA
                 ]:
 
         print(alg)

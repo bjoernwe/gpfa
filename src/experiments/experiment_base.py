@@ -375,13 +375,13 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
                                                                    field_channels_xy = channels_xy_1,
                                                                    field_spacing_xy  = spacing_xy_1,
                                                                    in_channel_dim    = 1,
-                                                                   ignore_cover      = True))
+                                                                   ignore_cover      = False))
         else:
             switchboards.append(mdp.hinet.Rectangular2dSwitchboard(in_channels_xy    = switchboards[-1].out_channels_xy,
                                                                    field_channels_xy = channels_xy_n,
                                                                    field_spacing_xy  = spacing_xy_n,
                                                                    in_channel_dim    = layers[-1][-1].output_dim,
-                                                                   ignore_cover      = True))
+                                                                   ignore_cover      = False))
     
         flow_nodes = []
         print 'creating layer with %s = %d nodes' % (switchboards[-1].out_channels_xy, switchboards[-1].output_channels)
@@ -950,14 +950,25 @@ def calc_omega_ndim(data):
 
 if __name__ == '__main__':
     #set_cachedir(cachedir=None)
-    for measure in [Measures.delta, Measures.delta_ndim, Measures.gpfa, Measures.gpfa_ndim]:
-        print prediction_error(measure=measure, 
-                               dataset=Datasets.Mario_window, 
-                               algorithm=Algorithms.GPFA2, 
-                               output_dim=2, 
-                               N=2000, 
-                               k=10, 
-                               p=1,
-                               iterations=50,
-                               seed=0)
+    #for measure in [Measures.delta, Measures.delta_ndim, Measures.gpfa, Measures.gpfa_ndim]:
+    #    print prediction_error(measure=measure, 
+    #                           dataset=Datasets.Mario_window, 
+    #                           algorithm=Algorithms.GPFA2, 
+    #                           output_dim=2, 
+    #                           N=2000, 
+    #                           k=10, 
+    #                           p=1,
+    #                           iterations=50,
+    #                           seed=0)
+    print build_hierarchy_flow(image_x=50, 
+                               image_y=50, 
+                               output_dim=10, 
+                               node_class=mdp.nodes.SFANode, 
+                               node_output_dim=10, 
+                               expansion=2, 
+                               channels_xy_1=10, 
+                               spacing_xy_1=5, 
+                               channels_xy_n=3, 
+                               spacing_xy_n=1, 
+                               node_kwargs={})
 
