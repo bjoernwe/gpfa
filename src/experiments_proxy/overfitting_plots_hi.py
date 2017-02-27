@@ -11,7 +11,7 @@ def main():
 
     for alg in [eb.Algorithms.HiSFA,
                 eb.Algorithms.HiPFA,
-                #eb.Algorithms.HiGPFA
+                eb.Algorithms.HiGPFA
                 ]:
         
         plt.figure()
