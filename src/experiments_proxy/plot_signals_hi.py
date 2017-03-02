@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import mkl
 import numpy as np
 
 import experiments_proxy.experiment_base as eb
@@ -8,11 +9,13 @@ import parameters_hi
 
 def main():
 
+    mkl.set_num_threads(1)
+
     algs = [eb.Algorithms.HiSFA,
             #eb.Algorithms.ForeCA,
             #eb.Algorithms.SFFA,
-            eb.Algorithms.HiPFA,
-            #eb.Algorithms.GPFA2
+            #eb.Algorithms.HiPFA,
+            #eb.Algorithms.HiGPFA,
             ]
     repetition_index = 0
 
@@ -44,7 +47,7 @@ def main():
 
             plt.subplot(4, 4, ids+1)
             
-            for i in range(10)[::-1]:
+            for i in range(3)[::-1]:
                 signal_train = signals_train[:,i]
                 signal_test  = signals_test[:,i]
                 signal_train = signal_train[-10000:]

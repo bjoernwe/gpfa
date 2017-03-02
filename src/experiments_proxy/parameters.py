@@ -20,7 +20,7 @@ default_args_global = {'n_train':      10000,
                        'limit_data':   100000,
                        'use_test_set': True,
                        'repetitions':  50,
-                       'cachedir':     '/home/weghebvc',#'/scratch/weghebvc',
+                       'cachedir':     '/scratch/weghebvc',
                        'manage_seed':  'external',
                        'verbose':      True,
                        'processes':    None}
@@ -37,7 +37,8 @@ default_args_high = {#'pca':         .99,
                      #'repetitions': 5,
                      }
 
-algorithm_measures = {eb.Algorithms.SFA:    eb.Measures.delta,
+algorithm_measures = {eb.Algorithms.Random: eb.Measures.delta,
+                      eb.Algorithms.SFA:    eb.Measures.delta,
                       eb.Algorithms.SFFA:   eb.Measures.delta,
                       eb.Algorithms.ForeCA: eb.Measures.omega,
                       eb.Algorithms.PFA:    eb.Measures.pfa,

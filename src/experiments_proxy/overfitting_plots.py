@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import mkl
 import numpy as np
 
 import experiments_proxy.experiment_base as eb
@@ -9,11 +10,13 @@ import parameters
 
 def main():
 
-    for alg in [#eb.Algorithms.SFA,
-                #eb.Algorithms.ForeCA,
-                #eb.Algorithms.SFFA,
+    mkl.set_num_threads(1)
+
+    for alg in [eb.Algorithms.SFA,
+                eb.Algorithms.ForeCA,
+                eb.Algorithms.SFFA,
                 eb.Algorithms.PFA,
-                #eb.Algorithms.GPFA2
+                eb.Algorithms.GPFA2
                 ]:
         
         plt.figure()
@@ -33,7 +36,7 @@ def main():
             result_x = results_x[dataset].values
             result_y = results_y[dataset].values
             
-            if False:
+            if True:
                 # average over first dim (output_dim)
                 result_x = np.mean(result_x, axis=0, keepdims=True) 
                 result_y = np.mean(result_y, axis=0, keepdims=True) 
@@ -41,8 +44,8 @@ def main():
             # point cloud
             color = next(colors)
             marker = next(markers)
-            for i in range(result_x.shape[0]):
-                plt.scatter(result_x[i], result_y[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
+#             for i in range(result_x.shape[0]):
+#                 plt.scatter(result_x[i], result_y[i], c=color, marker=marker, label=None, s=80, alpha=.3, linewidths=0, zorder=1)
     
             # plot
             mu_x = np.mean(result_x, axis=-1) # last axis = repetitions

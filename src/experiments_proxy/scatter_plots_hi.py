@@ -86,7 +86,7 @@ def main():
         # 
         plt.plot([1e-6, 1e2], [1e-6, 1e2], '-', zorder=3)
         plt.xlabel('error of %s' % alg)
-        plt.ylabel('error of SFA')
+        plt.ylabel('error of HiSFA')
         plt.xscale('log')
         plt.yscale('log')
         plt.legend(loc='best', prop={'size': 8})

@@ -9,7 +9,8 @@ import parameters
 
 def main():
 
-    algs = [eb.Algorithms.SFA,
+    algs = [eb.Algorithms.Random,
+            eb.Algorithms.SFA,
             eb.Algorithms.ForeCA,
             #eb.Algorithms.SFFA,
             eb.Algorithms.PFA,

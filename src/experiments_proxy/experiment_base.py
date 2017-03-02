@@ -8,7 +8,7 @@ from enum import Enum
 import foreca.foreca_node as foreca_node
 import gpfa
 import sffa
-from utils import echo
+from utils import echo, f_identity, f_exp08
 
 #sys.path.append('/home/weghebvc/workspace/git/explot/src/')
 #import explot as ep
@@ -31,8 +31,8 @@ import PFACoreUtil
 
 
 # prepare joblib.Memory
-#default_cachedir = '/scratch/weghebvc'
-default_cachedir = '/home/weghebvc'
+default_cachedir = '/scratch/weghebvc'
+#default_cachedir = '/home/weghebvc'
 mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 
@@ -40,7 +40,7 @@ mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2 HiSFA HiPFA HiGPFA')
 
-Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa')
+Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa_signals')
 
 
 
@@ -152,9 +152,9 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                             output_dim=output_dim, 
                             expansion=2, 
                             channels_xy_1=10, 
-                            spacing_xy_1=5, 
-                            channels_xy_n=3, 
-                            spacing_xy_n=3, 
+                            spacing_xy_1=10, 
+                            channels_xy_n=2, 
+                            spacing_xy_n=1, 
                             node_output_dim=10)
     elif algorithm == Algorithms.HiPFA:
         return train_hi_pfa(data_train=data_train,
@@ -164,9 +164,9 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                             output_dim=output_dim, 
                             expansion=2, 
                             channels_xy_1=10, 
-                            spacing_xy_1=5, 
-                            channels_xy_n=3, 
-                            spacing_xy_n=3, 
+                            spacing_xy_1=10, 
+                            channels_xy_n=2, 
+                            spacing_xy_n=1, 
                             node_output_dim=10)
     elif algorithm == Algorithms.HiGPFA:
         return train_hi_gpfa(data_train=data_train,
@@ -177,9 +177,9 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                              output_dim=output_dim, 
                              expansion=2, 
                              channels_xy_1=10, 
-                             spacing_xy_1=5, 
-                             channels_xy_n=3, 
-                             spacing_xy_n=3, 
+                             spacing_xy_1=10, 
+                             channels_xy_n=2, 
+                             spacing_xy_n=1, 
                              node_output_dim=10)
     else:
         assert False
@@ -250,7 +250,7 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 @mem.cache
 def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 4
+    # rev: 9
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -270,7 +270,7 @@ def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1,
 @mem.cache
 def train_hi_pfa(data_train, p, K, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 4
+    # rev: 9
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -309,7 +309,7 @@ def train_hi_gpfa(data_train, p, k, iterations, image_shape, output_dim, expansi
                                              'causal_features': True,
                                              'generalized_eigen_problem': True})
     flow.train(data_train)
-    return flow
+    return flow # rev 6
 
 
 
@@ -355,8 +355,8 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
             #if not last_layer:
             if True:
                 if expansion != 1:
-                    nodes.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=nodes[-1].output_dim, dtype=np.float64))
-                    nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-4), input_dim=nodes[-1].output_dim, dtype=np.float64))
+                    nodes.append(mdp.nodes.GeneralExpansionNode(funcs=[f_identity, f_exp08], input_dim=nodes[-1].output_dim, dtype=np.float64)) #nodes.append(mdp.nodes.PolynomialExpansionNode(degree=expansion, input_dim=nodes[-1].output_dim, dtype=np.float64))
+                    #nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-4), input_dim=nodes[-1].output_dim, dtype=np.float64))
                     nodes.append(mdp.nodes.WhiteningNode(input_dim=nodes[-1].output_dim, output_dim=nodes[-1].output_dim, reduce=False, dtype=np.float64))
                     nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=output_dim if last_layer else node_output_dim, dtype=np.float64, **node_kwargs))
                 nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=4, input_dim=nodes[-1].output_dim, dtype=np.float64))
@@ -440,10 +440,10 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
     
     
 
-@echo
-def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, use_test_set, 
-                     repetition_index=None, seed=None, **kwargs):
-    # rev: 4
+#@echo
+def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, 
+                     use_test_set, repetition_index=None, seed=None, **kwargs):
+    # rev: 8
     projected_data, model, [data_train, data_test] = calc_projected_data(env=env,
                                                                          dataset=dataset, 
                                                                          algorithm=algorithm, 
@@ -503,7 +503,7 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
                                                     ndim=True)
     elif measure == Measures.ndims:
         return data_chunks[0].shape[1]
-    elif measure == Measures.angle_to_sfa:
+    elif measure == Measures.angle_to_sfa_signals:
         return calc_angle_to_sfa_signals(data, **kwargs)
     else:
         assert False
@@ -653,8 +653,8 @@ if __name__ == '__main__':
                                node_output_dim=10, 
                                channels_xy_1=10, 
                                spacing_xy_1=5, 
-                               channels_xy_n=3, 
-                               spacing_xy_n=3, 
+                               channels_xy_n=2, 
+                               spacing_xy_n=1, 
                                node_kwargs={}, 
                                expansion=2)
         

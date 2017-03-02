@@ -14,7 +14,9 @@ def main():
 
     results = {}
     results_sfa = {}
-    for alg in [eb.Algorithms.ForeCA,
+    for alg in [eb.Algorithms.Random,
+                eb.Algorithms.SFFA,
+                eb.Algorithms.ForeCA,
                 eb.Algorithms.PFA,
                 eb.Algorithms.GPFA2
                 ]:
@@ -23,6 +25,7 @@ def main():
         #only_low_dimensional = alg is eb.Algorithms.ForeCA
         results[alg] = parameters.get_results(alg)
         results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})
+        #results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFFA})
     #results_sfa = parameters.get_results(eb.Algorithms.SFA)
 
     for alg in results.keys():
