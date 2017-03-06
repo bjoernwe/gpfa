@@ -8,7 +8,7 @@ from enum import Enum
 import foreca.foreca_node as foreca_node
 import gpfa
 import sffa
-from utils import echo, f_identity, f_exp08
+from utils import echo, f_identity, f_exp08, principal_angles
 
 #sys.path.append('/home/weghebvc/workspace/git/explot/src/')
 #import explot as ep
@@ -559,26 +559,26 @@ def calc_omega_ndim(data):
 def calc_angle_to_sfa_signals(data, **kwargs):
     kwargs['algorithm'] = Algorithms.SFA
     signals_sfa, _, _ = calc_projected_data(**kwargs)
-    return _principal_angle(signals_sfa, data) 
+    return principal_angles(signals_sfa, data)[0 if kwargs.get('min_principal_angle') else 1]  
 
 
 
-def _principal_angle(A, B):
-    """A and B must be column-orthogonal.
-    Golub: Matrix Computations, 1996
-    [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
-    """
-    #A = np.array(A, copy=True)
-    #B = np.array(B, copy=True)
-    if A.ndim == 1:
-        A = np.array(A, ndmin=2).T
-    if B.ndim == 1:
-        B = np.array(B, ndmin=2).T
-    assert A.ndim == B.ndim == 2
-    A = np.linalg.qr(A)[0]
-    B = np.linalg.qr(B)[0]
-    _, S, _ = np.linalg.svd(np.dot(A.T, B))
-    return np.arccos(min(S.min(), 1.0))
+# def _principal_angle(A, B):
+#     """A and B must be column-orthogonal.
+#     Golub: Matrix Computations, 1996
+#     [http://www.disi.unige.it/person/BassoC/teaching/python_class02.pdf]
+#     """
+#     #A = np.array(A, copy=True)
+#     #B = np.array(B, copy=True)
+#     if A.ndim == 1:
+#         A = np.array(A, ndmin=2).T
+#     if B.ndim == 1:
+#         B = np.array(B, ndmin=2).T
+#     assert A.ndim == B.ndim == 2
+#     A = np.linalg.qr(A)[0]
+#     B = np.linalg.qr(B)[0]
+#     _, S, _ = np.linalg.svd(np.dot(A.T, B))
+#     return np.arccos(min(S.min(), 1.0))
 
 
 
