@@ -43,6 +43,7 @@ def main():
         
         for dataset_args in parameters.dataset_args:
             
+            env = dataset_args['env']
             dataset = dataset_args['dataset']
             if not dataset in results[alg]:
                 continue
@@ -79,7 +80,7 @@ def main():
             values0_sfa_dummy[values0_sfa > 0] = np.NaN
             errors_sfa_neg = np.sqrt(np.nanmean(values0_sfa_dummy**2, axis=-1))
     
-            label = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
+            label = '%s' % eb.get_dataset_name(env=env, ds=dataset, latex=False) #%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
             xerr = np.vstack([errors_neg, errors_pos])
             yerr = np.vstack([errors_sfa_neg, errors_sfa_pos])
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=10, label=label, zorder=2)
@@ -96,45 +97,13 @@ def main():
             #print 'p-value for X < Y:', 1 - pvalue / 2.
 
         # 
-        plt.plot([1e-6, 1e2], [1e-6, 1e2], '-', zorder=3)
+        plt.plot([1e-3, 1e2], [1e-3, 1e2], '-', zorder=3)
         plt.xlabel('error of %s' % alg)
         plt.ylabel('error of SFA')
         plt.xscale('log')
         plt.yscale('log')
         plt.legend(loc='best', prop={'size': 8})
 
-    print("""
-\\begin{center}
-\\begin{tabular}{|c|c|c|c|}
-\\hline 
-- & ForeCA & PFA & GPFA \\\\
-\\hline""")
-    for dataset_args in parameters.dataset_args:
-        env = dataset_args['env']
-        dataset = dataset_args['dataset']
-        print('\\texttt{%s}' % eb.get_dataset_name(env=env, ds=dataset, latex=True), end='') 
-        for alg in results.keys():
-            print(' & ', end='')
-            if not dataset in results[alg]:
-                print(' n/a ', end='')
-            else:
-                x = np.mean(results[alg][dataset].values, axis=0) # axis 0 = output_dim
-                y = np.mean(results_sfa[alg][dataset].values, axis=0)
-                if alg is eb.Algorithms.ForeCA:
-                    sfa_advantage = np.mean(y) > np.mean(x)
-                    sfa_advantage_soft = np.mean(y) + 1*np.std(y) > np.mean(x)
-                else:
-                    sfa_advantage = np.mean(x) > np.mean(y)
-                    sfa_advantage_soft = np.mean(x) + 1*np.std(x) > np.mean(y)
-                if sfa_advantage:
-                    print('**', end='')
-                elif sfa_advantage_soft:
-                    print('*', end='')
-                else:
-                    print('', end='')
-        print(' \\\\\n\\hline')
-    print('\\end{tabular}\n\\end{center}')
-        
     plt.show()
 
 

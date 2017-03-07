@@ -84,13 +84,22 @@ def f_exp08(x):
 
 def test_principle_angles():
 
-    A = np.array([[1,0], [0,1], [0,0], [0,0]]) 
-    B = np.array([[0,0], [0,1], [1,0], [0,0]])
-    C = np.array([[0,0], [0,0], [1,0], [0,1]])
+    A = np.array([[1,0], 
+                  [0,1], 
+                  [0,0], 
+                  [0,0]]) 
+    B = np.array([[0,0], 
+                  [0,1], 
+                  [1,0], 
+                  [0,0]])
+    C = np.array([[0,0], 
+                  [0,0], 
+                  [1,0], 
+                  [0,1]])
     
     assert principal_angles(A, A) == (0, 0)
     assert principal_angles(A, B) == (0, np.pi/2) 
-    assert principal_angles(A, C) == (np.pi/2, np.pi/2) 
+    assert principal_angles(A, C) == (np.pi/2, np.pi/2)
     
     print 'okay' 
 
