@@ -11,6 +11,14 @@ import parameters
 
 
 def main():
+    
+    plot_alg_names = {eb.Algorithms.Random: 'random',
+                      eb.Algorithms.SFA:    'SFA',
+                      eb.Algorithms.SFFA:   "SFA'",
+                      eb.Algorithms.ForeCA: 'ForeCA',
+                      eb.Algorithms.PFA:    'PFA',
+                      eb.Algorithms.GPFA2:  'GPFA',
+                      }
 
     results = {}
     results_sfa = {}
@@ -30,10 +38,11 @@ def main():
 
     for alg in results.keys():
         
-        colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters.dataset_args))))
-        markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 's'] * 2)
+        #colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters.dataset_args)))) # iter(['white', 'gray', 'black']*6) #
+        colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, len(parameters.dataset_args))))
+        markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
         
-        plt.figure()
+        plt.figure(figsize=(10,6))
 
         #print alg
         #only_low_dimensional = alg is eb.Algorithms.ForeCA
@@ -85,24 +94,17 @@ def main():
             yerr = np.vstack([errors_sfa_neg, errors_sfa_pos])
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=10, label=label, zorder=2)
             
-            # Wilcoxon signed-rank test
-            x = np.mean(result, axis=0) # axis 0 = output_dim
-            y = np.mean(result_sfa, axis=0)
-            _, pvalue = scipy.stats.wilcoxon(x, y)
-            if np.mean(x) > np.mean(y):
-                p = pvalue / 2.
-            else:
-                p = 1 - pvalue / 2.
-            print('%s\np-value for X > Y: %0.4f (%0.4f)' % (dataset, p, 1-p))
-            #print 'p-value for X < Y:', 1 - pvalue / 2.
-
         # 
-        plt.plot([1e-3, 1e2], [1e-3, 1e2], '-', zorder=3)
-        plt.xlabel('error of %s' % alg)
-        plt.ylabel('error of SFA')
+        measure_label = 'forcastability' if alg is eb.Algorithms.ForeCA else 'prediction error'
+        measure_limits = [1e0, 1e2] if alg is eb.Algorithms.ForeCA else [1e-4, 1e2]
+        plt.plot(measure_limits, measure_limits, '-', c='gray', zorder=3)
+        plt.xlabel('%s on %s features' % (measure_label, plot_alg_names[alg]))
+        plt.ylabel('%s on SFA features' % (measure_label))
         plt.xscale('log')
         plt.yscale('log')
-        plt.legend(loc='best', prop={'size': 8})
+        plt.legend(loc='best', prop={'size': 9}, numpoints=1)#, handlelength=0)
+        plt.tight_layout()
+        plt.savefig('fig_results_%s.eps' % plot_alg_names[alg].lower())
 
     plt.show()
 
