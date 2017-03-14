@@ -102,7 +102,9 @@ def main():
         plt.ylabel('%s on SFA features' % (measure_label))
         plt.xscale('log')
         plt.yscale('log')
-        plt.legend(loc='best', prop={'size': 9}, numpoints=1)#, handlelength=0)
+        handles, labels = plt.gca().get_legend_handles_labels()
+        handles = [h[0] for h in handles]
+        plt.legend(handles, labels, loc='best', prop={'size': 9}, numpoints=1, borderpad=1, handlelength=0)
         plt.tight_layout()
         plt.savefig('fig_results_%s.eps' % plot_alg_names[alg].lower())
 

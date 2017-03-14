@@ -443,7 +443,7 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
 #@echo
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, 
                      use_test_set, repetition_index=None, seed=None, **kwargs):
-    # rev: 8
+    # rev: 9
     projected_data, model, [data_train, data_test] = calc_projected_data(env=env,
                                                                          dataset=dataset, 
                                                                          algorithm=algorithm, 
@@ -493,12 +493,12 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
 #                                          data_chunks=data_chunks)
     elif measure == Measures.gpfa:
         return calc_predictability_trace_of_avg_cov(x=data, 
-                                                    k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
+                                                    k=kwargs.get('k_eval', kwargs['k']), 
                                                     p=kwargs['p'],
                                                     ndim=False)
     elif measure == Measures.gpfa_ndim:
         return calc_predictability_trace_of_avg_cov(x=data, 
-                                                    k=kwargs['k_eval'],#.get('k_eval', kwargs['k']), 
+                                                    k=kwargs.get('k_eval', kwargs['k']), 
                                                     p=kwargs['p'],
                                                     ndim=True)
     elif measure == Measures.ndims:
