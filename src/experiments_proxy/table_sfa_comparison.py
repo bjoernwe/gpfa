@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import numpy as np
+import scipy.stats
 
 import experiments_proxy.experiment_base as eb
 import parameters
@@ -41,19 +42,21 @@ Dataset & ForeCA & PFA & GPFA \\\\
                 x = np.mean(results[alg][dataset].values, axis=0) # axis 0 = output_dim
                 y = np.mean(results_sfa[alg][dataset].values, axis=0)
                 z = np.mean(results_sffa[alg][dataset].values, axis=0)
+                _, pvalue = scipy.stats.wilcoxon(x, y)
+                _, pvalue_sffa = scipy.stats.wilcoxon(x, z)
                 if alg is eb.Algorithms.ForeCA:
                     sfa_advantage = np.mean(y) > np.mean(x)
                     sffa_advantage = np.mean(z) > np.mean(x)
-                    sfa_advantage_soft = np.mean(y) + 1*np.std(y) > np.mean(x)
+                    sfa_advantage_soft = np.mean(y) + np.std(y) > np.mean(x)
                 else:
                     sfa_advantage = np.mean(x) > np.mean(y)
                     sffa_advantage = np.mean(x) > np.mean(z)
-                    sfa_advantage_soft = np.mean(x) + 1*np.std(x) > np.mean(y)
-                if sfa_advantage:
+                    sfa_advantage_soft = np.mean(x) > np.mean(y) - np.std(y) 
+                if sfa_advantage and pvalue/2. < .01:
                     print('+', end='', file=f)
                 elif sfa_advantage_soft:
                     print('-', end='', file=f)
-                    if sffa_advantage:
+                    if sffa_advantage and pvalue_sffa/2. < .01:
                         print('/+', end='', file=f)
                 else:
                     print('', end='', file=f)

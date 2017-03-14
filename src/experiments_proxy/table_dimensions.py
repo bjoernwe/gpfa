@@ -14,7 +14,7 @@ def main():
     f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_dims.tex', 'w+')
     print("""
 \\begin{center}
-\\begin{tabular}{|l|r|r|r|c|c|}
+\\begin{tabular}{|l|r|r|r|r|R{1cm}|}
 \\hline 
 Dataset & $S$ & $S_{train}$ & $S_{test}$ & $N$ & $N'$ \\\\
 \\hline""", file=f)
@@ -22,6 +22,8 @@ Dataset & $S$ & $S_{train}$ & $S_{test}$ & $N$ & $N'$ \\\\
 
         env = dataset_args['env']
         dataset = dataset_args['dataset']
+        if dataset is None:
+            continue
         
         kwargs = dict(parameters.default_args_global)
         #kwargs['algorithm'] = alg
@@ -47,7 +49,8 @@ Dataset & $S$ & $S_{train}$ & $S_{test}$ & $N$ & $N'$ \\\\
         dim_avg = np.mean(results[dataset].values) # axis 0 = output_dim
         dim_std = np.std(results[dataset].values) # axis 0 = output_dim
         if kwargs['pca'] < 1.0:
-            print('%0.1f $\pm$ %0.1f' % (dim_avg, dim_std), end='', file=f)
+            #print('%0.1f $\pm$ %0.1f' % (dim_avg, dim_std), end='', file=f)
+            print('$\sim$%d' % int(round(dim_avg)), end='', file=f)
         else:
             print('%d' % dim_avg, end='', file=f)
         print(' \\\\\n\\hline', file=f)
