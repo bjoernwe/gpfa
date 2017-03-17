@@ -14,10 +14,10 @@ def main():
     f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_dims.tex', 'w+')
     print("""
 \\begin{center}
-\\begin{tabular}{|l|r|r|r|r|R{1cm}|}
-\\hline 
+\\begin{tabular}{L{3.5cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm}}
+\\toprule 
 Dataset & $S$ & $S_{train}$ & $S_{test}$ & $N$ & $N'$ \\\\
-\\hline""", file=f)
+\\midrule""", file=f)
     for dataset_args in parameters.dataset_args:
 
         env = dataset_args['env']
@@ -53,7 +53,9 @@ Dataset & $S$ & $S_{train}$ & $S_{test}$ & $N$ & $N'$ \\\\
             print('$\sim$%d' % int(round(dim_avg)), end='', file=f)
         else:
             print('%d' % dim_avg, end='', file=f)
-        print(' \\\\\n\\hline', file=f)
+        print(' \\\\\n', file=f)
+    print('\\texttt{MISC\\_NOISE} & & 10000 & 2000 & 20 & 20 \\\\', file=f)
+    print('\\bottomrule', file=f)
     print('\\end{tabular}\n\\end{center}', file=f)
 
 
