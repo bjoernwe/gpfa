@@ -20,10 +20,10 @@ def main():
                       }
 
     algs = [#eb.Algorithms.Random,
-            #eb.Algorithms.ForeCA,
+            eb.Algorithms.ForeCA,
             #eb.Algorithms.SFA,
             #eb.Algorithms.SFFA,
-            #eb.Algorithms.PFA,
+            eb.Algorithms.PFA,
             eb.Algorithms.GPFA2
             ]
 
@@ -35,41 +35,51 @@ def main():
             results_angle[alg][min_principal_angle] = parameters.get_results(alg, overide_args={'measure': eb.Measures.angle_to_sfa_signals, 'min_principal_angle': min_principal_angle,  'use_test_set': False})
         
     for _, alg in enumerate(algs):
-            
-        plt.figure(figsize=(10,6))
+        
+        figsize = (10,4.5) if alg is eb.Algorithms.ForeCA else (10,6)
+        plt.figure(figsize=figsize)
         plt.suptitle(plot_alg_names[alg])
             
-        for ids, dataset_args in enumerate(parameters.dataset_args):
+        idx = 0
+        for _, dataset_args in enumerate(parameters.dataset_args):
 
+            env = dataset_args['env']
+            dataset = dataset_args['dataset']
+            if not dataset in results_angle[alg][False]:
+                continue
+            
             for min_principal_angle in [False, True]:
 
-                env = dataset_args['env']
-                dataset = dataset_args['dataset']
-                if not dataset in results_angle[alg][min_principal_angle]:
-                    continue
-                
                 # angles
-                plt.subplot(4, 4, ids+1)
+                n_rows = 3 if alg is eb.Algorithms.ForeCA else 4
+                plt.subplot(n_rows, 4, idx+1)
                 #plt.subplot2grid(shape=(n_algs,4), loc=(a,3))
                 values = results_angle[alg][min_principal_angle][dataset].values
                 d, _ = values.shape
                 plt.errorbar(x=range(1,d+1), y=np.mean(values, axis=1), yerr=np.std(values, axis=1))
-                plt.xlim(.5, 10+.5)
+                xlim_max = 5.5 if alg is eb.Algorithms.ForeCA else 10.5 
+                plt.xlim(.5, xlim_max)
                 plt.ylim(-.2, np.pi/2+.2)
-                if ids % 4 == 0:
+                if idx % 4 == 0:
                     plt.ylabel('angle')
                 else:
                     plt.gca().set_yticklabels([])
-                if ids >= 12:
+                if (alg is eb.Algorithms.ForeCA and idx in [5,6,7,8]) or idx >= 12:
                     plt.xlabel('# dimensions')
                 else:
                     plt.gca().set_xticklabels([])
                     
                 # title
                 plt.title(eb.get_dataset_name(env=env, ds=dataset, latex=False), fontsize=12)
+                
+            idx += 1
 
-        plt.subplots_adjust(hspace=.4, wspace=.15, left=0.07, right=.96, bottom=.08, top=.92)
+        if alg is eb.Algorithms.ForeCA:
+            plt.subplots_adjust(hspace=.4, wspace=.15, left=0.07, right=.96, bottom=.1, top=.88)
+        else:
+            plt.subplots_adjust(hspace=.4, wspace=.15, left=0.07, right=.96, bottom=.08, top=.92)
             
+        plt.savefig('fig_angles_%s.eps' % plot_alg_names[alg].lower())
     plt.show()
 
 

@@ -28,13 +28,13 @@ default_args_global = {'n_train':      10000,
 default_args_low  = {#'pca':         1.,
                      'output_dim':  range(1,6),
                      'output_dim_max': 5,
-                     'repetitions': 10,
+                     #'repetitions': 10,
                      }
 
 default_args_high = {#'pca':         .99,
                      'output_dim':  range(1,11),
                      'output_dim_max': 10,
-                     'repetitions': 5,
+                     #'repetitions': 5,
                      }
 
 algorithm_measures = {eb.Algorithms.Random: eb.Measures.delta,

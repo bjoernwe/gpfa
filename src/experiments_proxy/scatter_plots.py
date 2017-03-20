@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import matplotlib
 import matplotlib.pyplot as plt
+import mkl
 import numpy as np
 import scipy.stats
 
@@ -11,6 +12,8 @@ import parameters
 
 
 def main():
+    
+    mkl.set_num_threads(1)
     
     plot_alg_names = {eb.Algorithms.Random: 'random',
                       eb.Algorithms.SFA:    'SFA',
@@ -39,7 +42,7 @@ def main():
     for alg in results.keys():
         
         #colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters.dataset_args)))) # iter(['white', 'gray', 'black']*6) #
-        colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, len(parameters.dataset_args))))
+        colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, int(1.25*len(parameters.dataset_args)))))
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
         
         plt.figure(figsize=(10,6))

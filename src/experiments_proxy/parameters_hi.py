@@ -19,23 +19,16 @@ default_args_global = {'n_train':      10000,
                        'noisy_dims':   0,
                        'limit_data':   100000,
                        'use_test_set': True,
-                       'repetitions':  10,
+                       'repetitions':  20,
                        'cachedir':     '/scratch/weghebvc',
                        'manage_seed':  'external',
                        'verbose':      True,
                        'processes':    None}
 
 default_args_low  = {#'pca':         1.,
-                     'output_dim':  5,#range(1,6),
+                     'output_dim':  range(1,6),
                      'output_dim_max': 5,
-                     #'repetitions': 10,
                      }
-
-# default_args_high = {#'pca':         .99,
-#                      'output_dim':  range(1,11),
-#                      'output_dim_max': 10,
-#                      #'repetitions': 5,
-#                      }
 
 algorithm_measures = {eb.Algorithms.HiSFA:  eb.Measures.delta,
                       eb.Algorithms.HiPFA:  eb.Measures.pfa,

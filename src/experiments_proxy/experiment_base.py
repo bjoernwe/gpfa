@@ -149,7 +149,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
     elif algorithm == Algorithms.HiSFA:
         return train_hi_sfa(data_train=data_train, 
                             image_shape=(50,50), 
-                            output_dim=output_dim, 
+                            output_dim=kwargs['output_dim_max'],#output_dim, 
                             expansion=2, 
                             channels_xy_1=10, 
                             spacing_xy_1=10, 
@@ -414,8 +414,8 @@ def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, re
         else:
             projected_data = model.execute(data_train)
         # reduce dim because ForeCA calculated output_dim_max dimensions 
-        if  algorithm == Algorithms.ForeCA:# or \
-            #algorithm == Algorithms.HiSFA:
+        if  algorithm == Algorithms.ForeCA or \
+            algorithm == Algorithms.HiSFA:
             #algorithm == Algorithms.SFA or \
             #algorithm == Algorithms.SFFA or \
             projected_data = projected_data[:,:output_dim]
@@ -557,7 +557,7 @@ def calc_omega_ndim(data):
 
 @mem.cache
 def calc_angle_to_sfa_signals(data, **kwargs):
-    kwargs['algorithm'] = Algorithms.SFA
+    kwargs['algorithm'] = Algorithms.HiSFA if kwargs.get('angle_to_hisfa', False) else Algorithms.SFA
     signals_sfa, _, _ = calc_projected_data(**kwargs)
     return principal_angles(signals_sfa, data)[0 if kwargs.get('min_principal_angle') else 1]  
 
