@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import mkl
 import numpy as np
 
 import experiments_proxy.experiment_base as eb
@@ -9,6 +10,16 @@ import parameters
 
 def main():
 
+    mkl.set_num_threads(1)
+
+    plot_alg_names = {eb.Algorithms.Random: 'Random',
+                      eb.Algorithms.SFA:    'SFA',
+                      eb.Algorithms.SFFA:   "SFA'",
+                      eb.Algorithms.ForeCA: 'ForeCA',
+                      eb.Algorithms.PFA:    'PFA',
+                      eb.Algorithms.GPFA2:  'GPFA',
+                      }
+    
     algs = [eb.Algorithms.Random,
             eb.Algorithms.SFA,
             eb.Algorithms.ForeCA,
@@ -21,18 +32,21 @@ def main():
     results_train = {}
     
     for alg in algs:
-        results_test[alg]  = parameters.get_signals(alg, repetition_index=range(3))
-        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=range(3))
+        results_test[alg]  = parameters.get_signals(alg)#, repetition_index=range(3))
+        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False})#, repetition_index=range(3))
         
     alphas = np.linspace(0, 1, 6)[::-1]
 
     for ia, alg in enumerate(algs):
             
-        plt.figure()
-        plt.suptitle(alg)
+        figsize = (10,4.5) if alg is eb.Algorithms.ForeCA else (10,6)
+        plt.figure(figsize=figsize)
+        plt.suptitle(plot_alg_names[alg])
             
-        for ids, dataset_args in enumerate(parameters.dataset_args):
-            
+        idx = 0
+        for _, dataset_args in enumerate(parameters.dataset_args):
+
+            env = dataset_args['env']
             dataset = dataset_args['dataset']
             if not dataset in results_test[alg]:
                 continue
@@ -44,7 +58,8 @@ def main():
             print N_train, N_test
 
             # plot signals
-            plt.subplot(4, 4, ids+1)
+            n_rows = 3 if alg is eb.Algorithms.ForeCA else 4
+            plt.subplot(n_rows, 4, idx+1)
             plt.xlim(-20, N_train//2+20)
             #plt.yscale('log')
             
@@ -57,12 +72,17 @@ def main():
                 xscale = N_train * np.arange(N_test//2, dtype=np.float) / N_test
                 plt.plot(xscale, -spectrum_test, c='r', alpha=alphas[i])
                 
+                    
             # title
-            #dataset_str = '%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
-            dataset_str = '%s' % (dataset_args['dataset'])
-            plt.title(dataset_str)
+            plt.title(eb.get_dataset_name(env=env, ds=dataset, latex=False), fontsize=12)
             
-        plt.subplots_adjust(hspace=.4, wspace=.3, left=0.02, right=.98, bottom=.02, top=.95)
+            idx += 1
+            
+
+    if alg is eb.Algorithms.ForeCA:
+        plt.subplots_adjust(hspace=.4, wspace=.15, left=0.07, right=.96, bottom=.1, top=.88)
+    else:
+        plt.subplots_adjust(hspace=.4, wspace=.15, left=0.07, right=.96, bottom=.08, top=.92)
         
     plt.show()
 

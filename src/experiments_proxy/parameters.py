@@ -228,18 +228,6 @@ def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
             projected_data, model, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
         results[dataset] = result
-
-#         print ''
-#         for i, layer in enumerate(model):
-#             print '\nLayer %d\n' % i
-#             if type(layer) is mdp.hinet.Layer:
-#                 for j, flownode in enumerate(layer):
-#                     print '\nNode #%d\n' % j
-#                     for node in flownode:
-#                         if type(node) is mdp.nodes.SFANode:
-#                             print node, ': %s' % node.d
-#                         else:
-#                             print node
                 
     return results
 

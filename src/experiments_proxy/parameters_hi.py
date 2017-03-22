@@ -15,7 +15,7 @@ from envs.env_random import EnvRandom
 
 default_args_global = {'n_train':      10000, 
                        'n_test':       2000,
-                       'seed':         0,
+                       'seed':         1,
                        'noisy_dims':   0,
                        'limit_data':   100000,
                        'use_test_set': True,
@@ -27,7 +27,7 @@ default_args_global = {'n_train':      10000,
 
 default_args_low  = {#'pca':         1.,
                      'output_dim':  range(1,6),
-                     'output_dim_max': 5,
+                     #'output_dim_max': 5,
                      }
 
 algorithm_measures = {eb.Algorithms.HiSFA:  eb.Measures.delta,

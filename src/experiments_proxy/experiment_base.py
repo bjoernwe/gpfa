@@ -149,7 +149,7 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
     elif algorithm == Algorithms.HiSFA:
         return train_hi_sfa(data_train=data_train, 
                             image_shape=(50,50), 
-                            output_dim=kwargs['output_dim_max'],#output_dim, 
+                            output_dim=output_dim, 
                             expansion=2, 
                             channels_xy_1=10, 
                             spacing_xy_1=10, 
@@ -250,7 +250,7 @@ def train_gpfa(data_train, k, iterations, variance_graph, neighborhood_graph=Fal
 @mem.cache
 def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 9
+    # rev: 10
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -270,7 +270,7 @@ def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1,
 @mem.cache
 def train_hi_pfa(data_train, p, K, image_shape, output_dim, expansion, channels_xy_1, 
                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
-    # rev: 9
+    # rev: 10
     flow = build_hierarchy_flow(image_x=image_shape[1], 
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
@@ -309,7 +309,7 @@ def train_hi_gpfa(data_train, p, k, iterations, image_shape, output_dim, expansi
                                              'causal_features': True,
                                              'generalized_eigen_problem': True})
     flow.train(data_train)
-    return flow # rev 6
+    return flow # rev 7
 
 
 
@@ -320,10 +320,10 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
     switchboards = []
     layers = []
     
-    while len(layers) == 0 or layers[-1].output_dim >= 90:
+    while len(layers) == 0 or switchboards[-1].out_channels_xy[0] >= 2 or switchboards[-1].out_channels_xy[1] >= 2:
 
         first_layer = True if len(layers) == 0 else False
-        last_layer  = True if len(layers) != 0 and layers[-1].output_dim <= 90 else False
+        last_layer  = True if len(layers) != 0 and switchboards[-1].out_channels_xy[0] <= 2 and switchboards[-1].out_channels_xy[1] <= 2 else False #layers[-1].output_dim <= 90 else False
 
         #if channels_xy_n == (2,1) or channels_xy_n == (1,2):
         #    channels_xy_n = (channels_xy_n[1], channels_xy_n[0])
@@ -359,7 +359,7 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
                     #nodes.append(mdp.nodes.NoiseNode(noise_args=(0, 1e-4), input_dim=nodes[-1].output_dim, dtype=np.float64))
                     nodes.append(mdp.nodes.WhiteningNode(input_dim=nodes[-1].output_dim, output_dim=nodes[-1].output_dim, reduce=False, dtype=np.float64))
                     nodes.append(node_class(input_dim=nodes[-1].output_dim, output_dim=output_dim if last_layer else node_output_dim, dtype=np.float64, **node_kwargs))
-                nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=4, input_dim=nodes[-1].output_dim, dtype=np.float64))
+                nodes.append(mdp.nodes.CutoffNode(lower_bound=-4, upper_bound=4, input_dim=nodes[-1].output_dim, dtype=np.float64) if not last_layer else mdp.nodes.IdentityNode(input_dim=nodes[-1].output_dim, dtype=np.float64))
             flow_node = mdp.hinet.FlowNode(mdp.Flow(nodes, verbose=True))
             flow_nodes.append(flow_node)
             if i==0:

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import mkl
 import numpy as np
 import scipy.stats
 
@@ -10,6 +11,8 @@ import parameters_hi
 
 
 def main():
+
+    mkl.set_num_threads(1)
 
     results = {}
     results_sfa = {}
@@ -56,39 +59,52 @@ Dataset & ForeCA & PFA & GPFA & HiPFA & HiGPFA \\\\
                 z = np.mean(results_sffa[alg][dataset].values, axis=0)
                 _, pvalue = scipy.stats.wilcoxon(x, y)
                 _, pvalue_sffa = scipy.stats.wilcoxon(x, z)
+                sfa_advantage = np.mean(x) > np.mean(y)
+                sffa_advantage = np.mean(x) > np.mean(z)
                 if alg is eb.Algorithms.ForeCA:
-                    sfa_advantage = np.mean(y) > np.mean(x)
-                    sffa_advantage = np.mean(z) > np.mean(x)
-                    sfa_advantage_soft = np.mean(y) + np.std(y) > np.mean(x)
+                    sfa_advantage = not sfa_advantage
+                    sffa_advantage = not sffa_advantage  
+                soft_advantage = np.abs(np.mean(x) - np.mean(y)) < np.std(y)
+                if soft_advantage:
+                    if pvalue/2. < .01:
+                        if sfa_advantage:
+                            print('$+$', end='', file=f)
+                        else:
+                            print('$-$', end='', file=f)
+                    else:
+                        print('$\circ$', end='', file=f)
                 else:
-                    sfa_advantage = np.mean(x) > np.mean(y)
-                    sffa_advantage = np.mean(x) > np.mean(z)
-                    sfa_advantage_soft = np.mean(x) > np.mean(y) - np.std(y) 
-                if sfa_advantage and pvalue/2. < .01:
-                    print('+', end='', file=f)
-                elif sfa_advantage_soft:
-                    print('$\circ$', end='', file=f)
-                    if sffa_advantage and pvalue_sffa/2. < .01:
-                        print('/+', end='', file=f)
-                else:
-                    print('-', end='', file=f)
-            # hierarchical
+                    if sfa_advantage:
+                        print('$++$', end='', file=f)
+                    else:
+                        print('$--$', end='', file=f)
+        # hierarchical
         for alg in results_hi.keys():
             print(' & ', end='', file=f)
-            if not dataset in results_hi[alg]:
+            if not dataset in results[alg]:
                 print(' ', end='', file=f)
             else:
-                x = results_hi[alg][dataset].values
-                y = results_hisfa[alg][dataset].values
+                x = np.mean(results_hi[alg][dataset].values, axis=0) # axis 0 = output_dim
+                y = np.mean(results_hisfa[alg][dataset].values, axis=0)
+                #z = np.mean(results_hi_sffa[alg][dataset].values, axis=0)
                 _, pvalue = scipy.stats.wilcoxon(x, y)
-                hisfa_advantage = np.mean(x) > np.mean(y)
-                hisfa_advantage_soft = np.mean(x) > np.mean(y) - np.std(y) 
-                if hisfa_advantage and pvalue/2. < .01:
-                    print('+', end='', file=f)
-                elif hisfa_advantage_soft:
-                    print('$\circ$', end='', file=f)
+                #_, pvalue_sffa = scipy.stats.wilcoxon(x, z)
+                sfa_advantage = np.mean(x) > np.mean(y)
+                sffa_advantage = np.mean(x) > np.mean(z)
+                soft_advantage = np.abs(np.mean(x) - np.mean(y)) - np.std(y)
+                if soft_advantage:
+                    if pvalue/2. < .01:
+                        if sfa_advantage:
+                            print('+', end='', file=f)
+                        else:
+                            print('-', end='', file=f)
+                    else:
+                        print('$\circ$', end='', file=f)
                 else:
-                    print('-', end='', file=f)
+                    if sfa_advantage:
+                        print('++', end='', file=f)
+                    else:
+                        print('--', end='', file=f)
         print(' \\\\\n', file=f)
     print('\\bottomrule\n', file=f)
     print('\\end{tabular}\n\\end{center}', file=f)

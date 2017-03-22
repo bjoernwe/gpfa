@@ -36,23 +36,14 @@ def main():
         #only_low_dimensional = alg is eb.Algorithms.ForeCA
         results[alg] = parameters.get_results(alg)
         results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})
-        #results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFFA})
-    #results_sfa = parameters.get_results(eb.Algorithms.SFA)
 
     for alg in results.keys():
         
-        #colors = iter(matplotlib.cm.get_cmap('Set1')(np.linspace(0, 1, len(parameters.dataset_args)))) # iter(['white', 'gray', 'black']*6) #
         colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, int(1.25*len(parameters.dataset_args)))))
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
         
         plt.figure(figsize=(10,6))
 
-        #print alg
-        #only_low_dimensional = alg is eb.Algorithms.ForeCA
-        #results = parameters.get_results(alg, only_low_dimensional=only_low_dimensional)
-        #print eb.Algorithms.SFA
-        #results_sfa = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA}, only_low_dimensional=only_low_dimensional)
-        
         for dataset_args in parameters.dataset_args:
             
             env = dataset_args['env']
@@ -95,12 +86,13 @@ def main():
             label = '%s' % eb.get_dataset_name(env=env, ds=dataset, latex=False) #%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
             xerr = np.vstack([errors_neg, errors_pos])
             yerr = np.vstack([errors_sfa_neg, errors_sfa_pos])
-            plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=10, label=label, zorder=2)
+            plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=9, label=label, zorder=2)
             
         # 
         measure_label = 'forcastability' if alg is eb.Algorithms.ForeCA else 'prediction error'
         measure_limits = [1e0, 1e2] if alg is eb.Algorithms.ForeCA else [1e-4, 1e2]
         plt.plot(measure_limits, measure_limits, '-', c='gray', zorder=3)
+        plt.suptitle(plot_alg_names[alg])
         plt.xlabel('%s on %s features' % (measure_label, plot_alg_names[alg]))
         plt.ylabel('%s on SFA features' % (measure_label))
         plt.xscale('log')
