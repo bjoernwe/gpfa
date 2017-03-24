@@ -81,7 +81,7 @@ Dataset & ForeCA & PFA & GPFA & HiPFA & HiGPFA \\\\
         # hierarchical
         for alg in results_hi.keys():
             print(' & ', end='', file=f)
-            if not dataset in results[alg]:
+            if not dataset in results_hi[alg]:
                 print(' ', end='', file=f)
             else:
                 x = np.mean(results_hi[alg][dataset].values, axis=0) # axis 0 = output_dim
