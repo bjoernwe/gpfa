@@ -20,20 +20,23 @@ def main():
                       eb.Algorithms.GPFA2:  'GPFA',
                       }
     
-    algs = [eb.Algorithms.Random,
+    algs = [eb.Algorithms.None,
+            #eb.Algorithms.Random,
             eb.Algorithms.SFA,
             eb.Algorithms.ForeCA,
             #eb.Algorithms.SFFA,
             eb.Algorithms.PFA,
             eb.Algorithms.GPFA2
             ]
+    
+    repetitions = parameters.default_args_global['repetitions']
 
     results_test  = {}
     results_train = {}
     
     for alg in algs:
-        results_test[alg]  = parameters.get_signals(alg)#, repetition_index=range(3))
-        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False})#, repetition_index=range(3))
+        results_test[alg]  = parameters.get_signals(alg, repetition_index=range(repetitions))
+        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=range(repetitions))
         
     alphas = np.linspace(0, 1, 6)[::-1]
 
@@ -51,11 +54,11 @@ def main():
             if not dataset in results_test[alg]:
                 continue
 
-            signals_train = np.mean(results_train[alg][dataset]['projected_data'], axis=2)
-            signals_test  = np.mean(results_test[alg][dataset]['projected_data'], axis=2)
-            N_train = signals_train.shape[0]
-            N_test  = signals_test.shape[0]
-            print N_train, N_test
+            signals_train = np.mean(results_train[alg][dataset]['projected_data'], axis=-1)
+            signals_test  = np.mean(results_test[alg][dataset]['projected_data'], axis=-1)
+            N_train, D_train = signals_train.shape
+            N_test, D_test  = signals_test.shape
+            print (N_train, D_train), (N_test, D_test)
 
             # plot signals
             n_rows = 3 if alg is eb.Algorithms.ForeCA else 4
@@ -64,14 +67,11 @@ def main():
             #plt.yscale('log')
             
             # FFT
-            for i in range(1)[::-1]:
-                spectrum_train = np.abs(np.fft.fft(signals_train[:,i]))[:N_train//2]
-                plt.plot(spectrum_train, c='b', alpha=alphas[i])
-            for i in range(1)[::-1]:
-                spectrum_test  = np.abs(np.fft.fft(signals_test[:,i]))[:N_test//2]
-                xscale = N_train * np.arange(N_test//2, dtype=np.float) / N_test
-                plt.plot(xscale, -spectrum_test, c='r', alpha=alphas[i])
-                
+            if alg is not eb.Algorithms.None:
+                spectrum_train = np.abs(np.fft.fft(signals_train[:,0]))[:N_train//2]
+            else:
+                spectrum_train = np.abs(np.fft.fft(np.mean(signals_train, axis=1)))[:N_train//2]
+            plt.plot(spectrum_train, c='b', alpha=alphas[0])
                     
             # title
             plt.title(eb.get_dataset_name(env=env, ds=dataset, latex=False), fontsize=12)
