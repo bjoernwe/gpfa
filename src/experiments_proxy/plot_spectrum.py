@@ -31,19 +31,14 @@ def main():
     
     repetitions = parameters.default_args_global['repetitions']
 
-    results_test  = {}
     results_train = {}
-    
     for alg in algs:
-        results_test[alg]  = parameters.get_signals(alg, repetition_index=range(repetitions))
         results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=range(repetitions))
         
-    alphas = np.linspace(0, 1, 6)[::-1]
-
     for ia, alg in enumerate(algs):
             
-        figsize = (10,4.5) if alg is eb.Algorithms.ForeCA else (10,6)
-        plt.figure(figsize=figsize)
+        #figsize = (10,4.5) if alg is eb.Algorithms.ForeCA else (10,6)
+        plt.figure()#figsize=figsize)
         plt.suptitle(plot_alg_names[alg])
             
         idx = 0
@@ -51,14 +46,12 @@ def main():
 
             env = dataset_args['env']
             dataset = dataset_args['dataset']
-            if not dataset in results_test[alg]:
+            if not dataset in results_train[alg]:
                 continue
 
             signals_train = np.mean(results_train[alg][dataset]['projected_data'], axis=-1)
-            signals_test  = np.mean(results_test[alg][dataset]['projected_data'], axis=-1)
             N_train, D_train = signals_train.shape
-            N_test, D_test  = signals_test.shape
-            print (N_train, D_train), (N_test, D_test)
+            print (N_train, D_train)
 
             # plot signals
             n_rows = 3 if alg is eb.Algorithms.ForeCA else 4
@@ -71,7 +64,7 @@ def main():
                 spectrum_train = np.abs(np.fft.fft(signals_train[:,0]))[:N_train//2]
             else:
                 spectrum_train = np.abs(np.fft.fft(np.mean(signals_train, axis=1)))[:N_train//2]
-            plt.plot(spectrum_train, c='b', alpha=alphas[0])
+            plt.plot(spectrum_train, c='b')
                     
             # title
             plt.title(eb.get_dataset_name(env=env, ds=dataset, latex=False), fontsize=12)
