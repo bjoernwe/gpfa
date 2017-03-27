@@ -22,7 +22,7 @@ def main():
                       }
     
     algs = [eb.Algorithms.None,
-            eb.Algorithms.Random,
+            #eb.Algorithms.Random,
             eb.Algorithms.SFA,
             eb.Algorithms.ForeCA,
             #eb.Algorithms.SFFA,
@@ -30,20 +30,21 @@ def main():
             eb.Algorithms.GPFA2
             ]
     
-    repetitions = 10 #parameters.default_args_global['repetitions']
+    repetitions = parameters.default_args_global['repetitions']
 
     results_train = {}
     for alg in algs:
         stack_result = not alg is eb.Algorithms.None
         results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False}, repetition_index=range(repetitions), stack_result=stack_result)
         
-    #figsize = (10,4.5) if alg is eb.Algorithms.ForeCA else (10,6)
-    plt.figure()#figsize=figsize)
+    figsize = (20,11)
+    plt.figure(figsize=figsize)
             
     for idat, dataset_args in enumerate(parameters.dataset_args):
 
         for ialg, alg in enumerate(algs):
             
+            env = dataset_args['env']
             dataset = dataset_args['dataset']
             if not dataset in results_train[alg]:
                 continue
@@ -61,14 +62,24 @@ def main():
                 avg_first_signal = avg_signals[:,0]
                 spectrum = np.fft.fft(avg_first_signal)
 
-            N_train = spectrum.shape[0]
-            power_spectrum = np.abs(spectrum)[:N_train//2]
+            signal_length = spectrum.shape[0]
+            power_spectrum = np.abs(spectrum)[:signal_length//2]
 
-            plt.subplot2grid(shape=(16,6), loc=(idat,ialg))
+            plt.subplot2grid(shape=(16,5), loc=(idat,ialg))
             plt.plot(power_spectrum, c='b')
+            plt.xticks([])
+            plt.yticks([])
+            margin = signal_length // 60
+            plt.xlim([-margin, signal_length//2 + margin])
             if idat == 0:
-                plt.title(alg)
+                plt.title(plot_alg_names[alg], fontsize=12)
+            elif idat == 15:
+                plt.xlabel('frequencies')
+            if ialg == 0:
+                plt.ylabel(eb.get_dataset_name(env=env, ds=dataset), rotation=0, horizontalalignment='right', verticalalignment='top')
         
+    plt.subplots_adjust(left=0.1, right=.99, bottom=0.04, top=.96)
+    plt.savefig('fig_spectra.eps')
     plt.show()
 
 

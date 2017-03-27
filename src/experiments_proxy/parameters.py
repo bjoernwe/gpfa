@@ -69,7 +69,7 @@ algorithm_args = {eb.Algorithms.ForeCA: {'n_train':      1000,
 dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'pca': .99},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT2, 'pca': .99},
                 {'env': EnvData, 'dataset': env_data.Datasets.STFT3, 'pca': .99},
-
+ 
                 {'env': EnvData, 'dataset': env_data.Datasets.EEG2, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.EEG, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.EIGHT_EMOTION, 'pca': 1., 'n_train': 1000, 'n_test': 200},
@@ -77,11 +77,11 @@ dataset_args = [{'env': EnvData, 'dataset': env_data.Datasets.STFT1, 'pca': .99}
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MGH, 'pca': 1.},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_MMG, 'pca': .99},
                 {'env': EnvData, 'dataset': env_data.Datasets.PHYSIO_UCD, 'pca': 1.},
-                
+                  
                 {'env': EnvData2D, 'dataset': env_data2d.Datasets.SpaceInvaders, 'window': ((16,30),(36,50)), 'pca': .99},
                 {'env': EnvData2D, 'dataset': env_data2d.Datasets.Mario,         'window': ((70,70),(90,90)), 'pca': .99},
                 {'env': EnvData2D, 'dataset': env_data2d.Datasets.Traffic,       'window': ((35,65),(55,85)), 'pca': .99},
-
+  
                 {'env': EnvData, 'dataset': env_data.Datasets.FIN_EQU_FUNDS, 'pca': 1., 'n_train': 1000, 'n_test': 200},
                 {'env': EnvData, 'dataset': env_data.Datasets.HAPT, 'pca': .99, 'n_train': 5000, 'n_test': 1000},
                 {'env': EnvRandom, 'dataset': None, 'ndim': 20, 'K': 0, 'p': 1, 'k': 1, 'pca': 1},
