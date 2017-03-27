@@ -13,6 +13,8 @@ import parameters_hi
 def main():
 
     mkl.set_num_threads(1)
+    
+    use_test_set = True
 
     results = {}
     results_sfa = {}
@@ -23,9 +25,9 @@ def main():
                 ]:
 
         print(alg)
-        results[alg] = parameters.get_results(alg)
-        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})
-        results_sffa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFFA})
+        results[alg] = parameters.get_results(alg, overide_args={'use_test_set': use_test_set})
+        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA, 'use_test_set': use_test_set})
+        results_sffa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFFA, 'use_test_set': use_test_set})
 
     results_hi = {}
     results_hisfa = {}
@@ -34,10 +36,11 @@ def main():
                 ]:
 
         print(alg)
-        results_hi[alg] = parameters_hi.get_results(alg)
-        results_hisfa[alg] = parameters_hi.get_results(alg, overide_args={'algorithm': eb.Algorithms.HiSFA})
+        results_hi[alg] = parameters_hi.get_results(alg, overide_args={'use_test_set': use_test_set})
+        results_hisfa[alg] = parameters_hi.get_results(alg, overide_args={'algorithm': eb.Algorithms.HiSFA, 'use_test_set': use_test_set})
 
-    f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_sfa_comparison.tex', 'w+')
+    #f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_sfa_comparison.tex', 'w+')
+    f = open('table_sfa_comparison%s.tex' % ('' if use_test_set else '_training'), 'w+')
     print("""
 \\begin{center}
 \\begin{tabular}{L{3.5cm} C{1.3cm} C{1.3cm} C{1.3cm} C{1.3cm} C{1.3cm}}

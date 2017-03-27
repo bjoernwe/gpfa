@@ -34,8 +34,8 @@ def main():
 
         print(alg)
         #only_low_dimensional = alg is eb.Algorithms.ForeCA
-        results[alg] = parameters.get_results(alg)
-        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})
+        results[alg] = parameters.get_results(alg)#, overide_args={'use_test_set': False})
+        results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})#, 'use_test_set': False})
 
     for alg in results.keys():
         

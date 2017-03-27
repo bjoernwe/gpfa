@@ -37,7 +37,8 @@ default_args_high = {#'pca':         .99,
                      #'repetitions': 5,
                      }
 
-algorithm_measures = {eb.Algorithms.Random: eb.Measures.delta,
+algorithm_measures = {eb.Algorithms.None:   None,
+                      eb.Algorithms.Random: eb.Measures.delta,
                       eb.Algorithms.SFA:    eb.Measures.delta,
                       eb.Algorithms.SFFA:   eb.Measures.delta,
                       eb.Algorithms.ForeCA: eb.Measures.omega,
@@ -193,7 +194,7 @@ def get_results(alg, overide_args={}, include_random=True):
 
 
 
-def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
+def get_signals(alg, overide_args={}, include_random=True, repetition_index=0, stack_result=True):
 
     results = {}
 
@@ -221,7 +222,10 @@ def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
             for i in repetition_index:
                 projected_data, model, [_, _] = eb.calc_projected_data(repetition_index=i, **kwargs)
                 projected_data_list.append(projected_data)
-            projected_data = np.stack(projected_data_list, axis=2)
+            if stack_result:
+                projected_data = np.stack(projected_data_list, axis=2)
+            else:
+                projected_data = projected_data_list
             data_train     = None
             data_test      = None
         except TypeError:
