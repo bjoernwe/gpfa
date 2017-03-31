@@ -47,6 +47,11 @@ def main():
             result = results[alg][dataset].values
             result_sfa = results_sfa[alg][dataset].values
             
+            if True:
+                # average over first dim (output_dim)
+                result = np.mean(result, axis=0, keepdims=True) 
+                result_sfa = np.mean(result_sfa, axis=0, keepdims=True) 
+            
             # point cloud
             color = next(colors)
             marker = next(markers)
