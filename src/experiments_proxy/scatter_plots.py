@@ -89,7 +89,11 @@ def main():
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=9, label=label, zorder=2)
             
         # 
-        measure_label = 'forcastability' if alg is eb.Algorithms.ForeCA else 'prediction error'
+        measure_label = 'prediction error'
+        if alg is eb.Algorithms.ForeCA:
+            measure_label = 'forcastability'
+        elif alg is eb.Algorithms.Random:
+            measure_label = 'delta value'
         measure_limits = [1e0, 1e2] if alg is eb.Algorithms.ForeCA else [1e-4, 1e2]
         plt.plot(measure_limits, measure_limits, '-', c='gray', zorder=3)
         plt.suptitle(plot_alg_names[alg])

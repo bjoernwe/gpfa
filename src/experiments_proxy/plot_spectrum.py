@@ -78,6 +78,10 @@ def main():
             if ialg == 0:
                 plt.ylabel(eb.get_dataset_name(env=env, ds=dataset), rotation=0, horizontalalignment='right', verticalalignment='top')
         
+    plt.subplot2grid(shape=(16,5), loc=(0,2))
+    plt.title('ForeCA', fontsize=12)
+    plt.gca().axis('off')
+
     plt.subplots_adjust(left=0.1, right=.99, bottom=0.04, top=.96)
     plt.savefig('fig_spectra.eps')
     plt.show()
