@@ -75,7 +75,7 @@ def update_seed_argument(remove_args=None, **kwargs):
 def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
 
     if env is EnvData:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], repetition_index=repetition_index, seed=seed)
+        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], sampling_rate=kwargs.get('sampling_rate', 1), repetition_index=repetition_index, seed=seed)
         env_node = EnvData(dataset=dataset, **fargs)
     elif env is EnvData2D:
         fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=kwargs.get('scaling', 1), repetition_index=repetition_index, seed=seed)
