@@ -16,7 +16,7 @@ def main():
 \\begin{center}
 \\begin{tabular}{L{3.5cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm}}
 \\toprule 
-Dataset & $S$ & $S_{train}$ & $S_{test}$ & $N$ & $N'$ \\\\
+Dataset & $S$ & $S_\\textrm{train}$ & $S_\\textrm{test}$ & $N$ & $N'$ \\\\
 \\midrule""", file=f)
     for dataset_args in parameters.dataset_args:
 

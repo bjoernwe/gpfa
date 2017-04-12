@@ -18,8 +18,9 @@ default_args_global = {'n_train':      10000,
                        'seed':         1,
                        'noisy_dims':   0,
                        'limit_data':   100000,
-                       'use_test_set': True,
-                       'repetitions':  20,
+                       'use_test_set': True}
+
+default_args_explot = {'repetitions':  20,
                        'cachedir':     '/scratch/weghebvc',
                        'manage_seed':  'external',
                        'verbose':      True,
@@ -31,11 +32,13 @@ default_args_low  = {#'pca':         1.,
                      }
 
 algorithm_measures = {eb.Algorithms.HiSFA:  eb.Measures.delta,
+                      eb.Algorithms.HiSFFA: eb.Measures.delta,
                       eb.Algorithms.HiPFA:  eb.Measures.pfa,
                       eb.Algorithms.HiGPFA: eb.Measures.gpfa,
                       }
 
 algorithm_args = {eb.Algorithms.HiSFA:  {},
+                  eb.Algorithms.HiSFFA: {},
                   eb.Algorithms.HiPFA:  {},
                   eb.Algorithms.HiGPFA: {'iterations': 30,
                                          'k_eval': 10}
@@ -74,6 +77,7 @@ def get_results(alg, overide_args={}, include_random=True):
         if not include_random and env is EnvRandom:
             continue
         kwargs = dict(default_args_global)
+        kwargs.update(default_args_explot)
         kwargs['algorithm'] = alg
         kwargs['measure'] = algorithm_measures[alg]
         kwargs.update(args)

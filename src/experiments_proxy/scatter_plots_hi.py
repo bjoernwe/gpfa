@@ -15,9 +15,9 @@ def main():
 
     mkl.set_num_threads(1)
     
-    plot_alg_names = {eb.Algorithms.HiSFA:  'HiSFA',
-                      eb.Algorithms.HiPFA:  'HiPFA',
-                      eb.Algorithms.HiGPFA: 'HiGPFA',
+    plot_alg_names = {eb.Algorithms.HiSFA:  'hSFA',
+                      eb.Algorithms.HiPFA:  'hPFA',
+                      eb.Algorithms.HiGPFA: 'hGPFA',
                       }
 
     results = {}
@@ -31,13 +31,15 @@ def main():
         results_sfa[alg] = parameters_hi.get_results(alg, overide_args={'algorithm': eb.Algorithms.HiSFA})
     #results_sfa = parameters.get_results(eb.Algorithms.SFA)
 
+    colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, math.ceil(2.5*len(parameters_hi.dataset_args_hi)))))
+    markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
+    
+    plt.figure(figsize=(10,6))
+
     for alg in results.keys():
         
-        colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, math.ceil(1.25*len(parameters_hi.dataset_args_hi)))))
-        markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
+        prefix = 'HiPFA: ' if alg is eb.Algorithms.HiPFA else 'HiGPFA: '
         
-        plt.figure(figsize=(10,6))
-
         for dataset_args in parameters_hi.dataset_args_hi:
             
             env = dataset_args['env']
@@ -77,22 +79,22 @@ def main():
             values0_sfa_dummy[values0_sfa > 0] = np.NaN
             errors_sfa_neg = np.sqrt(np.nanmean(values0_sfa_dummy**2, axis=-1))
     
-            label = '%s' % eb.get_dataset_name(env=env, ds=dataset, latex=False) #%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
+            label = prefix + '%s' % eb.get_dataset_name(env=env, ds=dataset, latex=False) #%s<%s>' % (dataset_args['env'], dataset_args['dataset'])
             xerr = np.vstack([errors_neg, errors_pos])
             yerr = np.vstack([errors_sfa_neg, errors_sfa_pos])
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=10, label=label, zorder=2)
             
-        # 
-        plt.plot([1e-2, 1e1], [1e-2, 1e1], '-', c='gray', zorder=3)
-        plt.xlabel('prediction error on %s features' % plot_alg_names[alg])
-        plt.ylabel('prediction error on HiSFA features')
-        plt.xscale('log')
-        plt.yscale('log')
-        handles, labels = plt.gca().get_legend_handles_labels()
-        handles = [h[0] for h in handles]
-        plt.legend(handles, labels, loc='best', prop={'size': 9}, numpoints=1, borderpad=1, handlelength=0)
-        plt.tight_layout()
-        plt.savefig('fig_results_%s.eps' % plot_alg_names[alg].lower())
+    # 
+    plt.plot([1e-3, 1e1], [1e-3, 1e1], '-', c='gray', zorder=3)
+    plt.xlabel('prediction error on HiPFA/HiGPFA features')
+    plt.ylabel('prediction error on HiSFA features')
+    plt.xscale('log')
+    plt.yscale('log')
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles = [h[0] for h in handles]
+    plt.legend(handles, labels, loc='best', prop={'size': 9}, numpoints=1, borderpad=1, handlelength=0)
+    plt.tight_layout()
+    plt.savefig('fig_results_hi.eps')
 
     plt.show()
 

@@ -32,7 +32,7 @@ def main():
     for alg in algs:
         results_angle[alg] = {}
         for min_principal_angle in [False, True]:
-            results_angle[alg][min_principal_angle] = parameters.get_results(alg, overide_args={'measure': eb.Measures.angle_to_sfa_signals, 'min_principal_angle': min_principal_angle,  'use_test_set': False})
+            results_angle[alg][min_principal_angle] = parameters.get_results(alg, overide_args={'measure': eb.Measures.angle_to_sfa_signals, 'min_principal_angle': min_principal_angle, 'use_test_set': False})
         
     for _, alg in enumerate(algs):
         

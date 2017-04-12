@@ -33,12 +33,13 @@ import PFACoreUtil
 # prepare joblib.Memory
 default_cachedir = '/scratch/weghebvc'
 #default_cachedir = '/home/weghebvc'
+#default_cachedir = None
 mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 
 #Datasets = Enum('Datasets', 'Random Crowd1 Crowd2 Crowd3 Dancing Mouth Face RatLab Kai Mario Mario_window Mario_window_8 EEG EEG2 EEG2_stft_128 MEG SpaceInvaders SpaceInvaders_window SpaceInvaders_window_8 Traffic Traffic_window Traffic_window_8 Tumor STFT1 STFT2 STFT3')
 
-Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2 HiSFA HiPFA HiGPFA')
+Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2 HiSFA HiSFFA HiPFA HiGPFA')
 
 Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa_signals')
 
@@ -156,6 +157,16 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
                             channels_xy_n=2, 
                             spacing_xy_n=1, 
                             node_output_dim=10)
+    elif algorithm == Algorithms.HiSFFA:
+        return train_hi_sffa(data_train=data_train, 
+                             image_shape=(50,50), 
+                             output_dim=output_dim, 
+                             expansion=2, 
+                             channels_xy_1=10, 
+                             spacing_xy_1=10, 
+                             channels_xy_n=2, 
+                             spacing_xy_n=1, 
+                             node_output_dim=10)
     elif algorithm == Algorithms.HiPFA:
         return train_hi_pfa(data_train=data_train,
                             p=kwargs['p'],
@@ -255,6 +266,26 @@ def train_hi_sfa(data_train, image_shape, output_dim, expansion, channels_xy_1,
                                 image_y=image_shape[0], 
                                 output_dim=output_dim, 
                                 node_class=mdp.nodes.SFANode, 
+                                node_output_dim=node_output_dim,
+                                expansion=expansion,
+                                channels_xy_1=channels_xy_1,
+                                spacing_xy_1=spacing_xy_1,
+                                channels_xy_n=channels_xy_n,
+                                spacing_xy_n=spacing_xy_n,
+                                node_kwargs={})
+    flow.train(data_train)
+    return flow
+
+
+
+@mem.cache
+def train_hi_sffa(data_train, image_shape, output_dim, expansion, channels_xy_1, 
+                  spacing_xy_1, channels_xy_n, spacing_xy_n, node_output_dim):
+    # rev: 0
+    flow = build_hierarchy_flow(image_x=image_shape[1], 
+                                image_y=image_shape[0], 
+                                output_dim=output_dim, 
+                                node_class=sffa.SFFA, 
                                 node_output_dim=node_output_dim,
                                 expansion=expansion,
                                 channels_xy_1=channels_xy_1,
@@ -652,7 +683,7 @@ if __name__ == '__main__':
                                node_class=mdp.nodes.SFANode, 
                                node_output_dim=10, 
                                channels_xy_1=10, 
-                               spacing_xy_1=5, 
+                               spacing_xy_1=10, 
                                channels_xy_n=2, 
                                spacing_xy_n=1, 
                                node_kwargs={}, 

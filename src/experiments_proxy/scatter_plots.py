@@ -22,22 +22,22 @@ def main():
                       eb.Algorithms.PFA:    'PFA',
                       eb.Algorithms.GPFA2:  'GPFA',
                       }
+    
+    algs =  [eb.Algorithms.Random,
+             eb.Algorithms.SFFA,
+             eb.Algorithms.ForeCA,
+             eb.Algorithms.PFA,
+             eb.Algorithms.GPFA2]
 
     results = {}
     results_sfa = {}
-    for alg in [eb.Algorithms.Random,
-                eb.Algorithms.SFFA,
-                eb.Algorithms.ForeCA,
-                eb.Algorithms.PFA,
-                eb.Algorithms.GPFA2
-                ]:
-
+    for alg in algs:
         print(alg)
         #only_low_dimensional = alg is eb.Algorithms.ForeCA
         results[alg] = parameters.get_results(alg)#, overide_args={'use_test_set': False})
         results_sfa[alg] = parameters.get_results(alg, overide_args={'algorithm': eb.Algorithms.SFA})#, 'use_test_set': False})
 
-    for alg in results.keys():
+    for alg in algs:
         
         colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, int(1.25*len(parameters.dataset_args)))))
         markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
@@ -89,11 +89,11 @@ def main():
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=9, label=label, zorder=2)
             
         # 
-        measure_label = 'prediction error'
+        measure_label = 'prediction errors'
         if alg is eb.Algorithms.ForeCA:
             measure_label = 'forcastability'
         elif alg is eb.Algorithms.Random:
-            measure_label = 'delta value'
+            measure_label = 'delta values'
         measure_limits = [1e0, 1e2] if alg is eb.Algorithms.ForeCA else [1e-4, 1e2]
         plt.plot(measure_limits, measure_limits, '-', c='gray', zorder=3)
         plt.suptitle(plot_alg_names[alg])
