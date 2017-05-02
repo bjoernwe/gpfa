@@ -11,9 +11,9 @@ def main():
 
     mkl.set_num_threads(1)
 
-    plot_alg_names = {eb.Algorithms.HiSFA:  'HiSFA',
-                      eb.Algorithms.HiPFA:  'HiPFA',
-                      eb.Algorithms.HiGPFA: 'HiGPFA',
+    plot_alg_names = {eb.Algorithms.HiSFA:  'hSFA',
+                      eb.Algorithms.HiPFA:  'hPFA',
+                      eb.Algorithms.HiGPFA: 'hGPFA',
                       }
 
     algs = [eb.Algorithms.HiPFA,

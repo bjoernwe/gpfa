@@ -22,7 +22,7 @@ default_args_global = {'n_train':      10000,
 
 default_args_explot = {'repetitions':  20,
                        'cachedir':     '/scratch/weghebvc',
-                       'manage_seed':  'external',
+                       'manage_seed':  'repetition_index',
                        'verbose':      True,
                        'processes':    None}
 

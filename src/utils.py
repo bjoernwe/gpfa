@@ -66,9 +66,43 @@ def echo(fn, write=sys.stdout.write):
 
 
 
-@echo
+def echo_on_exception(fn, write=sys.stdout.write):
+    """ Echo calls to a function.
+    
+    Returns a decorated version of the input function which "echoes" calls
+    made to it by writing out the function's name and the arguments it was
+    called with.
+    """
+    import functools
+    # Unpack function's arg count, arg names, arg defaults
+    code = fn.func_code
+    argcount = code.co_argcount
+    argnames = code.co_varnames[:argcount]
+    fn_defaults = fn.func_defaults or list()
+    argdefs = dict(zip(argnames[-len(fn_defaults):], fn_defaults))
+    
+    @functools.wraps(fn)
+    def wrapped(*v, **k):
+        try:
+            return fn(*v, **k)
+        except Exception:
+            # Collect function arguments by chaining together positional,
+            # defaulted, extra positional and keyword arguments.
+            positional = map(format_arg_value, zip(argnames, v))
+            defaulted = [format_arg_value((a, argdefs[a]))
+                         for a in argnames[len(v):] if a not in k]
+            nameless = map(repr, v[argcount:])
+            keyword = map(format_arg_value, k.items())
+            args = positional + defaulted + nameless + keyword
+            write("Threw exception: %s(%s)\n\n" % (fn.__name__, ", ".join(args)))
+            raise
+    return wrapped
+
+
+
+@echo_on_exception
 def test(a, b = 4, c = 'blah-blah', *args, **kwargs):
-    pass
+    assert c
 
 
 
@@ -106,8 +140,8 @@ def test_principle_angles():
 
 
 def main():
-    #test(1, c=False)
-    test_principle_angles()
+    test(1, c=False)
+    #test_principle_angles()
 
 
 

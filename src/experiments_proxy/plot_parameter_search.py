@@ -37,7 +37,7 @@ def main():
     for alg in algs:
         results[alg] = {}
         for alg2 in [eb.Algorithms.SFA, alg]:
-            results[alg][alg2] = parameters.get_results(alg=alg, overide_args={'algorithm': alg2, 'p': p_range[alg]})#, 'repetitions': 20})
+            results[alg][alg2] = parameters.get_results(alg=alg, overide_args={'algorithm': alg2, 'p': p_range[alg]})#, 'repetitions': 5})
         
     for _, alg in enumerate(algs):  # determines the predictable algorithm and measure
         
@@ -74,11 +74,13 @@ def main():
                 #else:
                 #    plt.gca().set_xticklabels([])
                 
-                plt.xlim(.5, p_range[alg][-1]+.5)
-                
-            plt.locator_params(axis='y', nbins=2)
+            plt.xlim(.5, p_range[alg][-1]+.5)
+            #plt.locator_params(axis='y', nbins=2)
+            plt.gca().set_yticks([plt.gca().get_yticks()[0], plt.gca().get_yticks()[-1]])
             if i < 12:
                 plt.gca().set_xticklabels([])
+            else:
+                plt.xlabel('p')
             if i == 15:
                 plt.legend(prop={'size': 9})
                     

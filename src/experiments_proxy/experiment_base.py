@@ -474,7 +474,7 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
 #@echo
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, 
                      use_test_set, repetition_index=None, seed=None, **kwargs):
-    # rev: 9
+    # rev: 10
     projected_data, model, [data_train, data_test] = calc_projected_data(env=env,
                                                                          dataset=dataset, 
                                                                          algorithm=algorithm, 
@@ -494,8 +494,10 @@ def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_te
                    'use_test_set': use_test_set, 
                    'repetition_index': repetition_index, 
                    'seed': seed})
-    return prediction_error_on_data(data=projected_data, measure=measure, model=model, 
-                                    data_chunks=[data_train, data_test], **kwargs)
+    error = prediction_error_on_data(data=projected_data, measure=measure, model=model, 
+                                     data_chunks=[data_train, data_test], **kwargs)
+    assert np.isfinite(error)
+    return error
     
     
 
@@ -568,7 +570,7 @@ def calc_autoregressive_error(data, model, p, data_train):
 
 @mem.cache
 def calc_predictability_trace_of_avg_cov(x, k, p, ndim):
-    return gpfa.calc_predictability_trace_of_avg_cov(x=x, k=k, p=p, ndim=ndim)
+    return gpfa.calc_predictability_trace_of_avg_cov( x=x, k=k, p=p, ndim=ndim )
 
 
 

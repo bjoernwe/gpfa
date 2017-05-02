@@ -38,7 +38,7 @@ def main():
 
     for alg in results.keys():
         
-        prefix = 'HiPFA: ' if alg is eb.Algorithms.HiPFA else 'HiGPFA: '
+        prefix = 'hPFA: ' if alg is eb.Algorithms.HiPFA else 'hGPFA: '
         
         for dataset_args in parameters_hi.dataset_args_hi:
             
@@ -86,8 +86,8 @@ def main():
             
     # 
     plt.plot([1e-3, 1e1], [1e-3, 1e1], '-', c='gray', zorder=3)
-    plt.xlabel('prediction error on HiPFA/HiGPFA features')
-    plt.ylabel('prediction error on HiSFA features')
+    plt.xlabel('prediction error on hPFA/hGPFA features')
+    plt.ylabel('prediction error on hSFA features')
     plt.xscale('log')
     plt.yscale('log')
     handles, labels = plt.gca().get_legend_handles_labels()

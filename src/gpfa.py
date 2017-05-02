@@ -34,7 +34,9 @@ def calc_predictability_trace_of_avg_cov(x, k, p, ndim=False):
     if ndim:
         E, _ = np.linalg.eigh(covariance)
         return E
-    return np.trace(covariance)
+    result = np.trace(covariance)
+    assert np.isfinite(result)
+    return result 
 
 
 

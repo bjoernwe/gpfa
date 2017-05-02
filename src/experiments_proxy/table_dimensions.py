@@ -11,7 +11,7 @@ def main():
 
     results = parameters.get_results(alg=eb.Algorithms.SFA, overide_args={'measure': eb.Measures.ndims})
 
-    f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_dims.tex', 'w+')
+    f = open('./table_dims.tex', 'w+')
     print("""
 \\begin{center}
 \\begin{tabular}{L{3.5cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm}}

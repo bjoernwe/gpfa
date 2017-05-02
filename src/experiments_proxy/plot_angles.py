@@ -65,7 +65,7 @@ def main():
                 else:
                     plt.gca().set_yticklabels([])
                 if (alg is eb.Algorithms.ForeCA and idx in [5,6,7,8]) or idx >= 12:
-                    plt.xlabel('# dimensions')
+                    plt.xlabel('M')
                 else:
                     plt.gca().set_xticklabels([])
                     
