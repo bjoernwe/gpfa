@@ -73,20 +73,20 @@ def update_seed_argument(remove_args=None, **kwargs):
 
 
 @echo
-def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed=None, **kwargs):
+def generate_training_data(env, dataset, n_train, n_test, seed, **kwargs):
 
     if env is EnvData:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], sampling_rate=kwargs.get('sampling_rate', 1), repetition_index=repetition_index, seed=seed)
-        env_node = EnvData(dataset=dataset, **fargs)
+        #fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], sampling_rate=kwargs.get('sampling_rate', 1), repetition_index=repetition_index, seed=seed)
+        env_node = EnvData(dataset=dataset, limit_data=kwargs['limit_data'], sampling_rate=kwargs.get('sampling_rate', 1), seed=seed)
     elif env is EnvData2D:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=kwargs.get('scaling', 1), repetition_index=repetition_index, seed=seed)
-        env_node = EnvData2D(dataset=dataset, **fargs)
+        #fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=kwargs.get('scaling', 1), repetition_index=repetition_index, seed=seed)
+        env_node = EnvData2D(dataset=dataset, limit_data=kwargs['limit_data'], window=kwargs.get('window', None), scaling=kwargs.get('scaling', 1), seed=seed)
     elif env is EnvKai:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, repetition_index=repetition_index, seed=seed) 
-        env_node = EnvKai(**fargs)
+        #fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, repetition_index=repetition_index, seed=seed) 
+        env_node = EnvKai(seed=seed)
     elif env is EnvRandom:
-        fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, ndim=kwargs['ndim'], repetition_index=repetition_index, seed=seed) 
-        env_node = EnvRandom(**fargs)
+        #fargs = update_seed_argument(remove_args=['n_train'], n_train=n_train, ndim=kwargs['ndim'], repetition_index=repetition_index, seed=seed) 
+        env_node = EnvRandom(ndim=kwargs['ndim'], seed=seed)
     else:
         assert False
         
@@ -105,15 +105,15 @@ def generate_training_data(env, dataset, n_train, n_test, repetition_index, seed
 
 
 
-def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwargs):
+def train_model(algorithm, data_train, output_dim, seed, **kwargs):
     
     if algorithm == Algorithms.None:
         return None
     elif algorithm == Algorithms.Random:
         return train_random(data_train=data_train, 
                     output_dim=output_dim, 
-                    seed=seed, 
-                    repetition_index=repetition_index)
+                    seed=seed) 
+                    #repetition_index=repetition_index)
     elif algorithm == Algorithms.SFA:
         return train_sfa(data_train=data_train, output_dim=output_dim)
     elif algorithm == Algorithms.SFFA:
@@ -198,10 +198,10 @@ def train_model(algorithm, data_train, output_dim, seed, repetition_index, **kwa
 
 
 #@mem.cache
-def train_random(data_train, output_dim, seed, repetition_index):
+def train_random(data_train, output_dim, seed):#, repetition_index):
     # rev: 2
-    fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
-    model = gpfa.RandomProjection(**fargs)
+    #fargs = update_seed_argument(output_dim=output_dim, repetition_index=repetition_index, seed=seed)
+    model = gpfa.RandomProjection(output_dim=output_dim, seed=seed)
     model.train(data_train)
     return model
 
@@ -414,15 +414,15 @@ def build_hierarchy_flow(image_x, image_y, output_dim, node_class, node_output_d
 
 
 @echo
-def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, repetition_index, 
-                        noisy_dims=0, use_test_set=True, seed=None, **kwargs):
+def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, #repetition_index, 
+                        seed, noisy_dims=0, use_test_set=True, **kwargs):
     
     [data_train, data_test] = generate_training_data(env=env,
                                                      dataset=dataset, 
                                                      n_train=n_train,
                                                      n_test=n_test, 
                                                      noisy_dims=noisy_dims,
-                                                     repetition_index=repetition_index, 
+                                                     #repetition_index=repetition_index, 
                                                      seed=seed,
                                                      **kwargs)
     print '%s: %d dimensions\n' % (dataset, data_train.shape[1])
@@ -431,7 +431,7 @@ def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, re
                         data_train=data_train, 
                         output_dim=output_dim, 
                         seed=seed,
-                        repetition_index=repetition_index,
+                        #repetition_index=repetition_index,
                         **kwargs)
     
     if model is None:
@@ -473,8 +473,8 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
 
 #@echo
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, 
-                     use_test_set, repetition_index=None, seed=None, **kwargs):
-    # rev: 10
+                     use_test_set, seed, **kwargs):
+    # rev: 11
     projected_data, model, [data_train, data_test] = calc_projected_data(env=env,
                                                                          dataset=dataset, 
                                                                          algorithm=algorithm, 
@@ -482,7 +482,7 @@ def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_te
                                                                          n_train=n_train,
                                                                          n_test=n_test, 
                                                                          use_test_set=use_test_set, 
-                                                                         repetition_index=repetition_index, 
+                                                                         #repetition_index=repetition_index, 
                                                                          seed=seed, **kwargs)
     
     kwargs.update({'env': env, 
@@ -492,7 +492,7 @@ def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_te
                    'n_train': n_train, 
                    'n_test': n_test, 
                    'use_test_set': use_test_set, 
-                   'repetition_index': repetition_index, 
+                   #'repetition_index': repetition_index, 
                    'seed': seed})
     error = prediction_error_on_data(data=projected_data, measure=measure, model=model, 
                                      data_chunks=[data_train, data_test], **kwargs)

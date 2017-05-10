@@ -23,7 +23,7 @@ def main():
             #eb.Algorithms.ForeCA,
             #eb.Algorithms.SFA,
             #eb.Algorithms.SFFA,
-            eb.Algorithms.PFA,
+            #eb.Algorithms.PFA,
             eb.Algorithms.GPFA2
             ]
 
@@ -84,7 +84,7 @@ def main():
             if i == 15:
                 plt.legend(prop={'size': 9})
                     
-        plt.subplots_adjust(hspace=.4, wspace=.4, left=0.04, right=.98, bottom=.05, top=.92)
+        plt.subplots_adjust(hspace=.4, wspace=.4, left=0.04, right=.98, bottom=.08, top=.92)
         plt.savefig('fig_search_p_%s.eps' % plot_alg_names[alg].lower())
         
     plt.show()

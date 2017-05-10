@@ -20,7 +20,7 @@ def main():
                       }
 
     algs = [#eb.Algorithms.Random,
-            eb.Algorithms.ForeCA,
+            #eb.Algorithms.ForeCA,
             #eb.Algorithms.SFA,
             #eb.Algorithms.SFFA,
             eb.Algorithms.PFA,

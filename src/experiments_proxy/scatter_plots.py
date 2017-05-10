@@ -24,7 +24,7 @@ def main():
                       }
     
     algs =  [eb.Algorithms.Random,
-             eb.Algorithms.SFFA,
+             #eb.Algorithms.SFFA,
              eb.Algorithms.ForeCA,
              eb.Algorithms.PFA,
              eb.Algorithms.GPFA2]
@@ -89,16 +89,16 @@ def main():
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=9, label=label, zorder=2)
             
         # 
-        measure_label = 'prediction errors'
+        measure_label = 'prediction errors on'
         if alg is eb.Algorithms.ForeCA:
-            measure_label = 'forcastability'
+            measure_label = 'forcastability of'
         elif alg is eb.Algorithms.Random:
             measure_label = 'delta values'
         measure_limits = [1e0, 1e2] if alg is eb.Algorithms.ForeCA else [1e-4, 1e2]
         plt.plot(measure_limits, measure_limits, '-', c='gray', zorder=3)
         plt.suptitle(plot_alg_names[alg])
-        plt.xlabel('%s on %s features' % (measure_label, plot_alg_names[alg]))
-        plt.ylabel('%s on SFA features' % (measure_label))
+        plt.xlabel('%s %s features' % (measure_label, plot_alg_names[alg]))
+        plt.ylabel('%s SFA features' % (measure_label))
         plt.xscale('log')
         plt.yscale('log')
         handles, labels = plt.gca().get_legend_handles_labels()

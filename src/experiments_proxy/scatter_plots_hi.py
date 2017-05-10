@@ -32,7 +32,7 @@ def main():
     #results_sfa = parameters.get_results(eb.Algorithms.SFA)
 
     colors = iter(matplotlib.cm.get_cmap('pink')(np.linspace(0, 1, math.ceil(2.5*len(parameters_hi.dataset_args_hi)))))
-    markers = iter(['*', 'o', '^', 'v', '<', '>', 'd', 'D', 's'] * 2)
+    markers = iter(['*', 'o', 's', '^', 'v', '<', '>', 'd', 'D'] * 2)
     
     plt.figure(figsize=(10,6))
 

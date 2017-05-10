@@ -57,12 +57,10 @@ dataset_default_args = {env_data2d.Datasets.Mario: default_args_low,
 # results from grid-search
 algorithm_parameters = {eb.Algorithms.HiPFA: {env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0},
                                               env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
-                                              env_data2d.Datasets.Traffic: {'p': 2, 'K': 0}},
-                        eb.Algorithms.HiGPFA:{env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 2},
-                                              env_data2d.Datasets.Mario: {'p': 2, 'k': 2},
-                                              env_data2d.Datasets.Traffic: {'p': 2, 'k': 2}},
-
-}
+                                              env_data2d.Datasets.Traffic: {'p': 1, 'K': 0}},
+                        eb.Algorithms.HiGPFA:{env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 5},
+                                              env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
+                                              env_data2d.Datasets.Traffic: {'p': 1, 'k': 10}}}
 
 
 
