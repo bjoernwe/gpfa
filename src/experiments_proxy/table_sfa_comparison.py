@@ -45,6 +45,8 @@ def main():
         results_hisfa[alg] = parameters_hi.get_results(alg, overide_args={'algorithm': eb.Algorithms.HiSFA, 'use_test_set': use_test_set})
         #results_hisffa[alg] = parameters_hi.get_results(alg, overide_args={'algorithm': eb.Algorithms.HiSFFA, 'use_test_set': use_test_set})
 
+    symbol_stats = {}
+
     #f = open('/home/weghebvc/Documents/2016-09 - NC2/paper/table_sfa_comparison.tex', 'w+')
     f = open('table_sfa_comparison%s.tex' % ('' if use_test_set else '_training'), 'w+')
     print("""
@@ -68,6 +70,7 @@ Dataset & ForeCA & PFA & GPFA & hPFA & hGPFA \\\\
                 samples_sfa  = np.mean(results_sfa[alg][dataset].values, axis=0)
                 #samples_sffa = np.mean(results_sffa[alg][dataset].values, axis=0)
                 symbol = evaluate(samples0=samples_sfa, samples1=samples_alg, inverse=alg is eb.Algorithms.ForeCA)
+                symbol_stats[symbol] = symbol_stats.get(symbol, 0) + 1
                 #symbol_sffa = evaluate(samples0=samples_sffa, samples1=samples_alg, inverse=alg is eb.Algorithms.ForeCA)
                 print(symbol, end='', file=f)
                 #if symbol_sffa != symbol:
@@ -82,6 +85,7 @@ Dataset & ForeCA & PFA & GPFA & hPFA & hGPFA \\\\
                 samples_hisfa  = np.mean(results_hisfa[alg][dataset].values, axis=0)
                 #samples_hisffa = np.mean(results_hisffa[alg][dataset].values, axis=0)
                 symbol_hi = evaluate(samples0=samples_hisfa, samples1=samples_hialg)
+                symbol_stats[symbol_hi] = symbol_stats.get(symbol_hi, 0) + 1
                 #symbol_hisffa = evaluate(samples0=samples_hisffa, samples1=samples_hialg)
                 print(symbol_hi, end='', file=f)
                 #if symbol_hisffa != symbol_hi:
@@ -89,6 +93,9 @@ Dataset & ForeCA & PFA & GPFA & hPFA & hGPFA \\\\
         print(' \\\\\n', file=f)
     print('\\bottomrule\n', file=f)
     print('\\end{tabular}\n\\end{center}', file=f)
+    
+    for symbol, counts in symbol_stats.items():
+        print('%s : %d' % (symbol, counts))
     
     
 def evaluate(samples0, samples1, inverse=False):

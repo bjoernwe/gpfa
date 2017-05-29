@@ -15,7 +15,7 @@ def main():
     
     mkl.set_num_threads(1)
     
-    search_args = {'p': [1,2,4,6,8],
+    search_args = {'p': [1,2,4,6],
                    'k': [1,2,5,10]}
 
     # run cross-validation        

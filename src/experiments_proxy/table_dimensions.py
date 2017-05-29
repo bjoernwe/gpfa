@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import numpy as np
 
+import envs.env_random
+
 import experiments_proxy.experiment_base as eb
 import parameters
 
@@ -22,8 +24,8 @@ Dataset & $S$ & $S_\\textrm{train}$ & $S_\\textrm{test}$ & $N$ & $N'$ \\\\
 
         env = dataset_args['env']
         dataset = dataset_args['dataset']
-        if dataset is None:
-            continue
+        #if dataset is None:
+        #    continue
         
         kwargs = dict(parameters.default_args_global)
         #kwargs['algorithm'] = alg
@@ -36,9 +38,16 @@ Dataset & $S$ & $S_\\textrm{train}$ & $S_\\textrm{test}$ & $N$ & $N'$ \\\\
         
         print('\\texttt{%s}' % eb.get_dataset_name(env=env, ds=dataset, latex=True), end='', file=f)
         print(' & ', end='', file=f)
-        e = env(dataset, limit_data=parameters.default_args_global['limit_data'])
-        N, M = e.data.shape
-        print('%d' % N, end='', file=f)
+        if env is envs.env_random.EnvRandom:
+            e = env(ndim=kwargs['ndim'])
+            N, M = None, e.ndim
+        else:
+            e = env(dataset, limit_data=parameters.default_args_global['limit_data'], seed=0)
+            N, M = e.data.shape
+        if dataset is None:
+            print('', end='', file=f)
+        else:
+            print('%d' % N, end='', file=f)
         print(' & ', end='', file=f)
         print('%d' % kwargs['n_train'], end='', file=f)
         print(' & ', end='', file=f)
@@ -54,7 +63,7 @@ Dataset & $S$ & $S_\\textrm{train}$ & $S_\\textrm{test}$ & $N$ & $N'$ \\\\
         else:
             print('%d' % dim_avg, end='', file=f)
         print(' \\\\\n', file=f)
-    print('\\texttt{MISC\\_NOISE} & & 10000 & 2000 & 20 & 20 \\\\', file=f)
+    #print('\\texttt{MISC\\_NOISE} & & 10000 & 2000 & 20 & 20 \\\\', file=f)
     print('\\bottomrule', file=f)
     print('\\end{tabular}\n\\end{center}', file=f)
 

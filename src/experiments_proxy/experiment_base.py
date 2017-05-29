@@ -41,7 +41,7 @@ mem = joblib.Memory(cachedir=default_cachedir, verbose=1)
 
 Algorithms = Enum('Algorithms', 'None Random SFA SFFA ForeCA PFA GPFA1 GPFA2 HiSFA HiSFFA HiPFA HiGPFA')
 
-Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa_signals')
+Measures = Enum('Measures', 'delta delta_ndim omega omega_ndim pfa gpfa gpfa_ndim ndims angle_to_sfa_signals angle_to_p1')
 
 
 
@@ -104,7 +104,7 @@ def generate_training_data(env, dataset, n_train, n_test, seed, **kwargs):
     return [data_train, data_test]
 
 
-
+@echo
 def train_model(algorithm, data_train, output_dim, seed, **kwargs):
     
     if algorithm == Algorithms.None:
@@ -471,7 +471,7 @@ def dimensions_of_data(measure, dataset, algorithm, output_dim, n_train, n_test,
     
     
 
-#@echo
+@echo
 def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_test, 
                      use_test_set, seed, **kwargs):
     # rev: 11
@@ -500,7 +500,7 @@ def prediction_error(measure, env, dataset, algorithm, output_dim, n_train, n_te
     return error
     
     
-
+@echo
 def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwargs):
 
     if data.ndim == 1:
@@ -538,6 +538,8 @@ def prediction_error_on_data(data, measure, model=None, data_chunks=None, **kwar
         return data_chunks[0].shape[1]
     elif measure == Measures.angle_to_sfa_signals:
         return calc_angle_to_sfa_signals(data, **kwargs)
+    elif measure == Measures.angle_to_p1:
+        return calc_angle_to_p1(data, **kwargs)
     else:
         assert False
     
@@ -592,7 +594,15 @@ def calc_omega_ndim(data):
 def calc_angle_to_sfa_signals(data, **kwargs):
     kwargs['algorithm'] = Algorithms.HiSFA if kwargs.get('angle_to_hisfa', False) else Algorithms.SFA
     signals_sfa, _, _ = calc_projected_data(**kwargs)
-    return principal_angles(signals_sfa, data)[0 if kwargs.get('min_principal_angle') else 1]  
+    return principal_angles(signals_sfa, data)[0 if kwargs.get('min_principal_angle') else -1]  
+
+
+@echo
+#@mem.cache
+def calc_angle_to_p1(data, **kwargs):
+    kwargs['p'] = 1
+    signals, _, _ = calc_projected_data(**kwargs)
+    return principal_angles(signals, data)[kwargs['principal_angle_idx']]  
 
 
 
