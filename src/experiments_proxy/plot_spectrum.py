@@ -41,9 +41,11 @@ def main():
     results_train = {}
     for alg in algs:
         stack_result = not alg is eb.Algorithms.None
-        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False, 'output_dim': 1}, seed=range(repetitions), stack_result=stack_result)
+        r = parameters.algorithm_args[alg].get('repetitions', repetitions)
+        results_train[alg] = parameters.get_signals(alg, overide_args={'use_test_set': False, 'output_dim': 1, 'seed': range(r)}, stack_result=stack_result)
     for alg in algs_hi:
-        results_train[alg] = parameters_hi.get_signals(alg, overide_args={'use_test_set': False, 'output_dim': 1}, seed=range(repetitions_hi))
+        r = parameters_hi.algorithm_args[alg].get('repetitions', repetitions_hi)
+        results_train[alg] = parameters_hi.get_signals(alg, overide_args={'use_test_set': False, 'output_dim': 1, 'seed': range(r)})
         
     figsize = (20,11)
     plt.figure(figsize=figsize)

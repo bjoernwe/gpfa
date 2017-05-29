@@ -30,14 +30,14 @@ default_args_explot = {'repetitions':  50,
                        'processes':    None}
 
 default_args_low  = {#'pca':         1.,
-                     'output_dim':  range(1,6),
-                     'output_dim_max': 5,
+                     #'output_dim':  range(1,6),
+                     #'output_dim_max': 5,
                      #'repetitions': 10,
                      }
 
 default_args_high = {#'pca':         .99,
-                     'output_dim':  range(1,11),
-                     'output_dim_max': 10, 
+                     #'output_dim':  range(1,11),
+                     #'output_dim_max': 10, 
                      #'repetitions': 5,
                      }
 
@@ -54,7 +54,9 @@ algorithm_measures = {eb.Algorithms.None:   None,
                       eb.Algorithms.HiGPFA: eb.Measures.gpfa,
                       }
 
-algorithm_args = {eb.Algorithms.ForeCA: {'n_train':      1000, 
+algorithm_args = {eb.Algorithms.None:   {},
+                  eb.Algorithms.SFA:    {},
+                  eb.Algorithms.ForeCA: {'n_train':      1000, 
                                          'n_test':       200,
                                          #'pca':          1.,
                                          'output_dim':  range(1,6),
@@ -135,30 +137,30 @@ algorithm_parameters = {eb.Algorithms.PFA: {env_data.Datasets.STFT1: {'p': 10, '
                                             env_data.Datasets.STFT2: {'p': 10, 'K': 10},
                                             env_data.Datasets.STFT3: {'p': 8, 'K': 1},
                                             env_data.Datasets.EEG2: {'p': 10, 'K': 0},
-                                            env_data.Datasets.EEG: {'p': 6, 'K': 2},
+                                            env_data.Datasets.EEG: {'p': 10, 'K': 1},
                                             env_data.Datasets.EIGHT_EMOTION: {'p': 8, 'K': 0},
                                             env_data.Datasets.PHYSIO_EHG: {'p': 10, 'K': 2},
                                             env_data.Datasets.PHYSIO_MGH: {'p': 10, 'K': 0},
                                             env_data.Datasets.PHYSIO_MMG: {'p': 2, 'K': 0},
                                             env_data.Datasets.PHYSIO_UCD: {'p': 8, 'K': 0},
-                                            env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0},
+                                            env_data2d.Datasets.SpaceInvaders: {'p': 1, 'K': 0},
                                             env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
-                                            env_data2d.Datasets.Traffic: {'p': 1, 'K': 0},
+                                            env_data2d.Datasets.Traffic: {'p': 1, 'K': 1},
                                             env_data.Datasets.FIN_EQU_FUNDS: {'p': 10, 'K': 10},
-                                            env_data.Datasets.HAPT: {'p': 10, 'K': 0},
+                                            env_data.Datasets.HAPT: {'p': 10, 'K': 1},
                                             None: {'p': 1, 'K': 10}},
-                        eb.Algorithms.GPFA2: {env_data.Datasets.STFT1: {'p': 6, 'k': 10},
+                        eb.Algorithms.GPFA2: {env_data.Datasets.STFT1: {'p': 4, 'k': 10},
                                               env_data.Datasets.STFT2: {'p': 4, 'k': 1},
                                               env_data.Datasets.STFT3: {'p': 6, 'k': 1},
-                                              env_data.Datasets.EEG2: {'p': 1, 'k': 5},
+                                              env_data.Datasets.EEG2: {'p': 1, 'k': 2},
                                               env_data.Datasets.EEG: {'p': 6, 'k': 5},
-                                              env_data.Datasets.EIGHT_EMOTION: {'p': 1, 'k': 2},
+                                              env_data.Datasets.EIGHT_EMOTION: {'p': 1, 'k': 5},
                                               env_data.Datasets.PHYSIO_EHG: {'p': 4, 'k': 5},
                                               env_data.Datasets.PHYSIO_MGH: {'p': 1, 'k': 1},
                                               env_data.Datasets.PHYSIO_MMG: {'p': 1, 'k': 10},
                                               env_data.Datasets.PHYSIO_UCD: {'p': 1, 'k': 1},
-                                              env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 1},
-                                              env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
+                                              env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 10},
+                                              env_data2d.Datasets.Mario: {'p': 1, 'k': 1},
                                               env_data2d.Datasets.Traffic: {'p': 2, 'k': 1},
                                               env_data.Datasets.FIN_EQU_FUNDS: {'p': 2, 'k': 10},
                                               env_data.Datasets.HAPT: {'p': 1, 'k': 10},
@@ -206,7 +208,7 @@ def get_results(alg, overide_args={}, include_random=True, plot=False):
 
 
 
-def get_signals(alg, overide_args={}, include_random=True, repetition_index=0, stack_result=True):
+def get_signals(alg, overide_args={}, include_random=True, stack_result=True):
 
     results = {}
 
@@ -230,9 +232,11 @@ def get_signals(alg, overide_args={}, include_random=True, repetition_index=0, s
         try:
             # list of repetition indices?
             projected_data_list = []
-            for i in repetition_index:
+            for i in kwargs['seed']:
                 print i, kwargs
-                projected_data, _, [_, _] = eb.calc_projected_data(repetition_index=i, **kwargs)
+                kwargs_updated = dict(kwargs)
+                kwargs_updated['seed'] = i
+                projected_data, _, [_, _] = eb.calc_projected_data(**kwargs_updated)
                 projected_data_list.append(projected_data)
             if stack_result:
                 projected_data = np.stack(projected_data_list, axis=2)
@@ -242,7 +246,7 @@ def get_signals(alg, overide_args={}, include_random=True, repetition_index=0, s
             data_test      = None
             model          = None
         except TypeError:
-            projected_data, model, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
+            projected_data, model, [data_train, data_test] = eb.calc_projected_data(**kwargs)
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test, 'model': model}
         results[dataset] = result
                 

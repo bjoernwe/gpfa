@@ -69,7 +69,7 @@ def main():
                 values = results_angle[alg][min_principal_angle][dataset].values
                 d, _ = values.shape
                 plt.errorbar(x=range(1,d+1), y=np.mean(values, axis=1), yerr=np.std(values, axis=1))
-                xlim_max = 10.5 #5.5 if alg is eb.Algorithms.ForeCA else 10.5 
+                xlim_max = 5.5 #if alg is eb.Algorithms.ForeCA else 10.5 
                 plt.xlim(.5, xlim_max)
                 plt.ylim(-.2, np.pi/2+.2)
                 if idx % 4 == 0:

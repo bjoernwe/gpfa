@@ -23,12 +23,12 @@ def main():
             #eb.Algorithms.ForeCA,
             #eb.Algorithms.SFA,
             #eb.Algorithms.SFFA,
-            #eb.Algorithms.PFA,
+            eb.Algorithms.PFA,
             eb.Algorithms.GPFA2
             ]
 
     p_range = {eb.Algorithms.PFA:   [1,2,4,6,8,10],
-               eb.Algorithms.GPFA2: [1,2,4,6,8]}
+               eb.Algorithms.GPFA2: [1,2,4,6]}
     
     line_styles = ['-', '--']
     

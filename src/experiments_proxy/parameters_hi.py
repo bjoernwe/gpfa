@@ -55,12 +55,12 @@ dataset_default_args = {env_data2d.Datasets.Mario: default_args_low,
                         env_data2d.Datasets.SpaceInvaders: default_args_low}
 
 # results from grid-search
-algorithm_parameters = {eb.Algorithms.HiPFA: {env_data2d.Datasets.SpaceInvaders: {'p': 2, 'K': 0},
+algorithm_parameters = {eb.Algorithms.HiPFA: {env_data2d.Datasets.SpaceInvaders: {'p': 1, 'K': 0},
                                               env_data2d.Datasets.Mario: {'p': 2, 'K': 0},
-                                              env_data2d.Datasets.Traffic: {'p': 1, 'K': 0}},
-                        eb.Algorithms.HiGPFA:{env_data2d.Datasets.SpaceInvaders: {'p': 1, 'k': 5},
-                                              env_data2d.Datasets.Mario: {'p': 1, 'k': 2},
-                                              env_data2d.Datasets.Traffic: {'p': 1, 'k': 10}}}
+                                              env_data2d.Datasets.Traffic: {'p': 1, 'K': 1}},
+                        eb.Algorithms.HiGPFA:{env_data2d.Datasets.SpaceInvaders: {'p': 2, 'k': 10},
+                                              env_data2d.Datasets.Mario: {'p': 1, 'k': 1},
+                                              env_data2d.Datasets.Traffic: {'p': 2, 'k': 1}}}
 
 
 
@@ -91,7 +91,7 @@ def get_results(alg, overide_args={}, include_random=True):
 
 
 
-def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
+def get_signals(alg, overide_args={}, include_random=True):
 
     results = {}
 
@@ -114,14 +114,14 @@ def get_signals(alg, overide_args={}, include_random=True, repetition_index=0):
         try:
             # list of repetition indices?
             projected_data_list = []
-            for i in repetition_index:
-                projected_data, _, [_, _] = eb.calc_projected_data(repetition_index=i, **kwargs)
+            for i in kwargs['seed']:
+                projected_data, _, [_, _] = eb.calc_projected_data(seed=i, **kwargs)
                 projected_data_list.append(projected_data)
             projected_data = np.stack(projected_data_list, axis=2)
             data_train     = None
             data_test      = None
         except TypeError:
-            projected_data, _, [data_train, data_test] = eb.calc_projected_data(repetition_index=repetition_index, **kwargs)
+            projected_data, _, [data_train, data_test] = eb.calc_projected_data(**kwargs)
         result = {'projected_data': projected_data, 'data_train': data_train, 'data_test': data_test}
         results[dataset] = result
 
