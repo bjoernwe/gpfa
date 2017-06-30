@@ -74,6 +74,11 @@ def main():
                 plt.ylim(-.2, np.pi/2+.2)
                 if idx % 4 == 0:
                     plt.ylabel('angle')
+                    #plt.gcf().canvas.draw()
+                    #labels = [item.get_text() for item in plt.gca().get_xticklabels()]
+                    #labels[1] = "$0$"
+                    #labels[4] = "$\pi/2$"
+                    #plt.gca().set_yticklabels(labels)
                 else:
                     plt.gca().set_yticklabels([])
                 plt.xlabel('M')

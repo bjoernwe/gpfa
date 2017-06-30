@@ -40,6 +40,8 @@ def main():
         
         prefix = 'hPFA: ' if alg is eb.Algorithms.HiPFA else 'hGPFA: '
         
+        flat_results = []
+        flat_results_sfa = []
         for dataset_args in parameters_hi.dataset_args_hi:
             
             env = dataset_args['env']
@@ -53,6 +55,10 @@ def main():
                 # average over first dim (output_dim)
                 result = np.mean(result, axis=0, keepdims=True) 
                 result_sfa = np.mean(result_sfa, axis=0, keepdims=True) 
+            
+            # flat results for correlation
+            flat_results.append(result.flatten())
+            flat_results_sfa.append(result_sfa.flatten())
             
             # point cloud
             color = next(colors)
@@ -84,10 +90,17 @@ def main():
             yerr = np.vstack([errors_sfa_neg, errors_sfa_pos])
             plt.errorbar(mu, mu_sfa, xerr=xerr, yerr=yerr, c=color, marker=marker, markersize=10, label=label, zorder=2)
             
+        # correlation
+        flat_results = np.concatenate(flat_results)
+        flat_results_sfa = np.concatenate(flat_results_sfa)
+        corr = np.corrcoef(x=np.log10(flat_results), y=np.log10(flat_results_sfa))[0,1]
+        print('%s: %0.2f' % (alg, corr)) 
+
     # 
     plt.plot([1e-3, 1e1], [1e-3, 1e1], '-', c='gray', zorder=3)
     plt.xlabel('prediction error on hPFA/hGPFA features')
     plt.ylabel('prediction error on hSFA features')
+    #plt.text(x=.9, y=.05, s='r = %0.2f' % corr, horizontalalignment='center', verticalalignment='center', transform = plt.gca().transAxes)
     plt.xscale('log')
     plt.yscale('log')
     handles, labels = plt.gca().get_legend_handles_labels()

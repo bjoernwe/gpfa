@@ -28,7 +28,7 @@ def main():
     f = open('table_runtime.tex', 'w+')
     print("""
 \\begin{center}
-\\begin{tabular}{L{3.5cm} R{1.7cm} R{1.7cm} R{1.7cm} R{1.7cm}}
+\\begin{tabular}{L{5cm} C{1.6cm} C{1.6cm} C{1.6cm} C{1.6cm}}
 \\toprule 
 Dataset & SFA & ForeCA & PFA & GPFA \\\\
 \\midrule""", file=f)
@@ -45,7 +45,7 @@ Dataset & SFA & ForeCA & PFA & GPFA \\\\
                 #
                 time = np.mean(results[alg][dataset].elapsed_times) # axis 0 = output_dim
                 #time = np.mean(time, axis=-1)
-                print('\\texttt{%.2E}' % (time/1000.), end='', file=f)
+                print('\\texttt{%E}' % (time/1000.), end='', file=f)
         print(' \\\\\n', file=f)
     print('\\bottomrule\n', file=f)
     print('\\end{tabular}\n\\end{center}', file=f)

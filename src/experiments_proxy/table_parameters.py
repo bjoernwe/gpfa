@@ -16,10 +16,10 @@ def main():
     f = open('table_parameters.tex', 'w+')
     print("""
 \\begin{center}
-\\begin{tabular}{L{3.5cm} C{1.3cm} C{1.3cm} C{1.3cm} C{1.3cm}}
+\\begin{tabular}{L{5cm} C{1cm} C{1cm} C{1cm} C{1cm}}
 \\toprule 
  & \multicolumn{2}{c}{PFA} & \multicolumn{2}{c}{GPFA} \\\\
-Dataset & $p$ & $k$ & $p$ & $k$ \\\\
+Dataset & $p$ & $K$ & $p$ & $k$ \\\\
 \\midrule""", file=f)
     for dataset_args in parameters.dataset_args:
         env = dataset_args['env']

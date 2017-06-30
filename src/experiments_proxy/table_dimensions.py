@@ -16,7 +16,7 @@ def main():
     f = open('./table_dims.tex', 'w+')
     print("""
 \\begin{center}
-\\begin{tabular}{L{3.5cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm} R{1.2cm}}
+\\begin{tabular}{L{5cm} R{1.25cm} R{1.25cm} R{1.25cm} R{1.25cm} R{1.25cm}}
 \\toprule 
 Dataset & $S$ & $S_\\textrm{train}$ & $S_\\textrm{test}$ & $N$ & $N'$ \\\\
 \\midrule""", file=f)

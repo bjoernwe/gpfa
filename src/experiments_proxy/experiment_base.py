@@ -445,8 +445,8 @@ def calc_projected_data(env, dataset, algorithm, output_dim, n_train, n_test, #r
         else:
             projected_data = model.execute(data_train)
         # reduce dim because ForeCA calculated output_dim_max dimensions 
-        if  algorithm == Algorithms.ForeCA or \
-            algorithm == Algorithms.HiSFA:
+        if  algorithm == Algorithms.ForeCA:# or \
+            #algorithm == Algorithms.HiSFA:
             #algorithm == Algorithms.SFA or \
             #algorithm == Algorithms.SFFA or \
             projected_data = projected_data[:,:output_dim]

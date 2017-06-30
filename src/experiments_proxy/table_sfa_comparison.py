@@ -51,7 +51,7 @@ def main():
     f = open('table_sfa_comparison%s.tex' % ('' if use_test_set else '_training'), 'w+')
     print("""
 \\begin{center}
-\\begin{tabular}{L{3.5cm} C{1.3cm} C{1.3cm} C{1.3cm} C{1.3cm} C{1.3cm}}
+\\begin{tabular}{L{5cm} C{1.4cm} C{1.4cm} C{1.4cm} C{1.4cm} C{1.4cm}}
 \\toprule 
 Dataset & ForeCA & PFA & GPFA & hPFA & hGPFA \\\\
 \\midrule""", file=f)

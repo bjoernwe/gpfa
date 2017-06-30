@@ -15,7 +15,7 @@ from envs.env_random import EnvRandom
 
 default_args_global = {'n_train':      10000, 
                        'n_test':       2000,
-                       'seed':         1,
+                       'seed':         0,
                        'noisy_dims':   0,
                        'limit_data':   100000,
                        'use_test_set': True}
@@ -84,9 +84,9 @@ def get_results(alg, overide_args={}, include_random=True):
         kwargs.update(algorithm_args.get(alg, {}))
         kwargs.update(overide_args)
     
-        #print 'results: %s' % kwargs
+        #print 'kwargs: %s' % kwargs
         results[dataset] = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window', 'scaling'], **kwargs)
-        
+        #print results[dataset].values.shape, '\n'
     return results
 
 
@@ -103,19 +103,21 @@ def get_signals(alg, overide_args={}, include_random=True):
             continue
         kwargs = dict(default_args_global)
         kwargs['algorithm'] = alg
-        kwargs['measure'] = algorithm_measures[alg]
+        #kwargs['measure'] = algorithm_measures[alg]
         kwargs.update(args)
         kwargs.update(dataset_default_args.get(dataset, {}))
         kwargs.update(algorithm_parameters.get(alg, {}).get(dataset, {}))
         kwargs.update(algorithm_args.get(alg, {}))
-        kwargs.update({'output_dim': 5, 'output_dim_max': 5})
+        #kwargs.update({'output_dim': 5, 'output_dim_max': 5})
         kwargs.update(overide_args)
     
         try:
             # list of repetition indices?
             projected_data_list = []
             for i in kwargs['seed']:
-                projected_data, _, [_, _] = eb.calc_projected_data(seed=i, **kwargs)
+                kwargs_updated = dict(kwargs)
+                kwargs_updated['seed'] = i
+                projected_data, _, [_, _] = eb.calc_projected_data(**kwargs_updated)
                 projected_data_list.append(projected_data)
             projected_data = np.stack(projected_data_list, axis=2)
             data_train     = None

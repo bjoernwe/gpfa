@@ -28,7 +28,12 @@ def main():
             ]
 
     p_range = {eb.Algorithms.PFA:   [1,2,4,6,8,10],
-               eb.Algorithms.GPFA2: [1,2,4,6]}
+               eb.Algorithms.GPFA2: [1,2,4,6]
+               }
+    
+    #p_range = {eb.Algorithms.PFA:   [0,1] + range(2, 11, 2), # K
+    #           eb.Algorithms.GPFA2: [1,2,5,10] # k
+    #           }
     
     line_styles = ['-', '--']
     
@@ -37,7 +42,7 @@ def main():
     for alg in algs:
         results[alg] = {}
         for alg2 in [eb.Algorithms.SFA, alg]:
-            results[alg][alg2] = parameters.get_results(alg=alg, overide_args={'algorithm': alg2, 'p': p_range[alg]})#, 'repetitions': 5})
+            results[alg][alg2] = parameters.get_results(alg=alg, overide_args={'algorithm': alg2, 'K': p_range[alg]})#, 'repetitions': 5})
         
     for _, alg in enumerate(algs):  # determines the predictable algorithm and measure
         

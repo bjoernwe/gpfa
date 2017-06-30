@@ -32,7 +32,7 @@ def main():
             result_x = results_x[dataset].values
             result_y = results_y[dataset].values
             
-            if False:
+            if True:
                 # average over first dim (output_dim)
                 result_x = np.mean(result_x, axis=0, keepdims=True) 
                 result_y = np.mean(result_y, axis=0, keepdims=True) 

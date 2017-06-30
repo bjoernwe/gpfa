@@ -63,6 +63,7 @@ algorithm_args = {eb.Algorithms.None:   {},
                                          'output_dim_max': 5,
                                          'repetitions':    10,
                                          },
+                  eb.Algorithms.PFA:    {},
                   eb.Algorithms.GPFA2:  {'iterations':   30,
                                          'k_eval':       10,
                                          'repetitions':  10,
@@ -200,7 +201,7 @@ def get_results(alg, overide_args={}, include_random=True, plot=False):
         kwargs.update(algorithm_args.get(alg, {}))
         kwargs.update(overide_args)
     
-        results[dataset] = ep.evaluate(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window', 'scaling'], **kwargs)
+        results[dataset] = ep.evaluate(eb.prediction_error, argument_order=['output_dim', 'principal_angle_idx'], ignore_arguments=['window', 'scaling'], **kwargs)
         if plot:
             ep.plot(eb.prediction_error, argument_order=['output_dim'], ignore_arguments=['window', 'scaling'], show_plot=False, **kwargs)
         
