@@ -117,6 +117,7 @@ if __name__ == '__main__':
     try:
         main()
     finally:
-        notify('finished')
+        #notify('finished')
+        pass
     plt.show()
     

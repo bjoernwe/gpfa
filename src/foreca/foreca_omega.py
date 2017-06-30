@@ -21,9 +21,11 @@ def omega(x):
     call(['rm', '%s/foreca_omega_input_%s.csv' % (cwd, run_id)])
     call(['rm', '%s/foreca_omega_result_%s.csv' % (cwd, run_id)])
 
+    if x.shape[1] == 1:
+        return [O]
     return O
 
 
 if __name__ == '__main__':
     
-    print omega(np.random.randn(1000,3))
+    print omega(np.random.randn(200,2))
