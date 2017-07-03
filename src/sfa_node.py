@@ -89,16 +89,10 @@ class SFA(Node):
         #rng = self._set_range()
 
         #### solve the generalized eigenvalue problem
-        # the eigenvalues are already ordered in ascending order
         try:
+            #self.d, self.sf = self._symeig(self.dcov_mtx, self.cov_mtx,
+            #                               range=rng, overwrite=(not debug))
             self.d, self.sf = scipy.linalg.eigh(self.dcov_mtx, self.cov_mtx)
-            if self._include_fast_signals:
-                idc = np.argsort(np.abs(2-self.d))[::-1][:min(self.output_dim, self.input_dim)]
-            else:
-                idc = np.argsort(self.d)[::-1][:min(self.output_dim, self.input_dim)]
-            self.d = self.d[idc]
-            self.sf = self.sf[:,idc]
-            
             d = self.d
             # check that we get only *positive* eigenvalues
             if d.min() < 0:
@@ -107,6 +101,13 @@ class SFA(Node):
                            " or prepend the SFANode with a PCANode(reduce=True)"
                            " or PCANode(svd=True)"% str(d))
                 raise NodeException(err_msg)
+            if self._include_fast_signals:
+                idc = np.argsort(np.abs(2-self.d))[::-1][:min(self.output_dim, self.input_dim)]
+            else:
+                idc = np.argsort(self.d)[:min(self.output_dim, self.input_dim)]
+            self.d = self.d[idc]
+            self.sf = self.sf[:,idc]
+            
         except SymeigException, exception:
             errstr = str(exception)+"\n Covariance matrices may be singular."
             raise NodeException(errstr)
