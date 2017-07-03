@@ -8,9 +8,15 @@ import mdp
 
 def calc_predictability_trace_of_avg_cov(x, k, p, ndim=False):
     """
-    The main evaluation criterion of GPFA
+    The main evaluation criterion of GPFA, i.e., equation (2) from the paper.
+
+    :param x: data array
+    :param k: number of neighbors for estimate
+    :param p: number of past time steps to consider
+    :param ndim: n-dimensional evaluation if True
+    :return: estimated variance in the next time step
     """
-    
+
     def _cov(t):
         successors = neighbors[t] + 1
         successors = successors[successors<N]
@@ -37,6 +43,12 @@ def calc_predictability_trace_of_avg_cov(x, k, p, ndim=False):
 
 
 def concatenate_past(x, p=1):
+    """
+    Helper function for time-embedded data
+    :param x: data
+    :param p: number of time frames embedded into one frame
+    :return: embedded data
+    """
     if x.ndim == 1:
         x = np.array(x, ndmin=2).T
     N, D = x.shape
@@ -52,6 +64,19 @@ class GPFA(mdp.Node):
     def __init__(self, output_dim, k=10, p=1, iterations=10, variance_graph=False, 
                  neighborhood_graph=False, weighted_edges=True, causal_features=True, 
                  generalized_eigen_problem=True, input_dim=None, dtype=None):
+        """
+        :param output_dim: number of features to extract
+        :param k: number of neighbors for estimation
+        :param p: number of past time steps to consider
+        :param iterations: number of iterations of the GPFA algorithm
+        :param variance_graph: GPFA(1) if True, GPFA(2) aka star-shaped graph if False
+        :param neighborhood_graph: Additional edges for nearest neighbors like in LPP
+        :param weighted_edges: Weight edges as often as they occur (True)
+        :param causal_features: Also minimize variance of the past
+        :param generalized_eigen_problem: Include the diagonal matrix with node weights into the eigen-problem (see von Luxburg)
+        :param input_dim: Will be set automatically
+        :param dtype: The default will usually work fine
+        """
         super(GPFA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.k = k
         self.p = p
