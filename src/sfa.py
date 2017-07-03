@@ -8,16 +8,21 @@ from mdp import numx, Node, NodeException, TrainingException
 from mdp.utils import (mult, pinv, CovarianceMatrix, QuadraticForm,
                        symeig, SymeigException)
 
-class SFFA(Node):
+class SFA(Node):
 
-    def __init__(self, input_dim=None, output_dim=None, dtype=None,
+    def __init__(self, include_fast_signals, input_dim=None, output_dim=None, dtype=None,
                  include_last_sample=True):
         """
+        This is a copy of the standard SFA node with the additional boolean parameter ``include_fast_signals''. When set
+        to True, delta values are not sorted by increasing size but by decreasing difference from 2, i.e., signals with
+        the most extreme delta values are extracted fist, no matter if slow or fast.
+
         For the ``include_last_sample`` switch have a look at the
         SFANode class docstring.
          """
-        super(SFFA, self).__init__(input_dim, output_dim, dtype)
+        super(SFA, self).__init__(input_dim, output_dim, dtype)
         self._include_last_sample = include_last_sample
+        self._include_fast_signals = include_fast_signals
 
         # init two covariance matrices
         # one for the input data
@@ -89,8 +94,10 @@ class SFFA(Node):
         # the eigenvalues are already ordered in ascending order
         try:
             self.d, self.sf = scipy.linalg.eigh(self.dcov_mtx, self.cov_mtx)
-            idc = np.argsort(np.abs(2-self.d))[::-1][:min(self.output_dim, self.input_dim)]
-            #idc = np.argsort(self.d)[::-1][:min(self.output_dim, self.input_dim)]
+            if self._include_fast_signals:
+                idc = np.argsort(np.abs(2-self.d))[::-1][:min(self.output_dim, self.input_dim)]
+            else:
+                idc = np.argsort(self.d)[::-1][:min(self.output_dim, self.input_dim)]
             self.d = self.d[idc]
             self.sf = self.sf[:,idc]
             
