@@ -3,10 +3,8 @@ __docformat__ = "restructuredtext en"
 import numpy as np
 import scipy
 
-import mdp
 from mdp import numx, Node, NodeException, TrainingException
-from mdp.utils import (mult, pinv, CovarianceMatrix, QuadraticForm,
-                       symeig, SymeigException)
+from mdp.utils import (mult, pinv, CovarianceMatrix, symeig, SymeigException)
 
 class SFA(Node):
 

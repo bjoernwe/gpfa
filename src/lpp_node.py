@@ -1,30 +1,9 @@
-import itertools
 import numpy as np
 import scipy.linalg
 import scipy.sparse.linalg
 import scipy.spatial.distance
 
 import mdp
-
-
-class RandomProjection(mdp.Node):
-
-    def __init__(self, output_dim, input_dim=None, dtype=None):
-        super(RandomProjection, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
-        return
-    
-    def _train(self, x):
-        return
-
-    def _stop_training(self):
-        D = self.input_dim
-        A = np.random.random((D, D))
-        A = A + A.T
-        _, self.U = scipy.sparse.linalg.eigsh(A, k=self.output_dim)
-        return
-
-    def _execute(self, x):
-        return x.dot(self.U)
 
 
 class LPP(mdp.Node):
