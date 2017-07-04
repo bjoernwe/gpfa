@@ -51,6 +51,13 @@ class ForeCA(mdp.Node):
     '''
 
     def __init__(self, output_dim, input_dim=None, whitening=True, dtype=None):
+        """
+
+        :param output_dim:
+        :param input_dim:
+        :param whitening: Avoid singular covariances. ForeCA itself should be indifferent towards scaling.
+        :param dtype:
+        """
         super(ForeCA, self).__init__(input_dim=input_dim, output_dim=output_dim, dtype=dtype)
         self.whitening = whitening
         self.m = None
@@ -60,19 +67,13 @@ class ForeCA(mdp.Node):
         #self.rnd = np.random.RandomState(seed)
         return
     
-        
-        
     def _train(self, x):
         self.m, self.W, self.U = train(x=x, output_dim=self.output_dim, whitening=self.whitening)
         return
-    
-    
-    
+
     def _stop_training(self):
         pass
-    
-    
-    
+
     def _execute(self, x):
         if self.m is not None:
             x = x - self.m
@@ -82,7 +83,6 @@ class ForeCA(mdp.Node):
         return result
 
 
-
 if __name__ == '__main__':
     x = np.random.randn(100,10)
     x = np.hstack([x,x])
@@ -90,4 +90,3 @@ if __name__ == '__main__':
     foreca.train(x)
     y = foreca.execute(x)
     print np.cov(y.T)
-    
