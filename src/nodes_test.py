@@ -53,15 +53,18 @@ class NodesTestCase(unittest.TestCase):
         assert self._is_similar(signals[:,0], self.signal2)
         assert self._is_similar(signals[:,1], self.signal1)
 
-    def _is_similar(self, signal1, signal2):
+    def _is_similar(self, signal1, signal2, rtol=0, atol=1e-1):
         """
         Compares signals after normalization and under both signs
+
         :param signal1:
         :param signal2:
+        :param rtol:
+        :param atol:
         :return:
         """
-        return np.allclose(signal1 / np.std(signal1), signal2 / np.std(signal2), rtol=0, atol=1e-1) or \
-               np.allclose(signal1 / np.std(signal1), -signal2 / np.std(signal2), rtol=0, atol=1e-1)
+        return np.allclose(signal1 / np.std(signal1), signal2 / np.std(signal2), rtol=rtol, atol=atol) or \
+               np.allclose(signal1 / np.std(signal1), -signal2 / np.std(signal2), rtol=rtol, atol=atol)
 
 
 if __name__ == '__main__':
