@@ -61,15 +61,15 @@ def concatenate_past(x, p=1):
 
 class GPFA(mdp.Node):
 
-    def __init__(self, output_dim, k=10, p=1, iterations=10, variance_graph=False, 
-                 neighborhood_graph=False, weighted_edges=True, causal_features=True, 
+    def __init__(self, output_dim, k=5, p=1, iterations=10, star_graph=False,
+                 neighborhood_graph=False, weighted_edges=True, causal_features=True,
                  generalized_eigen_problem=True, input_dim=None, dtype=None):
         """
         :param output_dim: number of features to extract
         :param k: number of neighbors for estimation
         :param p: number of past time steps to consider
         :param iterations: number of iterations of the GPFA algorithm
-        :param variance_graph: GPFA(1) if True, GPFA(2) aka star-shaped graph if False
+        :param star_graph: GPFA(2) aka star-shaped graph if True, GPFA(1) if False
         :param neighborhood_graph: Additional edges for nearest neighbors like in LPP
         :param weighted_edges: Weight edges as often as they occur (True)
         :param causal_features: Also minimize variance of the past
@@ -81,7 +81,7 @@ class GPFA(mdp.Node):
         self.k = k
         self.p = p
         self.iterations = iterations
-        self.variance_graph = variance_graph
+        self.star_graph = star_graph
         self.neighborhood_graph = neighborhood_graph
         self.weighted_edges = weighted_edges
         self.causal_features = causal_features
@@ -98,6 +98,10 @@ class GPFA(mdp.Node):
             self.whitening = mdp.nodes.WhiteningNode(reduce=True)
             self.whitening.train(x)
             x = self.whitening.execute(x)
+
+        # assert whiteness
+        if not np.allclose(np.cov(x.T), np.eye(x.shape[1]), atol=1e-1, rtol=0):
+            raise ValueError('GPFA training data not white')
 
         # number of samples
         N, dim = x.shape
@@ -118,7 +122,7 @@ class GPFA(mdp.Node):
 
             # future-preserving graph
             index_list = []
-            if self.variance_graph:
+            if not self.star_graph:
                 for t in range(p-1, N-1):
                     index_list += itertools.permutations(neighbors[t]+1, 2)
             else:
@@ -127,7 +131,7 @@ class GPFA(mdp.Node):
                     index_list += [(t,s+1) for t in neighbors[s]+1]
 
             if self.causal_features:
-                if self.variance_graph:
+                if not self.star_graph:
                     for t in range(p, N):
                         index_list += itertools.permutations(neighbors[t]-p, 2)
                 else:
@@ -137,7 +141,7 @@ class GPFA(mdp.Node):
 
             # neighborhood graph
             if self.neighborhood_graph:
-                if self.variance_graph:
+                if not self.star_graph:
                     for t in range(p-1, N):
                         index_list += itertools.permutations(neighbors[t], 2)
                 else:
