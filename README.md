@@ -1,4 +1,4 @@
-# gpfa
+# Grpah-Based Predictable Feature Analysis
 
 Code for _Graph-based Predictable Feature Analysis_ (GPFA) as described in: 
 
